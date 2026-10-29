@@ -1,0 +1,12 @@
+# clean checkout of f31fd9f50202526defbf8942d25d01fe4acfda18
+clone ok
+# tools
+v20.20.2
+10.8.2
+openjdk version "21.0.2" 2024-01-16
+Apache Maven 3.9.16 (2bdd9fddda4b155ebf8000e807eb73fd829a51d5)
+Python 3.14.0
+# files present before build:
+static/admin exists: no
+node_modules exists: no
+target exists: no

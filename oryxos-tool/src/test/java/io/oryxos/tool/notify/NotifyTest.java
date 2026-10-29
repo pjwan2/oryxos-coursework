@@ -59,7 +59,7 @@ class NotifyTest {
 
   private NotifyTool tool(Set<String> hosts) {
     return new NotifyTool(
-        List.of(new WebhookNotifyAdapter(sandbox(hosts), HttpGetTool.defaultClient())));
+        List.of(new WebhookNotifyAdapter(HttpGetTool.defaultClient())), sandbox(hosts));
   }
 
   private ToolContext ctx(String path) {

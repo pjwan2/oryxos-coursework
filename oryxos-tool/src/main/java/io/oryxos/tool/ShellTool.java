@@ -24,12 +24,25 @@ import java.util.concurrent.TimeUnit;
  */
 public final class ShellTool implements OryxTool {
   static final int MAX_OUTPUT_BYTES = 64 * 1024;
+
+  /** The only place a process is started; tests replace it to prove nothing was launched. */
+  @FunctionalInterface
+  interface ProcessStarter {
+    Process start(ProcessBuilder builder) throws IOException;
+  }
+
   private final Sandbox sandbox;
   private final Duration timeout;
+  private final ProcessStarter starter;
 
   public ShellTool(Sandbox sandbox, Duration timeout) {
+    this(sandbox, timeout, ProcessBuilder::start);
+  }
+
+  ShellTool(Sandbox sandbox, Duration timeout, ProcessStarter starter) {
     this.sandbox = Objects.requireNonNull(sandbox, "sandbox");
     this.timeout = Objects.requireNonNull(timeout, "timeout");
+    this.starter = Objects.requireNonNull(starter, "starter");
   }
 
   @Override
@@ -67,7 +80,7 @@ public final class ShellTool implements OryxTool {
           argv.add(item.asText());
         }
       }
-      sandbox.checkCommand(argv);
+      sandbox.forProfile(context.profile()).checkCommand(argv);
       return run(argv);
     } catch (SandboxViolation denied) {
       return ToolOutput.denied(denied.getMessage());
@@ -88,7 +101,7 @@ public final class ShellTool implements OryxTool {
     env.clear();
     env.putAll(keep);
     try {
-      Process process = builder.start();
+      Process process = starter.start(builder);
       process.getOutputStream().close();
       ByteArrayOutputStream captured = new ByteArrayOutputStream();
       Thread reader = Thread.ofVirtual().start(() -> drain(process.getInputStream(), captured));

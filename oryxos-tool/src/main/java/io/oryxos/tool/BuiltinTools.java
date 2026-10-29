@@ -19,7 +19,7 @@ public final class BuiltinTools {
         new FileWriteTool(sandbox),
         new HttpGetTool(sandbox, http),
         new ShellTool(sandbox, shellTimeout),
-        new NotifyTool(List.of(new WebhookNotifyAdapter(sandbox, http))));
+        new NotifyTool(List.of(new WebhookNotifyAdapter(http)), sandbox));
   }
 
   /** Deny-all instances, enough to list names and schemas without any side effect. */

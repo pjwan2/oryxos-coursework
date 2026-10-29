@@ -20,12 +20,13 @@ import java.util.Objects;
  */
 public final class WebhookNotifyAdapter implements NotifyChannelAdapter {
   private static final ObjectMapper MAPPER = new ObjectMapper();
-  private final Sandbox sandbox;
   private final HttpClient client;
 
-  public WebhookNotifyAdapter(Sandbox sandbox, HttpClient client) {
-    this.sandbox = Objects.requireNonNull(sandbox, "sandbox");
+  public WebhookNotifyAdapter(HttpClient client) {
     this.client = Objects.requireNonNull(client, "client");
+    if (client.followRedirects() != HttpClient.Redirect.NEVER) {
+      throw new IllegalArgumentException("HttpClient must not follow redirects");
+    }
   }
 
   @Override
@@ -34,10 +35,10 @@ public final class WebhookNotifyAdapter implements NotifyChannelAdapter {
   }
 
   @Override
-  public NotifyResult send(NotifyTarget target, String title, String message) {
+  public NotifyResult send(Sandbox sandbox, NotifyTarget target, String title, String message) {
     try {
       URI uri = URI.create(target.url());
-      sandbox.checkUri(uri);
+      sandbox.checkHttpTarget(uri);
       Map<String, String> payload = new LinkedHashMap<>();
       payload.put("title", title);
       payload.put("text", message);

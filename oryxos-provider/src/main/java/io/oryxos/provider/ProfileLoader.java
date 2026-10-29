@@ -1,6 +1,8 @@
 package io.oryxos.provider;
 
 import io.oryxos.core.profile.AgentProfile;
+import io.oryxos.core.sandbox.SandboxConfigException;
+import io.oryxos.core.sandbox.SandboxSpec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -58,6 +60,10 @@ public class ProfileLoader {
             throw new IllegalArgumentException("Duplicate profile name: " + p.name());
           }
           result.put(p.name(), p);
+        } catch (SandboxConfigException unsafe) {
+          // An invalid security declaration must stop startup; skipping it could leave an agent
+          // running with different permissions than its author believes.
+          throw new SandboxConfigException(file.getFileName() + ": " + unsafe.getMessage());
         } catch (RuntimeException | IOException problem) {
           LOG.error("Skipping invalid profile {}: {}", file.getFileName(), problem.toString());
         }
@@ -93,6 +99,8 @@ public class ProfileLoader {
     if (temperature < 0 || temperature > 2) {
       throw new IllegalArgumentException("Invalid provider.temperature");
     }
+    Map<String, Object> settings = asMap(src.get("settings"));
+    SandboxSpec.parse(settings.get("sandbox"), "settings.sandbox");
     return new AgentProfile(
         name,
         String.valueOf(src.getOrDefault("description", "")),
@@ -105,7 +113,7 @@ public class ProfileLoader {
         maps(src.get("notify_channels")),
         maps(src.get("schedules")),
         asMap(src.get("bootstrap")),
-        asMap(src.get("settings")));
+        settings);
   }
 
   private static String required(Map<String, Object> map, String key) {

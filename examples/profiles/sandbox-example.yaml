@@ -1,0 +1,27 @@
+# Example only (this directory is not scanned). Copy to .oryxos/profiles/ to use.
+# A Profile that declares no settings.sandbox may call no sandboxed tool successfully.
+# What is declared here is further limited to the operator's ceiling (oryxos.sandbox.*).
+name: weather-reader
+description: Reads a weather API and writes a daily summary file
+provider:
+  name: mock
+  model: mock-echo
+  temperature: 0.2
+tools:
+  - http_get
+  - file_write
+  - shell_exec
+settings:
+  max_iterations: 6
+  sandbox:
+    read_roots: [".oryxos/workspace/weather"]
+    write_roots: [".oryxos/workspace/weather"]
+    hosts:
+      - "api.open-meteo.com"      # exact host; any port; IP literals need an exact entry
+      - "*.example.org"           # subdomains only, never example.org itself
+    allow_private_networks: false # also requires the operator ceiling to allow it
+    commands:
+      - date                       # a bare program name: no arguments allowed
+      - name: git
+        args: ["status", "log", "--oneline", "-n", "[0-9]{1,3}"]  # each argument must fully match one
+        max_args: 5

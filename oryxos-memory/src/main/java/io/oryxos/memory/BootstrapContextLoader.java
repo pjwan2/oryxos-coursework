@@ -35,6 +35,7 @@ public final class BootstrapContextLoader implements ContextLoader {
   @Override
   public String load(AgentProfile profile, AgentSession session) {
     Map<String, Object> bootstrap = profile.bootstrap();
+    Sandbox scoped = sandbox.forProfile(profile);
     StringBuilder out = new StringBuilder();
     Object text = bootstrap.get("text");
     if (text instanceof String inline && !inline.isBlank()) {
@@ -42,7 +43,7 @@ public final class BootstrapContextLoader implements ContextLoader {
     }
     if (bootstrap.get("files") instanceof Iterable<?> files) {
       for (Object entry : files) {
-        String content = readFile(String.valueOf(entry));
+        String content = readFile(scoped, String.valueOf(entry));
         if (!content.isEmpty()) {
           out.append(out.length() == 0 ? "" : "\n").append(content);
         }
@@ -51,9 +52,9 @@ public final class BootstrapContextLoader implements ContextLoader {
     return out.toString();
   }
 
-  private String readFile(String name) {
+  private String readFile(Sandbox scoped, String name) {
     try {
-      Path path = sandbox.checkPath(Path.of(name), Sandbox.Access.READ);
+      Path path = scoped.checkPath(Path.of(name), Sandbox.Access.READ);
       if (!Files.isRegularFile(path)) {
         LOG.warn("Bootstrap file skipped (not a file): {}", name);
         return "";

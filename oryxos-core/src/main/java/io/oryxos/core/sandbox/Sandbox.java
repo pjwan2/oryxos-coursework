@@ -1,5 +1,6 @@
 package io.oryxos.core.sandbox;
 
+import io.oryxos.core.profile.AgentProfile;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
@@ -20,6 +21,29 @@ public interface Sandbox {
   /** Argv form only (no shell string); the executable must be allowlisted. */
   void checkCommand(List<String> argv);
 
-  /** Only http(s) URLs whose host is allowlisted. */
+  /** Only http(s) URLs whose host is allowlisted; IP literals need explicit approval. */
   void checkUri(URI uri);
+
+  /**
+   * Resolves the host and refuses loopback, private, link-local and cloud-metadata addresses unless
+   * approved. Cannot defeat DNS rebinding between this check and the connection.
+   */
+  default void checkResolvedTarget(URI uri) {
+    // Implementations that do not resolve names have nothing more to check.
+  }
+
+  /** What an HTTP tool calls before any request. */
+  default void checkHttpTarget(URI uri) {
+    checkUri(uri);
+    checkResolvedTarget(uri);
+  }
+
+  /**
+   * The sandbox that applies to this Profile. Implementations that hold per-Profile policy return a
+   * scoped instance; a Profile that declares nothing gets one that denies everything. Tools must
+   * call this first, with the Profile of the current call, never a remembered one.
+   */
+  default Sandbox forProfile(AgentProfile profile) {
+    return this;
+  }
 }

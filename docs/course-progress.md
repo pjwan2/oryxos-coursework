@@ -239,3 +239,137 @@ oryxos:
 - 文件工具对 Windows 目录联接（junction）、UNC 路径、大小写不敏感路径的行为未专门测试。
 - Shell 工具的输出/时间有上限，但没有 CPU/内存限制；这依旧是应用层白名单，不是 OS 隔离。
 - 写入 CORE 记忆是否应需要人工确认，属于 B2 的策略决定。
+
+---
+
+## 阶段 B2：Sandbox 工程实现与安全验收
+
+### 验收命令与结果
+
+```bash
+mvn -B -ntp spotless:apply           # BUILD SUCCESS
+mvn -B -ntp clean verify             # BUILD SUCCESS，未使用 -DskipTests，未改静态检查门禁
+```
+
+| 模块 | 测试数 | 失败 | 跳过 | B1 时 |
+|---|---|---|---|---|
+| oryxos-core | 24 | 0 | 0 | 15 |
+| oryxos-provider | 31 | 0 | 0 | 26 |
+| oryxos-tool | 106 | 0 | **4** | 34 |
+| oryxos-memory | 80 | 0 | 0 | 80 |
+| oryxos-cli | 9 | 0 | 0 | 9 |
+| oryxos-boot（Spring 集成） | 60 | 0 | 0 | 43 |
+| **合计** | **310** | **0** | **4** | 207 |
+
+Checkstyle、PMD、SpotBugs 全部通过。B1 的 207 个测试全部保留并通过，没有删除或放宽任何断言。**仅有的既有测试改动**：`NotifyTest` 里构造 `NotifyTool` 的一处（适配器不再自带 Sandbox，改由 `NotifyTool` 传入），断言未动。
+
+**4 个被跳过的测试：** 全部是"符号链接"测试（`aSymlinkInsideTheRootPointingOutsideCannotBeFollowed` 等）。本机 Windows 创建符号链接报 `A required privilege is not held by the client`。**因此符号链接逃逸在本机没有被实际验证。** 同一代码路径（`toRealPath` 解析后再比较）由 Windows **目录联接（junction）测试覆盖，该测试实际执行并通过**；符号链接测试需在 Linux/macOS 或开启 Windows 开发者模式后重跑。
+
+### 设计
+
+| 点 | 做法 |
+|---|---|
+| 权限来源 | Profile 在 `settings.sandbox` 声明自己需要的路径/域名/命令；运维配置 `oryxos.sandbox.*` 是**上限**；生效权限 = 二者**交集**。Profile 超出上限的部分被丢弃并记 WARN |
+| 未声明 | 没有 `settings.sandbox` 的 Profile 一律全部拒绝，不继承其他 Agent 或全局默认 |
+| 权限传递 | **不使用 ThreadLocal**。每次工具调用由 `ToolContext.profile()` 显式传入，`sandbox.forProfile(profile)` 推导；因此不存在跨请求串用。`ProfileContext` 仍由 `AgentService` 在 `finally` 清理（既有测试覆盖，本轮新增集成测试再验证） |
+| 无 Profile 直接用 | `ProfileSandbox` 本身的任何检查都拒绝（fail closed） |
+| 强制点 | 每个沙箱工具的第一步是 `sandbox.forProfile(...).check…`，在任何 I/O 之前 |
+| 配置校验 | `SandboxSpec` 严格解析：未知键、错类型、整盘根目录、UNC、`*`/`*.com` 通配、路径式命令、"匹配任意参数"的正则，一律 `SandboxConfigException` |
+| 非法配置 | 运维配置或 Profile 的 `sandbox` 段非法 → **启动失败**（不像其他无效 Profile 那样被跳过），CLI 显示一行根因，退出码 1 |
+
+### 文件系统
+
+规范化经 `toRealPath`（解析符号链接与 junction）后用 `Path.startsWith` 比较，不用字符串前缀。额外拒绝：UNC/设备路径（`\\server\share`、`\\?\`、`\\.\`）、盘符相对路径（`C:foo`）、备用数据流与名称中的 `:`、DOS 设备名（`CON`/`NUL`/`COM1` 等，任意扩展名）、以 `.`/空格结尾的名称、`< > | " ? * \`。平台自己无法解析的路径（Windows 上 `a.txt:x`、尾部空格）记为 `SandboxDenied`，且不回显路径。
+
+测试覆盖：普通路径、`../`（多种拼法）、绝对路径、同名前缀兄弟目录、读写根分离、**Windows junction 逃逸**、UNC/设备路径、盘符相对、ADS、设备名、尾部点/空格、大小写差异、"先规范化 `link/..` 会掩盖真实目标"的情形。
+
+### HTTP
+
+用解析后的主机判断，不用 `contains`。处理：大小写、尾部点、端口（忽略，按主机放行）、UserInfo（一律拒绝）、非 ASCII/畸形主机、通配符只匹配子域（不匹配裸域、不匹配 `eviltrusted.org`、`trusted.org.evil.com`）、仅 http/https。
+
+- **IP 字面量**：只有被**精确批准**的地址才放行；IPv4 映射 IPv6 按内嵌 IPv4 判断；`2130706433`、`0x7f.1`、`0177.0.0.1`、`127.1` 这类数字伪装一律拒绝。
+- **永不放行（即使被列入名单）**：链路本地 `169.254/16`、`fe80::/10`、AWS `fd00:ec2::254`、阿里云 `100.100.100.200`、`0.0.0.0/8`、组播。
+- **私网/环回**（`10/8`、`172.16/12`、`192.168/16`、CGNAT、ULA、`127/8`、`::1`）：主机名解析到这些地址时拒绝，除非 Profile **和**运维都设置了 `allow_private_networks`；IP 字面量需被精确批准。
+- **解析**：对名称解析出的**所有**地址逐个检查，一个不合格就拒绝；解析失败视为无法验证，拒绝。
+- **重定向**：`HttpClient` 必须是 `Redirect.NEVER`（构造时校验，否则拒绝创建）；3xx 当作失败返回，测试证明 `Location` 目标**一次都没被请求**。
+- 非法 URL 不回显原文（可能含令牌）。
+
+### Shell
+
+规则是"程序名 + 逐个参数的正则"，没有命令字符串、不经过 shell：只接受裸程序名（路径、`git status`、`git; rm`、`git && x` 全拒绝）；程序在 Profile 声明里且在运维上限内；**每个参数必须完整匹配某条声明的正则**，数量不超过 `max_args`；只写程序名则**不允许任何参数**。测试了选项注入（`--upload-pack=`、`-c core.pager=`）、命令替换、重定向、管道、换行、`../`。保留 64KB 输出上限与超时（用假进程测试，证明超时会 `destroyForcibly`、输出被截断），子进程环境只保留 `PATH`/`SystemRoot`。
+
+### 审计
+
+每次被拒绝的工具调用都写 `tool_invocations`：`session_id`、`tool_name`、`success=false`、`error_category=SandboxDenied`（单测与 JAR 实测均核对）。Notify 的拒绝同样如此。
+
+**与要求的差异（需你确认）：** 要求里还有"安全、可读的错误信息"。`tool_invocations` 表目前**没有 message 列**（只有 `error_category`），而项目没有迁移框架，`CREATE TABLE IF NOT EXISTS` 无法给已存在的旧库加列，直接改会让旧开发库写入失败。所以可读原因（如 `Path outside allowed READ roots`）出现在**返回给模型的工具结果和已持久化的 Session 记录**里，不在审计表。如需入表，需要先引入迁移步骤，属于 B3 前的决定。
+
+**凭证不外泄（有反向验证）：** 响应里不回显 URL/路径/参数；`RegistryToolExecutor` 以前会把异常整体写日志（message 可能带令牌），已改为只记工具名、异常类名与抛出位置。新测试在旧写法下确实失败（`log leaked: ... TOKEN-ABC123?key=SECRETKEY`），修复后通过。
+
+### 真实 JAR 运行证据（独立临时库）
+
+| 操作 | 结果 | 审计行 |
+|---|---|---|
+| agent-a 读自己的目录 | `A-DATA` | success=1 |
+| agent-b 读自己的目录 | `B-DATA` | success=1 |
+| agent-a 读 agent-b 的目录 | `SANDBOX_DENIED: Path outside allowed READ roots` | SandboxDenied |
+| agent-b 读 agent-a 的目录 | 同上 | SandboxDenied |
+| agent-a 读 `a/../b/data.txt`、`a/../outside/data.txt` | 同上 | SandboxDenied ×2 |
+| agent-c（未声明 sandbox）读 a 目录 | 同上 | SandboxDenied |
+| agent-a 写 `ws/b/pwned.txt` | `SANDBOX_DENIED ... WRITE roots`；文件**不存在** | SandboxDenied |
+| agent-a 写自己的目录 | `Wrote 5 characters` | success=1 |
+| `http_get http://169.254.169.254/...`（运维与 Profile 都批准） | `never allowed` | SandboxDenied |
+| `http_get http://127.0.0.1:9/`（未批准） | `IP address not approved` | SandboxDenied |
+| `http_get http://2130706433/` | `Ambiguous numeric host` | SandboxDenied |
+| 运维配置 `hosts=*` | `Error: Startup failed: oryxos.sandbox.hosts[0]: '*' is only allowed as a leading '*.' label`，退出码 1 | — |
+| Profile 含 `args: [".*"]` | `Error: Startup failed: bad.yaml: settings.sandbox.commands[0].args[0]: pattern accepts any argument; be specific`，退出码 1 | — |
+
+### 新增与修改的文件
+
+**新增（主代码）：** `core/sandbox/{SandboxSpec,SandboxConfigException}`、`tool/{ProfileSandbox,CommandRule}`、`examples/profiles/sandbox-example.yaml`
+
+**修改（主代码）：** `core/sandbox/Sandbox`（`forProfile`、`checkResolvedTarget`、`checkHttpTarget`）、`tool/{AllowListSandbox（重写）,SandboxPolicy,FileReadTool,FileWriteTool,HttpGetTool,ShellTool,RegistryToolExecutor,BuiltinTools}`、`tool/notify/{NotifyChannelAdapter,WebhookNotifyAdapter,NotifyTool}`、`memory/BootstrapContextLoader`（按 Profile 取沙箱）、`provider/ProfileLoader`（加载时校验）、`boot/{ToolConfiguration,BootCliRuntime}`
+
+**新增测试：** `SandboxSpecTest`(9)、`PathSecurityTest`(18，4 跳过)、`UriSecurityTest`(20)、`ProfileSandboxTest`(12)、`ShellSecurityTest`(10)、`SandboxEnforcementTest`(12)、`ProfileSandboxLoadingTest`(5)、`SandboxIntegrationTest`(10)、`SandboxStartupValidationTest`(7)，辅助 `TestProfiles`
+
+### Windows 路径限制（明确写下）
+
+- 创建符号链接需要权限；未获得权限时，符号链接测试被跳过（见上），junction 路径已验证。
+- **UNC、`\\?\`、`\\.\` 设备路径、盘符相对路径一律拒绝**，即使它们指向允许目录内。原因：无法在每个环境里可靠验证其真实目标。运维配置里也不允许 UNC 作为根目录。
+- 备用数据流、保留设备名、尾部点/空格一律拒绝（在 Linux 上同样拒绝，保持行为一致；代价是 Linux 上名称含 `:` 或 `\` 的合法文件也无法访问）。
+- 8.3 短文件名：已存在的路径经 `toRealPath` 还原为长名后比较；不存在的目标位于已验证的目录之下，无法借此逃出根目录。
+- 大小写：Windows 上 `Path` 比较不区分大小写，已测试。
+- **检查与使用之间的竞态（TOCTOU）**：工具使用的是检查通过后返回的规范路径，但检查之后、打开之前，若有其他进程把路径中某一级替换为链接，仍有窗口。未使用 `O_NOFOLLOW` 级别的原子打开。
+
+### 应用层 Sandbox 与 OS 强隔离的边界
+
+这是 JVM 内的**策略检查**，不是隔离。它能保证：被拒绝的操作不会发生，且判断基于规范化后的数据。它**不能**：
+
+- 阻止被允许的程序自己做坏事（如允许了 `java`，该程序内部可以做任何事；参数规则只限制我们传给它的参数）；
+- 限制 CPU/内存/磁盘/进程数/文件描述符；Shell 只有超时和输出上限；
+- 隔离网络（只在发请求前检查目标）；
+- 防御内核、JVM、依赖库漏洞，或被攻破后的横向移动；
+- 阻止同一 OS 用户的其他进程直接读写同一批文件。
+
+需要对不可信模型/提示词做强隔离时，必须在其外层再加容器/独立低权限用户/seccomp/网络策略。**本项目不宣称提供强资源隔离。**
+
+### 尚未完成或无法验证
+
+1. **DNS 重绑定无法由本检查消除**：我们先解析并检查所有地址，但 `HttpClient` 随后会再次解析，两次结果可能不同。纯主机名白名单也不能单独解决 SSRF。需要连接时固定 IP（本版本做不到，Java `HttpClient` 不允许自定义 `Host` 头）或出站代理/防火墙。
+2. **符号链接测试未在本机执行**（权限），见上。
+3. **没有重定向手动跟随**：3xx 一律当失败，正当使用重定向的 API 需要直接填最终地址。
+4. IPv6 区域标识、IDN（国际化域名）一律拒绝，未支持。
+5. 端口不参与判断：允许的主机上的任何端口都可访问。
+6. 审计表缺少可读错误信息列（见上）。
+7. Profile 到沙箱的缓存按 Profile 对象缓存、无上限；动态增删 Agent（阶段 C）时需要驱逐。
+8. 默认行为变化：全局 `.oryxos/workspace` 不再让每个 Agent 默认可读写；Agent 必须在 Profile 里声明。现有 `payment-demo`、`memory-demo` 不使用这些工具，不受影响。
+9. 真实 LLM、真实 MCP、真实 Mem0、真实 Webhook 仍未验证（同前）。
+
+### B3 Scheduler 前置缺口
+
+- 调度执行的 Agent 需要明确的 Profile 与会话身份（`channel=scheduler`，`userId` 约定），目前只有 `cli`、`web` 两种渠道。
+- 调度触发时同样走 `AgentService`，沙箱按该 Profile 生效；但**无人值守**场景下 Profile 的 `sandbox` 声明就是唯一防线，建议调度类 Profile 必须显式声明沙箱，缺失时启动告警。
+- `BootCliRuntime` 已用 `oryxos.scheduler.enabled=false` 关闭调度，但 `SchedulerModule` 目前只是占位，没有该属性的实现。
+- 防重叠、失败隔离、失败审计需要新表或复用 `tool_invocations`/`llm_calls`；**审计表加列需要先决定迁移方式**。
+- Profile 沙箱缓存的驱逐策略（动态更新/删除 Agent 时）。
+- 时区与 cron 的配置校验（与本轮同样要"非法配置启动失败"）。

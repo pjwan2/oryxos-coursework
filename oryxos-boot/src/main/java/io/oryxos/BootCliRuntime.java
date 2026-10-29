@@ -15,6 +15,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.NestedExceptionUtils;
 
 /**
  * Light commands read files directly and never start Spring. {@code chat} starts a web-less Spring
@@ -94,7 +95,14 @@ public final class BootCliRuntime implements CliRuntime {
       arguments.add("--oryxos.scheduler.enabled=false");
       arguments.add("--logging.level.root=ERROR");
       overrides.forEach((key, value) -> arguments.add("--" + key + "=" + value));
-      context = builder.run(arguments.toArray(String[]::new));
+      // The CLI reports a failed startup itself, as one line with the root cause.
+      arguments.add("--logging.level.org.springframework.boot.SpringApplication=OFF");
+      try {
+        context = builder.run(arguments.toArray(String[]::new));
+      } catch (RuntimeException startupFailure) {
+        Throwable cause = NestedExceptionUtils.getMostSpecificCause(startupFailure);
+        throw new IllegalStateException("Startup failed: " + cause.getMessage(), startupFailure);
+      }
     }
     AgentService agent = context.getBean("springAiAgentService", AgentService.class);
     return agent.process("cli", userId, profileName, message);

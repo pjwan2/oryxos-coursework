@@ -51,7 +51,10 @@ public final class RegistryToolExecutor implements AgentToolExecutor {
       return ToolOutput.denied(denied.getMessage());
     } catch (RuntimeException failure) {
       // A bug in one tool must not kill the whole agent turn; the audit still records a failure.
-      LOG.error("Tool {} failed", action.name(), failure);
+      // Never log the exception itself: its message can carry a URL token or an API key. The class
+      // and the throwing line are enough to find the bug.
+      StackTraceElement at = failure.getStackTrace().length > 0 ? failure.getStackTrace()[0] : null;
+      LOG.error("Tool {} failed with {} at {}", action.name(), failure.getClass().getName(), at);
       return ToolOutput.failed("Tool error: " + failure.getClass().getSimpleName(), false);
     }
   }

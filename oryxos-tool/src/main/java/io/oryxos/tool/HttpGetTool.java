@@ -25,6 +25,10 @@ public final class HttpGetTool implements OryxTool {
   public HttpGetTool(Sandbox sandbox, HttpClient client) {
     this.sandbox = Objects.requireNonNull(sandbox, "sandbox");
     this.client = Objects.requireNonNull(client, "client");
+    if (client.followRedirects() != HttpClient.Redirect.NEVER) {
+      // A followed redirect would reach hosts the sandbox never saw.
+      throw new IllegalArgumentException("HttpClient must not follow redirects");
+    }
   }
 
   public static HttpClient defaultClient() {
@@ -50,12 +54,21 @@ public final class HttpGetTool implements OryxTool {
         + "\"required\":[\"url\"]}";
   }
 
+  /** The message never echoes the URL: it may carry a token. */
+  private static URI parse(String raw) {
+    try {
+      return URI.create(raw);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("url is not a valid URL");
+    }
+  }
+
   @Override
   public ToolOutput execute(String argumentsJson, ToolContext context) {
     try {
       JsonNode args = ToolArgs.parse(argumentsJson);
-      URI uri = URI.create(ToolArgs.requireText(args, "url"));
-      sandbox.checkUri(uri);
+      URI uri = parse(ToolArgs.requireText(args, "url"));
+      sandbox.forProfile(context.profile()).checkHttpTarget(uri);
       HttpRequest request =
           HttpRequest.newBuilder(uri).GET().timeout(Duration.ofSeconds(10)).build();
       HttpResponse<InputStream> response =

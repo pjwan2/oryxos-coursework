@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -43,7 +44,7 @@ public final class FileReadTool implements OryxTool {
     try {
       JsonNode args = ToolArgs.parse(argumentsJson);
       Path requested = Path.of(ToolArgs.requireText(args, "path"));
-      Path path = sandbox.checkPath(requested, Sandbox.Access.READ);
+      Path path = sandbox.forProfile(context.profile()).checkPath(requested, Sandbox.Access.READ);
       if (!Files.isRegularFile(path)) {
         return ToolOutput.failed("Not a readable file", false);
       }
@@ -56,6 +57,10 @@ public final class FileReadTool implements OryxTool {
       }
     } catch (SandboxViolation denied) {
       return ToolOutput.denied(denied.getMessage());
+    } catch (InvalidPathException unparsable) {
+      // The platform itself cannot parse it (e.g. ':' or trailing space on Windows); do not echo
+      // it.
+      return ToolOutput.denied("Invalid path");
     } catch (IllegalArgumentException invalid) {
       return ToolOutput.failed(invalid.getMessage(), false);
     } catch (IOException io) {

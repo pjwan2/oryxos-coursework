@@ -3,6 +3,7 @@ package io.oryxos.tool.notify;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.oryxos.core.agent.ToolOutput;
+import io.oryxos.core.sandbox.Sandbox;
 import io.oryxos.core.tool.OryxTool;
 import io.oryxos.core.tool.ToolContext;
 import java.util.HashMap;
@@ -18,8 +19,10 @@ public final class NotifyTool implements OryxTool {
   static final int MAX_MESSAGE_CHARS = 4000;
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private final Map<String, NotifyChannelAdapter> adapters = new HashMap<>();
+  private final Sandbox sandbox;
 
-  public NotifyTool(List<NotifyChannelAdapter> adapterList) {
+  public NotifyTool(List<NotifyChannelAdapter> adapterList, Sandbox sandbox) {
+    this.sandbox = Objects.requireNonNull(sandbox, "sandbox");
     for (NotifyChannelAdapter adapter : Objects.requireNonNull(adapterList, "adapters")) {
       adapters.put(adapter.type(), adapter);
     }
@@ -67,7 +70,9 @@ public final class NotifyTool implements OryxTool {
     if (adapter == null) {
       return ToolOutput.failed("Unsupported notify type: " + target.type(), false);
     }
-    NotifyChannelAdapter.NotifyResult result = adapter.send(target, text(args, "title"), message);
+    // Scoped to THIS call's Profile: another agent's permissions are never visible here.
+    NotifyChannelAdapter.NotifyResult result =
+        adapter.send(sandbox.forProfile(context.profile()), target, text(args, "title"), message);
     if (result.success()) {
       return ToolOutput.ok("Notification sent to " + targetName);
     }

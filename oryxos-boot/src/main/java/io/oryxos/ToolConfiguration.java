@@ -1,17 +1,19 @@
 package io.oryxos;
 
 import io.oryxos.core.sandbox.Sandbox;
+import io.oryxos.core.sandbox.SandboxConfigException;
+import io.oryxos.core.sandbox.SandboxSpec;
 import io.oryxos.core.tool.OryxTool;
 import io.oryxos.core.tool.ToolRegistry;
-import io.oryxos.tool.AllowListSandbox;
 import io.oryxos.tool.BuiltinTools;
 import io.oryxos.tool.HttpGetTool;
+import io.oryxos.tool.ProfileSandbox;
 import io.oryxos.tool.SandboxPolicy;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -19,8 +21,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Builds the sandbox from {@code oryxos.sandbox.*} (default: only the workspace directory, no
- * commands, no hosts) and the single ToolRegistry holding built-in plus any extra OryxTool beans.
+ * Builds the operator's sandbox CEILING from {@code oryxos.sandbox.*} (default: only the workspace
+ * directory, no commands, no hosts) and the single ToolRegistry holding built-in plus any extra
+ * OryxTool beans. The ceiling grants nothing by itself: each Profile must declare what it needs
+ * under {@code settings.sandbox}, and gets the intersection.
  */
 @Configuration
 @EnableConfigurationProperties(ToolConfiguration.SandboxProperties.class)
@@ -34,6 +38,7 @@ public class ToolConfiguration {
     private List<String> commands = List.of();
     private List<String> hosts = List.of();
     private long shellTimeoutSeconds = 10;
+    private boolean allowPrivateNetworks;
 
     public List<String> getReadRoots() {
       return List.copyOf(readRoots);
@@ -67,6 +72,14 @@ public class ToolConfiguration {
       this.hosts = List.copyOf(hosts);
     }
 
+    public boolean isAllowPrivateNetworks() {
+      return allowPrivateNetworks;
+    }
+
+    public void setAllowPrivateNetworks(boolean allowPrivateNetworks) {
+      this.allowPrivateNetworks = allowPrivateNetworks;
+    }
+
     public long getShellTimeoutSeconds() {
       return shellTimeoutSeconds;
     }
@@ -76,14 +89,23 @@ public class ToolConfiguration {
     }
   }
 
+  /**
+   * The operator's ceiling. Invalid entries (a filesystem root, "*" hosts, path-style commands, bad
+   * timeouts) stop the application from starting. Profiles then declare what they need inside it.
+   */
   @Bean
   public Sandbox sandbox(SandboxProperties props) {
-    return new AllowListSandbox(
-        new SandboxPolicy(
-            props.getReadRoots().stream().map(Path::of).toList(),
-            props.getWriteRoots().stream().map(Path::of).toList(),
-            Set.copyOf(props.getCommands()),
-            Set.copyOf(props.getHosts())));
+    if (props.getShellTimeoutSeconds() < 1 || props.getShellTimeoutSeconds() > 300) {
+      throw new SandboxConfigException("oryxos.sandbox.shell-timeout-seconds must be 1..300");
+    }
+    Map<String, Object> declared = new LinkedHashMap<>();
+    declared.put("read_roots", props.getReadRoots());
+    declared.put("write_roots", props.getWriteRoots());
+    declared.put("commands", props.getCommands());
+    declared.put("hosts", props.getHosts());
+    declared.put("allow_private_networks", props.isAllowPrivateNetworks());
+    SandboxSpec spec = SandboxSpec.parse(declared, "oryxos.sandbox");
+    return new ProfileSandbox(SandboxPolicy.ceilingFromSpec(spec));
   }
 
   @Bean

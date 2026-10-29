@@ -1,0 +1,2 @@
+51 markdown files checked, 0 broken links
+exit=0

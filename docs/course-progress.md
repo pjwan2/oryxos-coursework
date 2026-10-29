@@ -686,3 +686,15 @@ boot：`pom.xml`（`build-info`、failsafe）；
 - 提交包：`deliverables/week-04/`（`scripts/package_week04.py` 生成 ZIP；没有推送、没有登录课程平台）
 
 相对 B4 的代码改动只有一个测试类（`ArchitectureRulesTest`）和三个脚本（`scripts/`）。
+
+---
+
+## 仓库专业化整理（结构整理，不改变系统行为）
+
+分支 `chore/repository-professionalization`，基于 `6c1e643`。只整理结构、命名、文档和 CI；没有改动任何 Java 代码、Spring Bean 名称、公共接口或运行时路径（`.oryxos/` 语义不变）。
+
+- **目录**：正式仓库目录名定为 `oryxos-coursework`。本机目录仍叫 `OryxOS_Gate2C_Session_Audit_v1_5`：重命名时 Windows 报 "Device or resource busy"（有程序占用），没有强行处理；仓库内没有任何东西依赖目录名。更名步骤见 [architecture/workspace-layout.md](architecture/workspace-layout.md)。
+- **文档结构**：`architecture/`、`decisions/`、`coursework/week-03|04|05/`、`operations/`、`history/`；`week04` 改为 `week-04`，旧运行手册和修复笔记以 kebab-case 文件名移入 `history/`（`git mv`，正文未改）。旧报告里引用的旧路径**没有被改写**，对照表在 [coursework/README.md](coursework/README.md)。
+- **新增**：根 `README.md` 重写、`CONTRIBUTING.md`、`docs/operations/{runbook,data-and-secrets}.md`、`config/env.example`、`scripts/README.md`、`scripts/check_doc_links.py`。
+- **修复**：`.github/workflows/ci.yml` 原来只跑 `mvn verify`，B4 起 `oryxos-web` 要求先构建前端，CI 会失败；现在先装 Node 并执行 `npm ci/test/build`（工作流**未实际运行**，没有远程）。`.gitignore` 补充 `.oryxos/workspace/`、密钥文件、`config/application*`。
+- **验收**（对提交 `3c9bb86` 的干净克隆，目录名 `oryxos-coursework`）：`npm ci`、`npm test`（28）、`npm run build`、`mvn spotless:apply`（无改动）、`mvn clean verify`（BUILD SUCCESS，九模块）、`git diff --check` 全部通过；**502 个测试、4 个跳过、0 个失败，逐类汇总与整理前基线（`f31fd9f`）完全一致**；真实 JAR 实机检查 77/77；默认启动 health / `/admin/` / Swagger / Prometheus 均 200；`package_week04.py` 仍能生成提交包；无敏感文件进入 Git。日志：[operations/restructure-verification/](operations/restructure-verification/README.md)。

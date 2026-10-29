@@ -1,0 +1,27 @@
+
+> oryxos-admin@0.1.0 build
+> vite build && node scripts/check-build.mjs
+
+vite v6.4.5 building for production...
+transforming...
+✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+../resources/static/admin/index.html                                                     0.54 kB │ gzip:  0.32 kB
+../resources/static/admin/assets/jetbrains-mono-vietnamese-wght-normal-Bt-aOZkq.woff2    7.50 kB
+../resources/static/admin/assets/jetbrains-mono-greek-wght-normal-Bw9x6K1M.woff2         9.00 kB
+../resources/static/admin/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2            10.25 kB
+../resources/static/admin/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2             11.23 kB
+../resources/static/admin/assets/jetbrains-mono-cyrillic-wght-normal-D73BlboJ.woff2     12.11 kB
+../resources/static/admin/assets/jetbrains-mono-latin-ext-wght-normal-DBQx-q_a.woff2    15.20 kB
+../resources/static/admin/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2              18.75 kB
+../resources/static/admin/assets/inter-greek-wght-normal-CkhJZR-_.woff2                 19.00 kB
+../resources/static/admin/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2          25.96 kB
+../resources/static/admin/assets/jetbrains-mono-latin-wght-normal-B9CIFXIH.woff2        40.40 kB
+../resources/static/admin/assets/inter-latin-wght-normal-Dx4kXJAl.woff2                 48.26 kB
+../resources/static/admin/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2             85.07 kB
+../resources/static/admin/assets/index-lT8Y3Dme.css                                     11.11 kB │ gzip:  4.38 kB
+../resources/static/admin/assets/index-CG5UbDSW.js                                     116.34 kB │ gzip: 43.44 kB
+✓ built in 787ms
+check-build: ok (16 files, 3 assets in index.html)
+exit=0

@@ -1,0 +1,13 @@
+# clean checkout of 3c9bb8640e4c948ab374b9afe6a2351e3e089fa8 (branch chore/repository-professionalization) into oryxos-coursework
+clone ok
+# tools
+v20.20.2
+10.8.2
+openjdk version "21.0.2" 2024-01-16
+Apache Maven 3.9.16 (2bdd9fddda4b155ebf8000e807eb73fd829a51d5)
+Python 3.14.0
+static/admin exists: no
+node_modules exists: no
+target exists: no
+old directory name occurs in tracked runtime files (src, pom, config, scripts, .github, .oryxos, examples):
+  none

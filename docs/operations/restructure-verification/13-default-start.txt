@@ -1,0 +1,12 @@
+# default start in a clean clone named oryxos-coursework (java -jar, no arguments, cwd = repo root)
+health:      200
+admin:       200
+swagger:     200
+prometheus:  200
+profiles:    ['memory-demo', 'payment-demo']
+invoke:       Tool result: Saved to ARCHIVAL memory
+sessions:    ['api:default:memory-demo']
+schedules:   0 tasks (no schedule profile in .oryxos/profiles)
+files created at runtime in the working directory:
+.oryxos/memory/MEMORY.md
+oryxos-dev.db

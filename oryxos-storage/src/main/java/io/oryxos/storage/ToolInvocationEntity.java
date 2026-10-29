@@ -72,4 +72,12 @@ public class ToolInvocationEntity {
   public String getErrorMessage() {
     return errorMessage;
   }
+
+  public long getDurationMs() {
+    return durationMs;
+  }
+
+  public Instant getOccurredAt() {
+    return occurredAt;
+  }
 }

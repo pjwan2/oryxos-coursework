@@ -49,6 +49,21 @@ class AgentServiceTest {
     public Optional<AgentSession> find(String id) {
       return Optional.ofNullable(sessions.get(id));
     }
+
+    @Override
+    public List<SessionSummary> list(int limit) {
+      return List.of();
+    }
+
+    @Override
+    public boolean discard(String id) {
+      return sessions.remove(id) != null;
+    }
+
+    @Override
+    public long count() {
+      return sessions.size();
+    }
   }
 
   private static ReActLoop loop(ModelGateway model) {

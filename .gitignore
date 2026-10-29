@@ -14,3 +14,7 @@ target/
 .oryxos/**/*.db
 .idea/
 .vscode/
+
+# Vue admin console: dependencies and the generated build (npm ci && npm run build)
+node_modules/
+oryxos-web/src/main/resources/static/admin/

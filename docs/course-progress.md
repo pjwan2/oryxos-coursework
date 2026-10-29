@@ -512,3 +512,163 @@ boot：`SchedulerConfiguration`、`application.yaml`（`spring.sql.init.mode=nev
 9. 未逐条验证 `SessionManager` 在课程中的确切含义（见上）。
 10. 真实 LLM、真实 MCP、真实 Mem0、真实 Webhook 仍未验证；本轮所有调度运行使用 Mock 模型。
 11. Profile 沙箱缓存的驱逐策略仍未做（阶段 C 动态 Agent 时需要）。
+
+---
+
+## 阶段 B4：REST API + Vue 3 管理台（第 26 节、第 27 节 Session 列表、第 28 节 Scheduler 界面）
+
+> 课程资料缺口同前：没有第 26～28 节原件，所以"按课程清单"的部分以任务书为准，无法逐条对照课件的地方在末尾列出。
+> 基线 `4c1e3cd`（427 测试 / 4 跳过 / 0 失败）。工作目录是 `OryxOS_Gate2C_Session_Audit_v1_5`（外层目录不是 Git 仓库，仓库在这一层）。
+
+### 验收命令与结果
+
+```
+cd oryxos-web/src/main/frontend
+npm ci              # 130 个包，来自 package-lock.json
+npm test            # vitest：3 个文件，28 个测试通过
+npm run build       # vite build + scripts/check-build.mjs：ok（16 个文件）
+cd ../../../..
+mvn -B -ntp spotless:apply
+mvn -B -ntp clean verify     # BUILD SUCCESS，九个模块全部 SUCCESS，含 failsafe 的 WebSmokeIT
+```
+
+环境：Node v20.20.2、npm 10.8.2（已存在，未改系统全局环境）；JDK 21.0.2；Maven 3.9.16。
+
+| 模块 | 测试数 | 跳过 | 失败 |
+|---|---|---|---|
+| core | 33 | 0 | 0 |
+| provider | 37 | 0 | 0 |
+| tool | 106 | 4 | 0 |
+| storage | 29 | 0 | 0 |
+| memory | 80 | 0 | 0 |
+| scheduler | 42 | 0 | 0 |
+| cli | 9 | 0 | 0 |
+| web | 56 | 0 | 0 |
+| boot（surefire 97 + failsafe 5） | 102 | 0 | 0 |
+| **合计** | **494** | **4** | **0** |
+
+B3 的 427 个测试一个不少（跳过的 4 个仍是 Windows 符号链接权限，同 B2/B3）。新增 67 个 Java 测试 + 28 个前端测试：
+
+| 测试 | 数量 | 覆盖 |
+|---|---|---|
+| `SessionApiControllerTest`（Controller 切片，MockMvc standalone） | 22 | 列表默认/上限 100、创建 201/200 幂等、详情最近 100 条与 `truncated`、消息 32KiB（按 UTF-8 字节，汉字 10923 个=32769 字节被拒）、404/400、删除、503/504/500 映射且 500 不泄漏、非本机 403、Host 头 DNS rebinding 403 |
+| `AgentApiControllerTest` | 6 | invoke 走同一个 AgentService、默认用户、未知 Agent 404、坏输入 400 且不触达 Agent、504、非本机 403 |
+| `QueryApiControllersTest` | 11 | profiles（不含 notify 目标/沙箱路径）、memory（上限、503 无细节、本机限制）、tools（Schema 作为对象）、tool-calls（时间窗、上限、坏参数）、health（503）、info（只有计数与开关） |
+| `ModelFailuresTest` + `ProviderServiceTest`(+1) | 5 + 1 | 超时→`ModelTimeoutException`、连接失败/429/5xx→`ModelUnavailableException`、其它异常原样、provider 原文不带出、审计仍写入 |
+| `RestApiIntegrationTest`（真实 Spring + 临时 SQLite + Mock 模型 + 真工具/沙箱） | 11 | API 返回与 SQLite 表逐条对照（会话消息、列表顺序、工具审计、记忆）、删除会话后审计保留、沙箱拒绝、`X-Trace-Id`、OpenAPI、Prometheus、调度器仍可用 |
+| `AdminUiTest` | 6 | `/admin`→`/admin/`、入口页、全部前端路由与深链接刷新不 404、真实静态资源与 MIME、缺失文件仍 404、`/api/**` 不被 SPA 兜底吞掉（未知 API 路径是 JSON 404）、路径穿越 |
+| `WebSmokeIT`（failsafe，**真实 fat JAR 子进程**，随机回环端口） | 5 | JAR 内嵌 `static/admin/index.html`+脚本、启动后 health、`/admin/`+子路由+资源、会话/调度器 HTTP 全流程、**重启后**会话/启停状态/运行计数/历史仍在 |
+| 前端 vitest | 28 | 三态（loading/empty/error+重试）、API 客户端（信封、Trace Id、非 JSON 不展示原文、不可达提示）、六页渲染、Scheduler 流程（二次确认、禁用任务提示、PUT 启停、409 提示、历史按需加载审计）、"技术状态 vs 工具审计"的判定逻辑 |
+
+SpotBugs、PMD、Checkstyle、spotless 全部开启，没有关闭或加排除规则。本轮各抓到真实问题并改代码修复：SpotBugs `EI_EXPOSE_REP/REP2`（DTO record 的 List 组件→构造时 `List.copyOf` + 访问器返回副本；`ObjectMapper`→`copy()`）、`NP_NULL_ON_SOME_PATH`（invoke 的 body）、`CT_CONSTRUCTOR_THROW`（`SystemApiController` 构造器不再调用可能抛异常的方法）；另有一个 `EI_EXPOSE_REP2`：接口里叫 `delete` 的方法会让 SpotBugs 把整个接口判为"可变值"，所以 `AgentSessionStore` 的新方法叫 `discard`（原因写在接口注释里）。
+
+### 第一部分：REST API
+
+六类 Controller 都在 `oryxos-web`，Controller 只做"校验 → 调 Service → 映射响应"。**所有 Agent 执行经 `AgentInvoker` 进入同一个 `AgentService`**（Bean `springAiAgentService`，与调度器是同一个）；没有第二套 AgentService、SessionStore 或审计。已有的 `/labs/**` 演示接口保持不变。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/v1/sessions` | `{profile, userId?}` 创建会话；会话 ID 仍由 `SessionIds` 生成（`web:<userId>:<profile>`）。新建 201，已存在 200（幂等）；不给 `userId` 则生成随机的 |
+| GET | `/api/v1/sessions?limit=` | 第 27 节：默认且最多 100，按最后活跃时间倒序（同时间按 ID 稳定排序）；摘要含消息数和最近一条用户消息（80 字截断） |
+| GET | `/api/v1/sessions/{id}?limit=` | 详情，最多最近 100 条消息，`totalMessages` + `truncated` |
+| POST | `/api/v1/sessions/{id}/messages` | `{content}`，≤32 KiB（UTF-8 字节）；会话必须存在，否则 404 |
+| DELETE | `/api/v1/sessions/{id}` | 只删会话行，`tool_invocations`/`llm_calls` 审计保留 |
+| POST | `/api/v1/agents/{name}/invoke` | `{message, userId?}`，channel=`api` |
+| GET | `/api/v1/profiles` | 名称、描述、provider、tools/skills/MCP、定时任务数、是否声明沙箱；**不含** notify 目标（Webhook URL/Token）、沙箱路径、settings |
+| GET | `/api/v1/memory?limit=` | 当前后端名 + CORE 全量 + ARCHIVAL 最近 N（默认 100，最大 500） |
+| GET | `/api/v1/tools` | 名称、描述、参数 Schema（JSON 对象） |
+| GET | `/api/v1/tool-calls?sessionId=&since=&until=&limit=` | 新增，工具审计（`tool_invocations`），默认 50、最大 200；管理台用它区分沙箱拒绝 |
+| GET | `/api/v1/health` | `status=ok` + `checks.database`；数据库不可达时 **503** |
+| GET | `/api/v1/info` | 应用/版本/阶段、Java、启动时间、运行时长、绑定地址、数据库类型、记忆后端、调度开关、各计数、认证状态（"none: trusted local use only"） |
+| `/api/v1/schedules` 四个 | | 沿用 B3，未改业务；仅新增了 `LocalAccess` 的 Host 头检查（见安全） |
+
+错误语义（统一 `ApiResponse`，`GlobalExceptionHandler`）：
+
+| 状态 | 场景 |
+|---|---|
+| 400 | 消息为空/超 32KiB、会话 ID/用户/Profile 名不合法、JSON 损坏、参数类型错误（只返回我们自己写的固定文案，不回显输入） |
+| 404 | 未知会话、未知 Profile/Agent（新增 `ProfileNotFoundException`，仍继承 `IllegalArgumentException`，CLI/调度器行为不变） |
+| 500 | 未预期异常，固定文本 `Internal server error`；运行内部抛出的 `IllegalArgumentException`（如 `max_iterations` 配置错）也按 500 处理，不误报成调用方错误 |
+| 503 | 模型不可达/过载（新增 `ModelUnavailableException`）、记忆后端失败、数据库不可达（health） |
+| 504 | 模型超时（`ModelTimeoutException`） |
+
+`ProviderService` 抛出前经 `ModelFailures` 分类：超时（`SocketTimeoutException`/`HttpTimeoutException`/HTTP 408、504）→504；连接失败、`ResourceAccessException`、`TransientAiException`、HTTP 429/5xx→503；其它（例如 401 密钥错误）保持原异常→500。分类后的异常**不带原消息和原因链**，因为 Provider 消息可能含密钥；LLM 审计行仍记录原始异常类别。保留 `X-Trace-Id`、OpenAPI（`/v3/api-docs`、Swagger UI，控制器加了 `@Tag`）和 Prometheus。
+
+### 第二部分：Vue 3 + Vite 管理台
+
+- 源码 `oryxos-web/src/main/frontend/`（Vue 3.5 + Vue Router 4 + Vite 6，纯 JavaScript），构建到 `oryxos-web/src/main/resources/static/admin/`，Vite `base=/admin/`；同一个 fat JAR 托管，没有新增生产 Web 服务。构建产物与 `node_modules` 已加入 `.gitignore`，`package-lock.json` 入库。
+- 服务端：`AdminIndexController`（`/admin/`）、`AdminUiConfiguration`（`/admin`→`/admin/` 重定向；`/admin/**` 的资源解析器：真实文件优先，不带扩展名且找不到文件的路径返回 `index.html`，带扩展名找不到仍 404）。只改 `/admin/**`，`/api/**` 不受影响。
+- `oryxos-web` 的 enforcer 规则要求 `static/admin/index.html` 存在，否则构建失败并给出命令，避免"JAR 能启动但 `/admin/` 404"。
+- 六页：Sessions（列表 + 详情 + 消息历史 + 该会话工具调用）、Profiles、Tools（参数表 + 原始 Schema）、Memory（后端 + CORE/ARCHIVAL）、System（health + info）、Scheduler（任务列表、执行历史、立即执行、启停）。前五页只读；没有 Agent 创建/编辑/删除（第 30 节）。会话页不提供删除按钮（API 有，界面没有）。
+- 全部数据来自真实 API，代码里没有写死数据；每页统一 `AsyncState`：loading / empty（带下一步提示）/ error（服务端文案 + HTTP 状态 + Trace Id + 重试）。网络不可达只显示"Cannot reach the OryxOS server"，不显示原始错误。
+- 字体 Inter / JetBrains Mono 来自 npm 包 `@fontsource-variable/*`，随 JAR 打包（约 300 KB），**没有 CDN/Google Fonts**；`check-build.mjs` 会在出现外部 URL、source map、疑似凭证时让构建失败。
+- **Scheduler 页**：
+  - "立即执行"必须先点确认；任务处于 disabled 时确认框明确写"任务已停用，但仍允许手动执行，将立即运行 Agent"。手动运行不改变 enabled（实测 `ops.report` 停用后手动执行，仍为 disabled，`run_count` 1）。
+  - 结果卡片把两件事分开：**Technical execution**（`AgentService.process` 是否正常结束，来自 `task_executions`）与 **Tool audit**（该次运行期间同会话的 `tool_invocations`，按"会话 + 开始/结束时间窗"匹配）。有沙箱拒绝时显示红色"1 denied by the sandbox"，并写明"运行已结束，但至少有一个工具动作**没有**执行；运行结束不代表通知已发送或操作已完成"。不会把拒绝显示成成功/通知/业务操作完成。历史表每行可按需展开同样的审计结论。
+  - 启用/停用走 `PUT /schedules/{id}`，失败显示服务端文案（403/409 等）。
+- 截图检查发现并修复了一个真实布局问题：长任务 message 把 Scheduler 表格的操作列挤出视口（现在长文本列换行、其余列不拆词）。
+
+### 第三部分：页面样式
+
+仓库里没有 `website/.vitepress/theme/custom.css`，采用课程约定的 Token（`#000000`/`#111111`/`#222222`/`#f97316`/`#f5f5f5`/`#a3a3a3`，Inter + JetBrains Mono），写成 `style.css` 的 CSS 变量。设计约定、构建步骤、页面规则固化在 `.claude/skills/oryxos-admin-ui/SKILL.md`，供第 30 节复用。没有做动画和装饰。
+
+### 第四部分：安全
+
+- 服务仍绑定 `127.0.0.1`（`server.address`），未开放公网；没有新增任何外部服务连接。
+- 本地可信访问（`LocalAccess`，B3 引入）现在覆盖：Scheduler 写（沿用）、**全部 Session 接口（读写）**、**Memory**、**tool-calls**、**Agent invoke**。规则：对端必须是回环地址；出现 `X-Forwarded-For`/`Forwarded` 拒绝；有 `Origin` 必须是本地；**新增：`Host` 头必须是 localhost/回环 IP**（防 DNS rebinding：网页把自己的域名重绑到 127.0.0.1 后，同源 GET 不带 `Origin`，此前会漏过）。实测 `Host: evil.example`、带 `X-Forwarded-For`、跨站 `Origin` 的请求均 403。
+- Profiles/Tools/System/Scheduler 的 GET 没有限制本机（不含对话/记忆正文，且服务本身只绑回环）。
+- 前端不展示 API Key、Webhook Token、数据库地址或异常原文：API 不返回这些字段，页面只显示服务端的固定文案；`info` 里没有 JDBC URL（测试断言）。
+- **这不是生产认证。** 没有用户、没有令牌；本机上任何进程/用户都能访问。README、管理台导航栏和 System 页都写明"仅限可信本地使用，无认证"。
+
+### 真实 JAR 运行证据（独立 JVM，端口 8098，新建临时 SQLite，Mock 模型）
+
+三个 Profile（`ops` 带沙箱与两个定时任务，`flaky` 每次运行都失败，`memory-demo`）；记忆后端 `sqlite`。Chrome（Puppeteer 无头）驱动真实页面，脚本与输出在 `docs/evidence/b4/`，截图在 `docs/evidence/b4/screenshots/`。
+
+- 首次运行 **27/27** 检查通过（`main-output.txt`），包括：`/admin/` 打开、深链接刷新不 404、六页数据与 API 一致（会话行数、Profile 卡片、工具列表）、中文消息、System 页无密钥/路径、手动运行沙箱拒绝（技术状态"finished without error"，审计"1 denied by the sandbox"+警告）、失败运行（`Agent run failed (IllegalArgumentException)`）、停用后手动运行、历史展开、注入 503 的错误态（文案+HTTP 503+Trace Id+重试）、未知前端路由回退、控制台零错误。
+- SQLite 与界面对照（`db-before.txt`）：
+
+```
+tool_invocations: scheduler:scheduler:ops | file_write | success=0 | SandboxDenied | Path outside allowed WRITE roots
+task_executions : 1 ops.write-outside manual success=1   <- 技术上"成功"，与上面的审计拒绝并存，界面把二者分开显示
+                  2 flaky.boom        manual success=0 "Agent run failed (IllegalArgumentException)"
+                  3 ops.report        manual success=1
+scheduled_tasks : ops.report enabled=0 run_count=1 / ops.write-outside enabled=1 run_count=1 / flaky.boom enabled=1 run_count=1
+schema_migrations: 1,2,3
+```
+
+  `ws/forbidden/out.txt` 确实没有被创建。
+- **重启**：结束 JVM 进程（`taskkill /F`，等同崩溃）后用同一个 JAR 和库重新启动，`after-restart-output.txt` **5/5** 通过：`ops.report` 仍为 disabled、`run_count=1`，执行历史仍在，会话记录仍在；`db-after.txt` 与 `db-before.txt` **逐字相同**。
+- 另用 `curl` 验证：`Host: evil.example` → 403，`X-Forwarded-For` → 403，跨站 `Origin` 的 POST → 403。
+
+### 新增与修改的文件
+
+core：`agent/{ProfileNotFoundException,ModelUnavailableException,ModelTimeoutException,SessionSummary,ToolCallRecord,ToolCallHistory}`、`profile/ProfileCatalog`、`agent/AgentSessionStore`（+`list`/`discard`/`count`）；
+provider：`ModelFailures`、`ProviderService`（抛出前分类）、`ProfileRegistry`（实现 `ProfileCatalog`，抛 `ProfileNotFoundException`）；
+storage：`JpaAgentSessionStore`（列表/删除/计数）、`JpaToolCallHistory`、`SessionRepository`、`SessionEntity`、`ToolInvocationEntity`；
+web：`SessionApiController`、`AgentApiController`、`ProfileApiController`、`MemoryApiController`、`ToolApiController`、`SystemApiController`、`AgentInvoker`、`SessionRef`、`InvalidRequestException`、`ApiNotFoundException`、`AdminIndexController`、`AdminUiConfiguration`、`GlobalExceptionHandler`、`LocalAccess`、`pom.xml`（enforcer）；
+boot：`pom.xml`（`build-info`、failsafe）；
+前端：`oryxos-web/src/main/frontend/`（`package.json`+lock、`vite.config.js`、`src/`、`tests/`、`scripts/check-build.mjs`）；
+其他：`.gitignore`、`README.md`、`scripts/build-all.sh`、`.claude/skills/oryxos-admin-ui/SKILL.md`、`docs/evidence/b4/`；
+测试：见上表；两个既有测试替身（`AgentServiceTest.MemorySessions`、`SchedulerFixtures.InMemorySessions`）补了新接口方法，断言未改。
+
+### 未完成和无法验证
+
+1. **没有人工浏览器验收。** 页面用无头 Chrome + Puppeteer 自动化检查并看过截图，这不等于人工逐页点验；真实浏览器里的观感、不同分辨率、Edge/Firefox 都没有验证。该验证脚本在 `docs/evidence/b4/`，里面写死了本机路径，不属于 `mvn verify` 门禁，也没有接入 CI。
+2. **没有认证**，本地限制只是过渡（见上）；`LocalAccess` 对"本机其它进程/用户"无效。Profiles/Tools/System/Scheduler 的 GET 未限制本机。
+3. **没有真实 LLM**：REST 的 503/504 在真实 DeepSeek 上未验证；`ModelFailures` 的分类只用合成异常（`SocketTimeoutException`、`ConnectException`、HTTP 状态）单测过，没有看过真实 Spring AI/RestClient 超时抛出的异常链。401 之类密钥错误会走 500。
+4. **同一会话并发发消息会互相覆盖**（读-改-写，没有会话级锁）；调度器与 REST 同时写同一会话同理。管理台不发消息，所以界面不触发，但 API 可以。未处理。
+5. 会话详情接口不返回创建/更新时间（只有列表有）；深链接直接打开详情时看不到时间。
+6. Scheduler 的"工具审计"按**会话 + 时间窗**匹配，不是按执行 ID 精确关联；同一 Profile 的两个任务共用一个会话，若它们的运行时间重叠，审计可能互相混入。要精确需要给 `tool_invocations` 增加执行 ID 列（需要 V4 迁移），本轮没做。
+7. 任务"成功"仍是 `AgentService.process` 没抛异常（B3 的产品决策，未改）；界面用上面的方式把拒绝单独标出。
+8. 管理台没有分页/搜索（会话上限 100）；没有消息发送、会话删除按钮（API 有）。
+9. `ProfileCatalog.list()` 是启动时快照，运行时增删 Agent 不会出现（第 29/30 节）。
+10. Spring Boot 启动日志提示 SpringDoc 的 `/v3/api-docs`、Swagger UI 默认开启；仍沿用，没有按环境关闭。
+11. `npm install` 对测试依赖链上的 `abbrev@5`（`@vue/test-utils → js-beautify → nopt`）给出 `EBADENGINE` 警告（要求 Node ≥22）；仅开发/测试依赖，不进入产物，当前 Node 20.20 下构建与测试都通过。
+12. 第 26～28 节课件缺失：路径命名（如 `tool-calls`）、会话创建的语义（我用确定性 ID，幂等 201/200）、Agent `invoke` 的 channel（`api`）都是我按任务书的取舍，**待确认**是否与课程一致。
+13. 真实 MCP、真实 Mem0、真实 Webhook 仍未验证（同前）。
+
+### 阶段 C 前置
+
+- 第 30 节要在界面上创建/编辑/删除 Agent：需要可变的 `ProfileCatalog`、Profile 沙箱缓存的驱逐策略（B3 遗留）、以及管理台的确认/校验错误展示（约定已在 SKILL.md）。
+- 第 29 节动态注册 Agent 后，`ProfileApiController`、调度器注册与 Session 摘要都需要感知变更。
+- 给 `tool_invocations` 增加执行 ID（V4 迁移）可以消除上面第 6 条的时间窗匹配。

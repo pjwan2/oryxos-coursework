@@ -67,7 +67,7 @@ public class ProviderService {
               false,
               e.getClass().getSimpleName(),
               Instant.now()));
-      throw e;
+      throw ModelFailures.classify(providerName, e);
     }
     int input = 0;
     int output = 0;

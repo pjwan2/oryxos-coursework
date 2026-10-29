@@ -11,8 +11,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.oryxos.core.agent.ModelTimeoutException;
+import io.oryxos.core.agent.ModelUnavailableException;
 import io.oryxos.core.profile.AgentProfile;
 import io.oryxos.core.tool.ToolSpec;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +26,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
+import org.springframework.web.client.ResourceAccessException;
 
 class ProviderServiceTest {
   private final ChatResponse response = mock(ChatResponse.class);
@@ -64,6 +69,34 @@ class ProviderServiceTest {
                 "session-2", AgentProfile.example("bad", "bad-model"), new Prompt("hello")));
     assertFalse(audited.getFirst().success());
     assertFalse(audited.getFirst().errorMessage().contains("secret-token"));
+  }
+
+  @Test
+  void aSlowProviderBecomesATimeoutAndAnUnreachableOneUnavailableBothStillAudited() {
+    ChatModel slow = mock(ChatModel.class);
+    when(slow.call(any(Prompt.class)))
+        .thenThrow(new ResourceAccessException("io", new SocketTimeoutException("secret-token")));
+    ChatModel down = mock(ChatModel.class);
+    when(down.call(any(Prompt.class)))
+        .thenThrow(new ResourceAccessException("io", new ConnectException("secret-token")));
+    ProviderService service =
+        new ProviderService(
+            Map.of("slow", slow, "down", down), new ToolSchemaAdapter(), audited::add);
+
+    ModelTimeoutException timeout =
+        assertThrows(
+            ModelTimeoutException.class,
+            () -> service.chat("s", AgentProfile.example("slow", "m"), new Prompt("hi")));
+    ModelUnavailableException unavailable =
+        assertThrows(
+            ModelUnavailableException.class,
+            () -> service.chat("s", AgentProfile.example("down", "m"), new Prompt("hi")));
+
+    assertFalse(timeout.getMessage().contains("secret-token"));
+    assertFalse(unavailable.getMessage().contains("secret-token"));
+    assertEquals(2, audited.size());
+    assertTrue(audited.stream().noneMatch(LlmCallEvent::success));
+    assertTrue(audited.stream().noneMatch(e -> e.errorMessage().contains("secret-token")));
   }
 
   @Test

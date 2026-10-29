@@ -121,6 +121,21 @@ final class SchedulerFixtures {
     public synchronized Optional<AgentSession> find(String sessionId) {
       return Optional.ofNullable(sessions.get(sessionId));
     }
+
+    @Override
+    public synchronized List<io.oryxos.core.agent.SessionSummary> list(int limit) {
+      return List.of();
+    }
+
+    @Override
+    public synchronized boolean discard(String sessionId) {
+      return sessions.remove(sessionId) != null;
+    }
+
+    @Override
+    public synchronized long count() {
+      return sessions.size();
+    }
   }
 
   static final class InMemoryTaskStore implements ScheduledTaskStore {

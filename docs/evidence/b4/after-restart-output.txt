@@ -1,0 +1,7 @@
+PASS  After restart: scheduler page shows retained state
+PASS  After restart: ops.report still disabled with runCount=1  -> {"taskId":"ops.report","profileName":"ops","cron":"0 0 3 1 1 *","zone":"Asia/Shanghai","message":"daily report","enabled":false,"running":false,"nextRunAt":null,"lastRunAt":"2026-10-29T11:39:54.830096900Z","lastStatus":"SUCCESS","runCount":1}
+PASS  After restart: execution history retained  -> 1 rows
+PASS  After restart: session transcript retained
+PASS  Browser console/page errors during run
+
+5/5 checks passed

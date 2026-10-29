@@ -11,7 +11,8 @@ import java.util.regex.Pattern;
  * exists. The peer address must be loopback, the request must not have passed through a proxy
  * (forwarding headers present means the peer address is the proxy's, not the caller's), and a
  * browser {@code Origin}, if any, must itself be local, which stops a web page opened in the user's
- * browser from driving the API cross-site. This is a stop-gap, not authentication.
+ * browser from driving the API cross-site, and so must the {@code Host} header (DNS rebinding).
+ * This is a stop-gap, not authentication.
  */
 final class LocalAccess {
   private static final Pattern IP_LITERAL = Pattern.compile("[0-9.]+|[0-9a-fA-F:]*:[0-9a-fA-F:.]*");
@@ -22,7 +23,8 @@ final class LocalAccess {
     if (!isLoopback(request.getRemoteAddr())
         || request.getHeader("X-Forwarded-For") != null
         || request.getHeader("Forwarded") != null
-        || !originIsLocal(request.getHeader("Origin"))) {
+        || !originIsLocal(request.getHeader("Origin"))
+        || !hostIsLocal(request.getHeader("Host"))) {
       throw new LocalAccessOnlyException();
     }
   }
@@ -39,11 +41,20 @@ final class LocalAccess {
   }
 
   private static boolean originIsLocal(String origin) {
-    if (origin == null) {
-      return true;
-    }
+    return origin == null || uriHostIsLocal(origin);
+  }
+
+  /**
+   * The {@code Host} header must name this machine too. Without it, a web page could rebind its own
+   * domain name to 127.0.0.1 and read the API as "same origin", which sends no {@code Origin}.
+   */
+  private static boolean hostIsLocal(String hostHeader) {
+    return hostHeader == null || uriHostIsLocal("http://" + hostHeader);
+  }
+
+  private static boolean uriHostIsLocal(String uri) {
     try {
-      String host = URI.create(origin).getHost();
+      String host = URI.create(uri).getHost();
       if (host == null) {
         return false;
       }

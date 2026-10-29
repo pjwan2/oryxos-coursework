@@ -30,5 +30,33 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <!-- The admin console is built by npm (see docs/course-progress.md, B4). A JAR without it
+                 would start fine and then 404 on /admin/, so stop the build instead. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>require-admin-ui-build</id>
+                        <phase>validate</phase>
+                        <goals><goal>enforce</goal></goals>
+                        <configuration>
+                            <rules>
+                                <requireFilesExist>
+                                    <files>
+                                        <file>${project.basedir}/src/main/resources/static/admin/index.html</file>
+                                    </files>
+                                    <message>The Vue admin console is not built. Run: cd oryxos-web/src/main/frontend &amp;&amp; npm ci &amp;&amp; npm run build</message>
+                                </requireFilesExist>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

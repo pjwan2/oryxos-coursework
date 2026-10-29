@@ -1,5 +1,9 @@
 package io.oryxos.web.api;
 
+import io.oryxos.core.agent.ModelTimeoutException;
+import io.oryxos.core.agent.ModelUnavailableException;
+import io.oryxos.core.agent.ProfileNotFoundException;
+import io.oryxos.core.memory.MemoryStoreException;
 import io.oryxos.core.schedule.ScheduleConfigException;
 import io.oryxos.core.schedule.ScheduleNotFoundException;
 import io.oryxos.core.schedule.SchedulerDisabledException;
@@ -11,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -47,6 +52,46 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(403, "Management writes are limited to local access"));
   }
 
+  /** Validation text of our own, see {@link InvalidRequestException}. */
+  @ExceptionHandler(InvalidRequestException.class)
+  public ResponseEntity<ApiResponse<Void>> invalidRequest(InvalidRequestException exception) {
+    return ResponseEntity.badRequest().body(ApiResponse.error(400, exception.getMessage()));
+  }
+
+  @ExceptionHandler(ApiNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> missing(ApiNotFoundException exception) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(404, exception.getMessage()));
+  }
+
+  @ExceptionHandler(ProfileNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> unknownProfile(ProfileNotFoundException exception) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(404, "Unknown agent profile"));
+  }
+
+  /** The model could not be reached: the caller may retry later. Provider text is never shown. */
+  @ExceptionHandler(ModelUnavailableException.class)
+  public ResponseEntity<ApiResponse<Void>> modelUnavailable(ModelUnavailableException exception) {
+    log.warn("Model provider unavailable");
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(ApiResponse.error(503, "Model provider unavailable"));
+  }
+
+  @ExceptionHandler(ModelTimeoutException.class)
+  public ResponseEntity<ApiResponse<Void>> modelTimeout(ModelTimeoutException exception) {
+    log.warn("Model provider timed out");
+    return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+        .body(ApiResponse.error(504, "Model provider timed out"));
+  }
+
+  @ExceptionHandler(MemoryStoreException.class)
+  public ResponseEntity<ApiResponse<Void>> memoryUnavailable(MemoryStoreException exception) {
+    log.warn("Memory backend failed: {}", exception.getClass().getSimpleName());
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(ApiResponse.error(503, "Memory backend unavailable"));
+  }
+
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ApiResponse<Void>> badRequest(IllegalArgumentException exception) {
     return ResponseEntity.badRequest().body(ApiResponse.error(400, "Invalid request"));
@@ -65,6 +110,11 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)
   public ResponseEntity<ApiResponse<Void>> badParameter(MethodArgumentTypeMismatchException e) {
+    return ResponseEntity.badRequest().body(ApiResponse.error(400, "Invalid request parameter"));
+  }
+
+  @ExceptionHandler(ServletRequestBindingException.class)
+  public ResponseEntity<ApiResponse<Void>> badBinding(ServletRequestBindingException e) {
     return ResponseEntity.badRequest().body(ApiResponse.error(400, "Invalid request parameter"));
   }
 

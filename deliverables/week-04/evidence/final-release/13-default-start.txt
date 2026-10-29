@@ -1,0 +1,11 @@
+# 2026-10-30T01:10:28+11:00  java -jar oryxos-boot/target/oryxos-boot-0.1.0-SNAPSHOT.jar   (no arguments, cwd = repository root)
+health:      {'status': 'ok', 'checks': {'database': 'ok'}}
+info:        {'application': 'oryxos', 'stage': 'b4', 'bindAddress': '127.0.0.1', 'database': 'sqlite', 'memoryBackend': 'markdown', 'profiles': 2, 'tools': 8}
+admin:       200 text/html
+admin route: 200
+swagger-ui:  200
+api-docs:    200
+prometheus:  200 jvm_memory_used_bytes{area="heap",id="G1 Eden Space"} 4.6137344E7
+profiles:    ['memory-demo', 'payment-demo']
+invoke:       Tool result: Saved to ARCHIVAL memory
+listening:   127.0.0.1:8080

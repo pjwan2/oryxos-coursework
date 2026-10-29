@@ -1,0 +1,114 @@
+2026-10-30T01:05:50+11:00
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] OryxOS Coursework                                                  [pom]
+[INFO] oryxos-core                                                        [jar]
+[INFO] oryxos-provider                                                    [jar]
+[INFO] oryxos-tool                                                        [jar]
+[INFO] oryxos-storage                                                     [jar]
+[INFO] oryxos-memory                                                      [jar]
+[INFO] oryxos-scheduler                                                   [jar]
+[INFO] oryxos-cli                                                         [jar]
+[INFO] oryxos-web                                                         [jar]
+[INFO] oryxos-boot                                                        [jar]
+[INFO] 
+[INFO] ----------------------< io.oryxos:oryxos-parent >-----------------------
+[INFO] Building OryxOS Coursework 0.1.0-SNAPSHOT                         [1/10]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-parent ---
+[INFO] 
+[INFO] -----------------------< io.oryxos:oryxos-core >------------------------
+[INFO] Building oryxos-core 0.1.0-SNAPSHOT                               [2/10]
+[INFO]   from oryxos-core\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-core ---
+[INFO] Spotless.Java is keeping 57 files clean - 0 were changed to be clean, 0 were already clean, 57 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ---------------------< io.oryxos:oryxos-provider >----------------------
+[INFO] Building oryxos-provider 0.1.0-SNAPSHOT                           [3/10]
+[INFO]   from oryxos-provider\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-provider ---
+[INFO] Spotless.Java is keeping 22 files clean - 0 were changed to be clean, 0 were already clean, 22 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] -----------------------< io.oryxos:oryxos-tool >------------------------
+[INFO] Building oryxos-tool 0.1.0-SNAPSHOT                               [4/10]
+[INFO]   from oryxos-tool\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-tool ---
+[INFO] Spotless.Java is keeping 36 files clean - 0 were changed to be clean, 0 were already clean, 36 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ----------------------< io.oryxos:oryxos-storage >----------------------
+[INFO] Building oryxos-storage 0.1.0-SNAPSHOT                            [5/10]
+[INFO]   from oryxos-storage\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-storage ---
+[INFO] Spotless.Java is keeping 20 files clean - 0 were changed to be clean, 0 were already clean, 20 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ----------------------< io.oryxos:oryxos-memory >-----------------------
+[INFO] Building oryxos-memory 0.1.0-SNAPSHOT                             [6/10]
+[INFO]   from oryxos-memory\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-memory ---
+[INFO] Spotless.Java is keeping 16 files clean - 0 were changed to be clean, 0 were already clean, 16 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ---------------------< io.oryxos:oryxos-scheduler >---------------------
+[INFO] Building oryxos-scheduler 0.1.0-SNAPSHOT                          [7/10]
+[INFO]   from oryxos-scheduler\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-scheduler ---
+[INFO] Spotless.Java is keeping 7 files clean - 0 were changed to be clean, 0 were already clean, 7 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ------------------------< io.oryxos:oryxos-cli >------------------------
+[INFO] Building oryxos-cli 0.1.0-SNAPSHOT                                [8/10]
+[INFO]   from oryxos-cli\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-cli ---
+[INFO] Spotless.Java is keeping 6 files clean - 0 were changed to be clean, 0 were already clean, 6 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ------------------------< io.oryxos:oryxos-web >------------------------
+[INFO] Building oryxos-web 0.1.0-SNAPSHOT                                [9/10]
+[INFO]   from oryxos-web\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-web ---
+[INFO] Spotless.Java is keeping 24 files clean - 0 were changed to be clean, 0 were already clean, 24 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] -----------------------< io.oryxos:oryxos-boot >------------------------
+[INFO] Building oryxos-boot 0.1.0-SNAPSHOT                              [10/10]
+[INFO]   from oryxos-boot\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-boot ---
+[INFO] Spotless.Java is keeping 27 files clean - 0 were changed to be clean, 0 were already clean, 27 were skipped because caching determined they were already clean
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for OryxOS Coursework 0.1.0-SNAPSHOT:
+[INFO] 
+[INFO] OryxOS Coursework .................................. SUCCESS [  0.372 s]
+[INFO] oryxos-core ........................................ SUCCESS [  0.196 s]
+[INFO] oryxos-provider .................................... SUCCESS [  0.046 s]
+[INFO] oryxos-tool ........................................ SUCCESS [  0.045 s]
+[INFO] oryxos-storage ..................................... SUCCESS [  0.040 s]
+[INFO] oryxos-memory ...................................... SUCCESS [  0.040 s]
+[INFO] oryxos-scheduler ................................... SUCCESS [  0.037 s]
+[INFO] oryxos-cli ......................................... SUCCESS [  0.036 s]
+[INFO] oryxos-web ......................................... SUCCESS [  0.043 s]
+[INFO] oryxos-boot ........................................ SUCCESS [  0.043 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.289 s
+[INFO] Finished at: 2026-10-30T01:05:53+11:00
+[INFO] ------------------------------------------------------------------------
+exit=0

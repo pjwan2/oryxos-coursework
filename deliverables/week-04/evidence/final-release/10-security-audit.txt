@@ -1,0 +1,33 @@
+scanned 400 tracked files and 15 commits
+commit identities that will be public: ['PENGJU WANG <wangpengju2008@gmail.com>', 'pengju wang <wangpengju2008@gmail.com>']
+
+harmless test fixtures (fake secrets the tests prove are not leaked): 29
+  ok   [github token] oryxos-core/src/test/java/io/oryxos/core/agent/SafeErrorTextTest.java: ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345
+  ok   [assigned secret] oryxos-core/src/test/java/io/oryxos/core/agent/SafeErrorTextTest.java: api_key=sk-live-1234567890
+  ok   [assigned secret] oryxos-core/src/test/java/io/oryxos/core/agent/SafeErrorTextTest.java: token = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345
+  ok   [url with credentials] oryxos-core/src/test/java/io/oryxos/core/agent/SafeErrorTextTest.java: https://user:pa55@hooks.example.org
+  ok   [e-mail address] oryxos-core/src/test/java/io/oryxos/core/agent/SafeErrorTextTest.java: pa55@hooks.example.org
+  ok   [e-mail address] oryxos-core/src/test/java/io/oryxos/core/sandbox/SandboxSpecTest.java: user@x.org
+  ok   [e-mail address] oryxos-tool/src/main/java/io/oryxos/tool/AllowListSandbox.java: allowed.com@evil.com
+  ok   [e-mail address] oryxos-tool/src/test/java/io/oryxos/tool/AllowListSandboxTest.java: api.example.com@evil.com
+  ok   [assigned secret] oryxos-tool/src/test/java/io/oryxos/tool/PathSecurityTest.java: secret = Files.createDirectories
+  ok   [url with credentials] oryxos-tool/src/test/java/io/oryxos/tool/UriSecurityTest.java: https://api.example.com:password@evil.com
+
+FINDINGS needing review: 8
+  HIT  [absolute local path] history:f11f6f0: /c/Users/
+         "absolute local path": re.compile(r"(?i)(?:[A-Z]:[\\/]+Users[\\/]+|/c/Users/|/home/[a-z0-9_-]+/|/Users/[A-Za-z0-9_-]+/)[^\s\"'`)<>|]*"),
+  HIT  [absolute local path] history:3c9bb86: <HOME>\Downloads\OryxOS_V1
+         cd <HOME>\Downloads\OryxOS_V1
+  HIT  [absolute local path] history:3c9bb86: /c/Users/...
+         | `Database migration failed: path to '/c/Users/...' does not exist` | a Git-Bash style path was given to Java; use a Windows path (`C:/...`) in `ORYXOS_JDBC_UR
+  HIT  [absolute local path] history:dfd6d68: <HOME>/AppData/Local/Temp/claude/c--Users-USER-Downloads-OryxOS-V1/aebf54
+         const WS = '<HOME>/AppData/Local/Temp/claude/c--Users-USER-Downloads-OryxOS-V1/aebf54e6-a98f-4495-b94c-b23641648078/scratchpad/b4run/ws'
+  HIT  [absolute local path] history:a93f25a: <HOME>/Downloads/OryxOS_V1/OryxOS_Gate2C_Session_Audit_v1_5
+         | 仓库（本地） | `<HOME>/Downloads/OryxOS_V1/OryxOS_Gate2C_Session_Audit_v1_5`（唯一主工程；未推送任何远程） |
+  HIT  [absolute local path] history:f31fd9f: <HOME>/Downloads/OryxOS_V1/OryxOS_Gate2C_Session_Audit_v1_5/
+         `<HOME>/Downloads/OryxOS_V1/OryxOS_Gate2C_Session_Audit_v1_5/` is the only folder that is a Git repository (branch `feature/spring-ai-react-integration`;
+  HIT  [absolute local path] history:f31fd9f: <HOME>/Downloads/OryxOS_V1/OryxOS.code-workspace
+         - `<HOME>/Downloads/OryxOS_V1/OryxOS.code-workspace` (a VS Code workspace with only this folder; open it with *File > Open Workspace from File*), and
+  HIT  [absolute local path] history:f31fd9f: <HOME>/Downloads/OryxOS_V1/README.md
+         - `<HOME>/Downloads/OryxOS_V1/README.md` (a table saying what every sibling folder is).
+exit=1

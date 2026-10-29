@@ -1,99 +1,92 @@
-# 第 4 周验收报告
+# 第 4 周验收报告（发布版本）
 
-Written for: 作业评阅者与你自己（核对"哪些真的验证过"）。所有数字来自本机实际执行的命令；没有执行过的验证不写成通过。
+Written for: 作业评阅者与项目所有者。本报告对**发布用的提交**重新执行了完整验收；此前对 `f31fd9f` 的报告原样保留为 [acceptance-report-baseline-f31fd9f.md](acceptance-report-baseline-f31fd9f.md)（历史基线，数字相同但不能代替本次验证）。
 
 ## 1. 被验收的版本
 
 | 项 | 值 |
 |---|---|
-| 仓库 | `OryxOS_Gate2C_Session_Audit_v1_5`（唯一主工程，分支 `feature/spring-ai-react-integration`） |
-| **验收提交** | `f31fd9f50202526defbf8942d25d01fe4acfda18`（"Week 4 delivery prep…"） |
-| 验收方式 | 对该提交做一次**全新的 `git clone`**（没有 `node_modules`、没有 `static/admin`、没有任何 `target`，见 `evidence/clean-checkout/00-environment.txt`），在克隆里按 README 的步骤执行 |
-| 之后的提交 | 只增加本报告、证据文件和提交包，没有改动任何模块的代码（核对命令见 `deliverables/week04/source-reference.md`） |
-| 阶段提交 | A `9c07dc0`、B1 `d57fcd2`、B2 `67e7364`、B3 `4c1e3cd`、B4 `e6c76c0`（均与真实 Git 记录一致） |
-| 环境 | Windows 10 Pro，JDK 21.0.2，Maven 3.9.16，Node v20.20.2，npm 10.8.2，Python 3.14 |
+| 项目 | OryxOS Coursework — AI Agent Runtime（仓库 `oryxos-coursework`） |
+| 分支 | `submission/week-04` |
+| **验收提交** | `f11f6f046d7bfe96c12c76c443db72be630d6e41`（`chore(repo): prepare professional Week 04 coursework release`） |
+| 验收环境 | 这个提交刚从原工作目录 `git clone` 出来的新目录 `oryxos-coursework`；验收前 `git status` 为空、没有远程、没有 `node_modules` 和 `static/admin`（目录里有一个 `target/`，是克隆后为格式化跑 `mvn -o spotless:apply` 留下的，`clean verify` 会先清除它） |
+| 执行时间 | 2026-10-30 01:05:38 至 01:09:12（+11:00），Maven `clean verify` 用时 2 分 30 秒 |
+| 工具 | Windows 10，JDK 21.0.2，Maven 3.9.16，Node v20.20.2，npm 10.8.2，Python 3.14 |
+| 之后的提交 | 只增加本报告和 `evidence/final-release/` 以及重新生成的提交包副本，不含模块代码改动；核对：`git diff --stat f11f6f0 HEAD -- oryxos-core oryxos-provider oryxos-tool oryxos-memory oryxos-storage oryxos-scheduler oryxos-cli oryxos-web oryxos-boot` 应为空 |
+| 阶段提交 | A `9c07dc0`、B1 `d57fcd2`、B2 `67e7364`、B3 `4c1e3cd`、B4 `e6c76c0`、周交付 `f31fd9f`…`6c1e643`、整理 `3c9bb86`、`c8b8513` |
 
-**"干净环境"的含义和局限**：这是同一台机器上的干净克隆，不是新虚拟机或容器；Maven 本地仓库（`~/.m2`）和 npm 缓存是已有的。它证明"仓库内容本身足以按 README 构建和启动"，不证明"在完全没有缓存、没有网络的机器上能构建"。
+原始输出在 [evidence/final-release/](evidence/final-release/)。
 
-## 2. 执行的命令与结果
+## 2. 命令与结果
 
-全部在克隆目录里执行，原始输出在 `evidence/clean-checkout/`。
-
-| # | 命令 | 结果 | 证据文件 |
+| # | 命令 | 结果 | 证据 |
 |---|---|---|---|
-| 1 | `node -v`、`npm -v`、`java -version`、`mvn -v` | Node 已存在（v20.20.2），无需安装，未改任何全局环境 | `00-environment.txt` |
-| 2 | `cd oryxos-web/src/main/frontend && npm ci` | 130 个包，exit 0 | `01-npm-ci.txt` |
-| 3 | `npm test`（vitest） | 3 个文件、**28 个测试全部通过** | `02-npm-test.txt` |
-| 4 | `npm run build`（vite build + `check-build.mjs`） | 成功；`check-build: ok (16 files, 3 assets)`（无外部 URL、无 source map、无疑似凭证） | `03-npm-build.txt` |
-| 5 | `mvn -B -ntp spotless:apply` | BUILD SUCCESS；执行后 `git status` **为空**（格式化没有改动任何文件） | `04-mvn-spotless-apply.txt`、`04b-git-status-after-spotless.txt` |
-| 6 | `mvn -B -ntp clean verify` | **BUILD SUCCESS**，九个模块全部 SUCCESS，用时 2 分 38 秒，**没有使用 `-DskipTests`**，没有关闭任何检查 | `05-mvn-clean-verify.txt` |
-| 7 | `python scripts/test_summary.py` | 见第 3 节 | `evidence/test-summary.md` |
-| 8 | 检查 fat JAR 内容 | JAR 85.7 MB；内嵌的 `oryxos-web-0.1.0-SNAPSHOT.jar` 含 `static/admin/index.html` 和全部资源 | `06-jar.txt`；`WebSmokeIT` 也在构建中自动检查 |
-| 9 | `python scripts/week04_live_check.py --jar …`（真实 JAR，临时目录） | **77/77 检查通过** | `evidence/live-check.txt` |
-| 10 | `java -jar oryxos-boot/target/oryxos-boot-0.1.0-SNAPSHOT.jar`（**不带任何参数**，工作目录=仓库根） | 启动成功；health 200；`/admin/`、`/admin/scheduler`、Swagger UI 200；Prometheus 有指标；监听 `127.0.0.1:8080`；用默认 Markdown 记忆写入并读到 `MEMORY.md` | `08-readme-default-start.txt` |
+| 1 | `npm ci` | exit 0 | `01-npm-ci.txt` |
+| 2 | `npm test` | **3 个文件、28 个测试全部通过** | `02-npm-test.txt` |
+| 3 | `npm run build`（含 `check-build.mjs`） | exit 0；16 个文件、3 个资源引用，无外部 URL / source map / 疑似凭证 | `03-npm-build.txt` |
+| 4 | `mvn -B -ntp spotless:apply` | exit 0，**未改动任何文件**（`git status` 为空） | `04-…txt`、`04b-…txt` |
+| 5 | `mvn -B -ntp clean verify` | **BUILD SUCCESS**，九个模块 + 父工程全部 SUCCESS；没有 `-DskipTests`，没有关闭任何检查 | `05-mvn-clean-verify.txt` |
+| 6 | `python scripts/test_summary.py` | **502 个测试，4 个跳过，0 个失败** | `test-summary.md` |
+| 7 | Fat JAR 检查 | 85.7 MB；`Main-Class: …JarLauncher`，`Start-Class: io.oryxos.OryxOsApplication`；嵌套的 `oryxos-web` JAR 含 `static/admin/index.html` 等 18 个文件；八个 `oryxos-*` 模块 JAR 都在 | `06-jar.txt` |
+| 8 | `java -jar …`（不带参数，工作目录=仓库根） | 启动成功；绑定 `127.0.0.1:8080`；health、`/admin/`、`/admin/scheduler`、Swagger UI、`/v3/api-docs`、Prometheus 全部 200；profiles 来自 `.oryxos/profiles`；一次记忆写入成功 | `13-default-start.txt` |
+| 9 | `python scripts/week04_live_check.py --jar …`（真实 JAR、临时目录） | **77/77 通过**（Memory markdown 11 + sqlite 11、Sandbox 12、Web 29、Scheduler 14） | `07-live-check.txt` |
+| 10 | 无头 Chrome 驱动六个管理页（真实 JAR，新库） | **27/27**；杀进程重启后 **5/5**；SQLite 内容重启前后逐字相同；13 张截图 | `vue-dashboard/` |
+| 11 | `git diff --check` | exit 0 | `09-git-diff-check.txt` |
+| 12 | `python scripts/check_doc_links.py` | 53 个 Markdown 文件，0 断链 | `08-doc-links.txt` |
+| 13 | `python scripts/security_audit.py` | 当前文件树 **0 项待查**；历史中仅有旧文档里的本机路径，见第 5 节 | `10-security-audit.txt` |
 
-静态检查（`verify` 阶段，`evidence/static-analysis-summary.txt`）：Checkstyle 0 违规（父工程 + 9 个模块共 10 次运行）、SpotBugs 0 个 BugInstance 且 Error size 0（9 个模块）、Spotless check 全部模块通过、PMD `check` 目标在 `failOnViolation=true` 下通过（PMD 不打印违规计数，构建成功即无违规）。构建期间**没有**关闭、放宽或为它们加排除规则。
+静态检查（`verify` 阶段）：Checkstyle 0 违规（10 次运行）；SpotBugs 0 个 BugInstance 且 Error size 0（9 个模块）；Spotless check 通过（9 个模块）；PMD `check` 在 `failOnViolation=true` 下通过（30 次目标执行，构建成功即无违规）。四项检查均启用，没有排除规则。
 
 ## 3. 测试数量
 
-来源：克隆上 `mvn clean verify` 生成的 surefire / failsafe XML，由 `scripts/test_summary.py` 汇总（完整的逐类表在 `evidence/test-summary.md`）。
+| 模块 | 测试 | 跳过 | 失败 |
+|---|---|---|---|
+| oryxos-core | 33 | 0 | 0 |
+| oryxos-provider | 37 | 0 | 0 |
+| oryxos-tool | 106 | **4** | 0 |
+| oryxos-memory | 80 | 0 | 0 |
+| oryxos-storage | 29 | 0 | 0 |
+| oryxos-scheduler | 42 | 0 | 0 |
+| oryxos-cli | 9 | 0 | 0 |
+| oryxos-web | 56 | 0 | 0 |
+| oryxos-boot（surefire 105 + failsafe 5） | 110 | 0 | 0 |
+| **合计** | **502** | **4** | **0**（通过 498） |
 
-| 模块 | 测试 | 跳过 | 失败 | B3 基线 | 增量 |
-|---|---|---|---|---|---|
-| oryxos-core | 33 | 0 | 0 | 33 | 0 |
-| oryxos-provider | 37 | 0 | 0 | 31 | +6 |
-| oryxos-tool | 106 | **4** | 0 | 106 | 0 |
-| oryxos-storage | 29 | 0 | 0 | 29 | 0 |
-| oryxos-memory | 80 | 0 | 0 | 80 | 0 |
-| oryxos-scheduler | 42 | 0 | 0 | 42 | 0 |
-| oryxos-cli | 9 | 0 | 0 | 9 | 0 |
-| oryxos-web | 56 | 0 | 0 | 17 | +39 |
-| oryxos-boot（surefire 105 + failsafe 5） | 110 | 0 | 0 | 80 | +30 |
-| **合计** | **502** | **4** | **0** | 427 | **+75** |
+- 前端 vitest 另有 28 个。
+- **4 个跳过**是 `PathSecurityTest` 里的符号链接测试（本机 Windows 账号没有创建符号链接的权限）；如实记录为跳过，没有被算作通过。同一条解析路径的 junction 版本测试执行并通过。
+- 与 `f31fd9f` 基线逐类相同（含 `ArchitectureRulesTest` 8 个、`WebSmokeIT` 5 个）；这次是重新执行的结果，不是复制。
 
-- 通过 498、跳过 4、失败 0。
-- **既有 427 个测试无回退**：自 B3（`4c1e3cd`）以来没有删除任何测试文件；3 个既有测试文件被修改，**全是新增行（63 行插入、0 行删除）**：两个测试替身补了新接口方法（`AgentServiceTest`、`SchedulerFixtures`），`ProviderServiceTest` 新增一个用例。没有改动任何既有断言。核对命令：`git diff --diff-filter=D --name-only 4c1e3cd HEAD -- '*src/test*'`（空）、`git diff --diff-filter=M 4c1e3cd HEAD -- '*src/test*' | grep '^-'`（空）。
-- 增量 75 = B4 的 67（`SessionApiControllerTest` 22、`AgentApiControllerTest` 6、`QueryApiControllersTest` 11、`ModelFailuresTest` 5、`ProviderServiceTest` +1、`RestApiIntegrationTest` 11、`AdminUiTest` 6、`WebSmokeIT` 5）+ 本轮 8（`ArchitectureRulesTest`）。
-- 前端另有 vitest 28 个测试，不计入上表。
-- **4 个跳过**：`PathSecurityTest` 里的符号链接测试（本机 Windows 账号没有创建符号链接的权限）。如实记录为跳过；junction 版本的同一路径测试执行并通过。见 [known-limitations.md](known-limitations.md) B 节。
-
-## 4. 对 Phase 7 清单的逐项核对
+## 4. 逐项核对
 
 | 要求 | 结果 | 证据 |
 |---|---|---|
-| Maven 九模块全部成功 | **通过** | `05-mvn-clean-verify.txt` Reactor Summary |
-| 既有 427 个测试无回退，新测试全部计入 | **通过**（502） | 第 3 节 |
-| 4 个符号链接测试继续如实记录 | **如实记录为跳过** | `test-summary.md` 中 `PathSecurityTest` 18 / 跳过 4 |
-| Memory Markdown / SQLite 正常 | **通过** | `live-check.txt` 两个后端各 11 项；契约测试三后端；`MemoryRestartTest` |
-| Sandbox 拒绝及审计正常 | **通过** | `live-check.txt` Sandbox 节：7 次拒绝与 `tool_invocations` 行一一对应，越界文件未创建；`SandboxIntegrationTest` |
-| Scheduler 执行、停用、重启恢复正常 | **通过** | `live-check.txt` Scheduler 节（杀进程重启后状态、计数、历史不变）；`ScheduledTaskE2ETest`、`RestartRecoveryTest`、`WebSmokeIT` |
-| REST API 返回正确状态 | **通过** | `live-check.txt` Web 节：200/201/400/403/404/500；`RestApiIntegrationTest`；503/504 见下 |
-| Prometheus / Swagger 正常 | **通过** | `live-check.txt`；`08-readme-default-start.txt` |
-| `/admin/` 能访问，子路由刷新不 404，`/api` 不受影响 | **通过** | `AdminUiTest`、`WebSmokeIT`、`live-check.txt` |
-| Vue 页面显示真实数据 | **通过（自动化）** | `evidence/b4-live-run/`：无头 Chrome 在真实 JAR 上 27 项 + 重启后 5 项检查，页面数据与 API、SQLite 逐项一致，13 张截图；该运行基于 `e6c76c0`，此后后端与前端代码未变（本轮只加测试、脚本、文档）。**不是人工验收** |
-| 可执行 JAR 包含前端资源 | **通过** | `06-jar.txt`；`WebSmokeIT.theFatJarContainsTheVueBuild` |
-| 干净环境按 README 启动 | **通过（同机干净克隆）** | `08-readme-default-start.txt`；局限见第 1 节 |
-| 503 / 504 | **仅合成异常验证** | `ModelFailuresTest`、`ProviderServiceTest`、控制器切片测试；没有真实 Provider 故障的运行证据 |
+| Maven 九模块全部成功 | **通过** | `05-…txt` Reactor Summary |
+| 测试没有被跳过或关闭 | **通过**（唯一的跳过是上述 4 个，原因已记录） | `05-…txt`、`test-summary.md` |
+| PMD、SpotBugs、Checkstyle 仍启用 | **通过** | `05-…txt` |
+| Fat JAR Manifest 正确 | **通过** | `06-jar.txt` |
+| `java -jar` 可启动 | **通过** | `13-default-start.txt` |
+| Health / Prometheus / Swagger | **通过** | `13-…txt`、`07-live-check.txt` |
+| `/admin/` 可访问，子路由刷新不 404 | **通过** | `13-…txt`、`AdminUiTest`、`WebSmokeIT` |
+| Vue 页面显示真实数据 | **通过（自动化）**：页面数据与 API、SQLite 逐项一致 | `vue-dashboard/main-run.txt`；**没有人工浏览器验收** |
+| Memory / Sandbox / Scheduler | **通过** | `07-live-check.txt` |
+| SQLite 重启恢复 | **通过** | `07-live-check.txt`（调度器杀进程重启）、`vue-dashboard/db-before/after.txt` 相同、`WebSmokeIT` |
+| 第 4 周提交文件路径无误 | **通过**（链接检查 0 断链；`scripts/package_week04.py` 生成的两个 ZIP 通过扫描） | `08-doc-links.txt`，发布时的打包输出 |
 
-## 5. 架构审计的结果
+## 5. 仓库安全审计与许可证检查
 
-`ArchitectureRulesTest`（8 个测试）在构建中检查：九个模块、允许的依赖图、core 只导入 JDK、数据库 API 只在 storage（白名单：`SqliteMemoryStore`、`MemoryConfiguration`）、web 不触达执行与基础设施、provider/scheduler 不能直接执行工具或循环、只有一个 ToolRegistry / 会话存储 / 工具审计写入者、每个工具执行器都包着审计。
+`scripts/security_audit.py` 扫描了 400 个受跟踪文件和全部 15 个提交（所有分支）的每一份补丁：
 
-- 审计**没有发现需要改代码的违规**，所以没有重构、没有重命名包、没有改公共接口。
-- 做过一次变异检查：往 web 的一个类里加 `import java.sql.Connection`，守卫测试按预期失败并指出文件名，随后还原（`git diff` 为空）。
-- 两处如实记录的结构偏差和一个历史遗留的第二个 `AgentService` Bean 见 [module-boundaries.md](../../architecture/module-boundaries.md)、[design-decisions.md](../../architecture/design-decisions.md) D-08。
+- **没有真实密钥、令牌、Webhook 地址、`.env`、数据库、真实 `MEMORY.md`、日志、`target/`、`node_modules/`、压缩包、PDF/Office 课件**进入过当前文件树或 Git 历史（文件名与内容两层检查）。
+- 29 个"命中"是测试用的**假凭证和攻击样例**（如 `ghp_ABCDEFGH…`、`https://user:pw@host`、`api.example.com@evil.com`），它们正是测试用来证明"不会泄漏"的输入，已逐条人工复核。
+- **本机路径**：当前文件树 0 处。历史里的若干旧文档提交（`3c9bb86`、`dfd6d68`、`a93f25a`、`f31fd9f`）曾写入过 `C:/Users/USER/...` 形式的本机目录路径（用户名为通用的 `USER`，不含密码或凭证）。**没有改写历史**，因为那会改变所有阶段提交 SHA 并使验收证据失效；风险评估为低。
+- **个人信息**：提交者为 `pengju wang <wangpengju2008@gmail.com>`（15 个提交）。项目所有者已确认接受随历史公开。
+- **第三方内容与许可证**：没有已知的第三方源码、模板或课程资料被复制进仓库（无法对早期由工具生成的阶段做逐行来源核查，故表述为"没有已知"）。**没有选择开源许可证**，也没有添加任何许可证文件；README 写明默认保留所有权利。依赖由 Maven/npm 按各自许可证获取；打包进构建产物的 Inter、JetBrains Mono 字体来自 `@fontsource`（SIL OFL 1.1），不在源码树中。
+- 示例配置只使用占位值或环境变量；`config/env.example` 的密钥项为空。
 
-## 6. 没有验证的东西（摘要）
+## 6. 没有验证的东西
 
-完整列表见 [known-limitations.md](known-limitations.md)。最重要的：
+与 [known-limitations.md](known-limitations.md) 相同，最重要的：真实 LLM、MCP、Webhook、Mem0 从未运行；4 个符号链接测试跳过；无认证、非 OS 沙箱；管理台没有人工浏览器验收；503/504 只用合成异常验证；GitHub Actions 工作流没有在远程运行过（本报告成文时尚未推送）；老师的评分标准和「本周作业」页面的具体题目**未核实**。
 
-1. 真实 LLM、真实 MCP、真实 Webhook、真实 Mem0：**从未运行**，全部使用 Mock / 假服务。
-2. 4 个符号链接测试：**跳过**。
-3. 无认证；Sandbox 是应用层策略，不是 OS 隔离；DNS 重绑定未消除。
-4. 管理台：**没有人工浏览器验收**。
-5. 503/504：只用合成异常验证。
-6. 老师的评分标准与提交方式：**等待核对**。
+## 7. 范围说明
 
-## 7. 本次整理没有做的事
-
-没有推送任何远程；没有登录课程平台；没有提交作业；没有移动或删除任何历史目录（只给出了待你批准的归档方案，见 `docs/architecture/workspace-layout.md`）；没有 `git reset --hard`、`git clean` 或强制操作。
+本版本只整理命名、结构、文档、打包与安全检查，没有新增功能；没有第 5 周代码，也不存在第 5 周分支。

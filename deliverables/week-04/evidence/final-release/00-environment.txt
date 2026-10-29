@@ -1,0 +1,12 @@
+started: 2026-10-30T01:05:38+11:00
+repository directory: oryxos-coursework
+branch: submission/week-04
+HEAD: f11f6f046d7bfe96c12c76c443db72be630d6e41
+git status (must be empty before the build): [0 entries]
+remotes: [0]
+v20.20.2
+10.8.2
+openjdk version "21.0.2" 2024-01-16
+Apache Maven 3.9.16 (2bdd9fddda4b155ebf8000e807eb73fd829a51d5)
+Python 3.14.0
+build output present before start: static/admin=no node_modules=no target=yes

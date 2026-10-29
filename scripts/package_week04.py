@@ -39,7 +39,7 @@ def refresh_copies():
         if not (WEEK / name).is_file():
             sys.exit(f"missing {WEEK / name}: write the report first")
     (OUT / "design").mkdir(parents=True, exist_ok=True)
-    for name in ("requirements-matrix.md", "acceptance-report.md", "known-limitations.md", "architecture.md"):
+    for name in ("requirements-matrix.md", "acceptance-report.md", "known-limitations.md", "architecture.md", "acceptance-report-baseline-f31fd9f.md"):
         shutil.copy2(WEEK / name, OUT / name)
     for name in ("memory-design.md", "sandbox-design.md", "scheduler-design.md", "web-service-design.md"):
         shutil.copy2(WEEK / name, OUT / "design" / name)

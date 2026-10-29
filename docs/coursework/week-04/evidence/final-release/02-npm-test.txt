@@ -1,0 +1,18 @@
+2026-10-30T01:05:45+11:00
+
+> oryxos-admin@0.1.0 test
+> vitest run
+
+
+ RUN  v3.2.7 <HOME>/Downloads/OryxOS_V1/oryxos-coursework/oryxos-web/src/main/frontend
+
+ ✓ tests/scheduler.test.js (6 tests) 5ms
+ ✓ tests/api.test.js (8 tests) 12ms
+ ✓ tests/views.test.js (14 tests) 134ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  01:05:46
+   Duration  1.51s (transform 247ms, setup 0ms, collect 584ms, tests 151ms, environment 1.66s, prepare 387ms)
+
+exit=0

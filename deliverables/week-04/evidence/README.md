@@ -13,6 +13,7 @@ All files are real output of commands run on the author's machine (Windows 10, J
 | `clean-checkout/06-jar.txt` | The fat JAR and the `static/admin` files inside its nested web jar | Python |
 | `live-check.txt` | 77 checks against the real JAR: Memory (markdown, sqlite, restart), Sandbox (with audit rows), Scheduler (with kill and restart), Web/Swagger/Prometheus/admin | `scripts/week04_live_check.py` |
 | `clean-checkout/08-readme-default-start.txt` | `java -jar` with no arguments in the clean clone: health, profiles, a memory write, `/admin/`, Swagger, Prometheus, loopback listening address | curl |
+| `final-release/` | **The final verification of the published commit** `f11f6f0` (fresh clone `oryxos-coursework`, 2026-10-30): npm, Maven `clean verify` (502 / 4 skipped / 0), fat-JAR manifest, default start, 77 live checks, headless-browser run of the six dashboard pages (`vue-dashboard/`), doc-link check, `git diff --check`, repository security audit. Described in [../acceptance-report.md](../acceptance-report.md) | npm, Maven, scripts |
 | `b4-live-run/` | Headless-Chrome run of the six admin pages against the real JAR (27 + 5 checks), SQLite dumps before and after a restart, 13 screenshots. Automated, **not** a human review. Made on commit `e6c76c0` (B4); no console or API code has changed since | Puppeteer, see its README |
 
 Not in here, because it was never done: any run with a real LLM, MCP server, webhook or Mem0 server; the four skipped symlink tests; a human walk-through of the console.

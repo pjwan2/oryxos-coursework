@@ -25,7 +25,7 @@ OryxOS 是课程项目：一个 Java 21 / Spring Boot 3.5 / Spring AI 的 Agent 
 需要：JDK 21、Maven 3.9+、Node ≥ 20.19 与 npm（前端）、Python 3.9+（只用于可选的实机检查脚本）。**不需要任何 API Key、数据库或网络服务**（默认使用本地 Mock 模型）。
 
 ```bash
-git clone <仓库>  &&  cd OryxOS_Gate2C_Session_Audit_v1_5     # 或解压源码包
+git clone <仓库>  &&  cd oryxos-coursework                # 或解压源码包
 cd oryxos-web/src/main/frontend
 npm ci && npm test && npm run build     # 前端构建进 oryxos-web/src/main/resources/static/admin/
 cd ../../../..

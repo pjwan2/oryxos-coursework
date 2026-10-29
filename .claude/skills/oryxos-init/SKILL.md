@@ -3,7 +3,7 @@ name: oryxos-init
 description: Initialize and verify OryxOS's nine-module engineering foundation.
 ---
 
-# OryxOS Initialization Skill · Gate 1
+# OryxOS Initialization Skill (foundation stage)
 
 Before implementing business features, preserve the course architecture and follow these six phases:
 
@@ -15,4 +15,4 @@ Before implementing business features, preserve the course architecture and foll
 6. **CI and proof:** `mvn spotless:apply`; `mvn clean verify`; boot JAR; curl health, Prometheus, Swagger.
 
 Do not change project tests or weaken validation to make red tests green. Do not add a real LLM key to source control.
-This is only Gate 1. Provider, ReAct, tools, persistence, and scheduler are later stages.
+This covers the foundation stage only. Provider, ReAct, tools, persistence, and scheduler are later stages.

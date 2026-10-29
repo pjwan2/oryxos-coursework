@@ -1,26 +1,12 @@
-# Workspace and repository layout
+# Repository and workspace layout
 
-Current as of the repository professionalization (branch `chore/repository-professionalization`). The previous version of this page (written at commit `e6c76c0`, week-4 delivery) is in Git history. Nothing outside this repository was moved or deleted.
+Project: **OryxOS Coursework — AI Agent Runtime**. Repository: **`oryxos-coursework`**.
 
-## The one main project
+## How this repository came about
 
-The formal name of the repository directory is **`oryxos-coursework`** (project name: *OryxOS — Agent Runtime Engineering*). On this machine the directory is still called `OryxOS_Gate2C_Session_Audit_v1_5`, because Windows reported "Device or resource busy" when it was renamed (something, most likely an editor or terminal, holds it open). Nothing in the repository depends on the directory name: no source, configuration or script contains it, and the full gate was run from a clean clone named `oryxos-coursework` (see the professionalization section of [course-progress.md](../course-progress.md)).
+The code was developed stage by stage (A, B1 to B4, week-4 delivery) in a directory with a provisional name. It was then published as `oryxos-coursework` by making an **independent local clone** of the verified commit `c8b8513` (with its complete history, 14 commits), because Windows kept the original directory locked and it was not renamed in place. The original directory is kept, untouched, outside this repository as a local backup. Nothing in the repository depends on any directory name: no source, configuration or script contains one, and runtime paths are resolved against the working directory.
 
-To finish the rename yourself:
-
-```powershell
-# 1. close VS Code windows and terminals that have the folder open
-cd C:\Users\USER\Downloads\OryxOS_V1
-Rename-Item OryxOS_Gate2C_Session_Audit_v1_5 oryxos-coursework
-# 2. fix the one-line workspace file next to it
-(Get-Content OryxOS.code-workspace) -replace 'OryxOS_Gate2C_Session_Audit_v1_5','oryxos-coursework' | Set-Content OryxOS.code-workspace
-```
-
-`.git`, the untracked local data (`oryxos-dev.db`, `.oryxos/memory`, `node_modules`, `target`) and all relative paths keep working: runtime paths are resolved against the working directory, not against the repository path.
-
-Branches: `feature/spring-ai-react-integration` plus `chore/repository-professionalization` for this reorganisation. Stage commits: A `9c07dc0`, B1 `d57fcd2`, B2 `67e7364`, B3 `4c1e3cd`, B4 `e6c76c0`, week-4 delivery `f31fd9f` to `6c1e643`.
-
-The parent folder `OryxOS_V1/` is not a Git repository. It holds `OryxOS.code-workspace` (a VS Code workspace with only the main project) and a `README.md` classifying the sibling folders; both are outside the repository on purpose.
+Stage commits: A `9c07dc0`, B1 `d57fcd2`, B2 `67e7364`, B3 `4c1e3cd`, B4 `e6c76c0`, week-4 delivery `f31fd9f` to `6c1e643`, repository reorganisation `3c9bb86`, `c8b8513`. Branch `submission/week-04` is the coursework submission of week 4; later weeks are developed on `feature/` branches and are not mixed into it.
 
 ## Layout
 
@@ -29,17 +15,17 @@ oryxos-coursework/
   README.md  CONTRIBUTING.md  pom.xml  .gitignore  .gitattributes
   oryxos-core/ oryxos-provider/ oryxos-tool/ oryxos-memory/ oryxos-storage/
   oryxos-scheduler/ oryxos-cli/ oryxos-web/ oryxos-boot/        nine Maven modules
-      oryxos-web/src/main/frontend/        Vue 3 + Vite admin console (source)
+      oryxos-web/src/main/frontend/        Vue 3 + Vite admin dashboard (source)
   config/            templates without credentials (env.example), Checkstyle rules
   examples/          public agent examples (profiles)
-  scripts/           build, verification, packaging, maintenance (README.md lists them)
+  scripts/           build, verification, packaging, security audit (README.md lists them)
   docs/
     architecture/    overview, module boundaries, this page
     decisions/       design decision register
     coursework/      week-03/  week-04/ (designs, reports, evidence)  week-05/ (not started)
-    operations/      runbook, data and secrets
+    operations/      runbook, data and secrets, restructure verification
     history/         superseded run books and fix notes, unchanged
-    course-progress.md   chronological log of stages A, B1 to B4
+    course-progress.md   chronological log of stages A, B1 to B4 (Chinese)
   deliverables/week-04/   generated submission folder (the zips are not tracked)
   .oryxos/profiles/       runtime working directory: only demo agent profiles are tracked
   .github/workflows/ci.yml   .claude/skills/
@@ -55,49 +41,25 @@ oryxos-coursework/
 | **D. Course evidence** | `docs/coursework/week-*/evidence/`, `deliverables/week-*/`, `docs/course-progress.md` | yes |
 | **Documentation** | `README.md`, `CONTRIBUTING.md`, `docs/**` (except evidence) | yes |
 
-Details and the pre-commit checks: [../operations/data-and-secrets.md](../operations/data-and-secrets.md). `.oryxos/` keeps its runtime meaning (profile directory, Markdown memory, sandbox workspace); nothing about it changed.
+Details and pre-commit checks: [../operations/data-and-secrets.md](../operations/data-and-secrets.md). `.oryxos/` keeps its runtime meaning (profile directory, Markdown memory, sandbox workspace).
 
-`.git/gate2d_before_install/` inside `.git` is a backup left by the Gate 2D script; it is untracked and was left alone.
+## Earlier moves inside the repository
 
-## What was moved in the reorganisation
+All with `git mv` (history preserved, text unchanged); authoritative list: `git show --stat -M 3c9bb86`. Full old-to-new path map: [../coursework/README.md](../coursework/README.md).
 
-All with `git mv` (history preserved), text unchanged. The authoritative list is `git show --stat -M <commit>`; the main moves:
+## Local parent folder (outside this repository)
 
-| From | To |
-|---|---|
-| `docs/coursework/week04/` | `docs/coursework/week-04/` |
-| `deliverables/week04/` | `deliverables/week-04/` |
-| `docs/architecture/design-decisions.md` | `docs/decisions/design-decisions.md` (a one-line stub stays at the old path for old links) |
-| `docs/COURSE_MAPPING.md` | `docs/coursework/week-03/course-mapping.md` |
-| `docs/LESSON16_RUNBOOK.md`, `LESSON17_RUNBOOK.md`, `LESSON17_PHASE2_RUNBOOK.md`, `GATE2D_APPLY_AND_VERIFY.md` | `docs/history/lesson-16-runbook.md`, `lesson-17-runbook.md`, `lesson-17-phase2-runbook.md`, `gate2d-apply-and-verify.md` |
-| `docs/history/PROMETHEUS_FIX.md`, `SPOTBUGS_FIX.md` | `docs/history/prometheus-fix.md`, `spotbugs-fix.md` |
+On the author's machine the repository sits next to the earlier directories it grew out of. They are **not** part of this repository and were not changed:
 
-Complete path map for older documents: [../coursework/README.md](../coursework/README.md).
+| Folder | What it is | Proposed handling |
+|---|---|---|
+| original working directory (provisional name) | the directory this repository was cloned from, still has its own build output and local data | keep as backup |
+| earlier checkpoints (Gate 1, Provider v1.3, ReAct v1.4) | no Git history of their own | archive, do not delete |
+| a separate "When" homework pack | not part of OryxOS | keep or archive |
+| a one-off patch script and an empty stray `oryxos-dev.db` | historical | archive / delete after confirming |
 
-## Folders next to the main project (not changed)
-
-| Folder | Size | What it is | Proposed handling |
-|---|---|---|---|
-| `OryxOS_Gate1_SpringBoot_v1_1/` | 37 MB | Gate 1 skeleton, no Git | archive |
-| `OryxOS_Gate2_Provider_v1_3/` | 88 MB | Provider checkpoint, no Git | archive |
-| `OryxOS_Gate2B_ReAct_v1_4/` | 88 MB | ReAct checkpoint, no Git | archive |
-| `OryxOS_When_Homework_Implementation_v1/` | 0.6 MB | Separate "When" homework pack with a roadmap and evidence template | keep, or archive |
-| `OryxOS_Gate2D_apply_to_existing_v15.py` | 32 KB | one-off script that applied Gate 2D | archive |
-| `oryxos-dev.db` (0 bytes) | 0 | stray empty file | delete after you confirm |
-
-The Gate folders have no Git history of their own, so treat each as the only copy of its exact state: archive, do not delete. **The archive plan below has not been executed and needs your approval.**
-
-```powershell
-cd C:\Users\USER\Downloads\OryxOS_V1
-New-Item -ItemType Directory _archive | Out-Null
-Move-Item OryxOS_Gate1_SpringBoot_v1_1      _archive\
-Move-Item OryxOS_Gate2_Provider_v1_3        _archive\
-Move-Item OryxOS_Gate2B_ReAct_v1_4          _archive\
-Move-Item OryxOS_Gate2D_apply_to_existing_v15.py _archive\
-```
-
-Close editors and terminals first, and make sure no `java -jar` started from those folders is running (a running JVM locks its JAR on Windows).
+Archiving is a manual step that needs the owner's approval: close editors and terminals first, make sure no `java -jar` started from those folders is running (a running JVM locks its JAR on Windows), then move them into a single `_archive` folder with `Move-Item`.
 
 ## Safety rules followed
 
-No `git reset --hard`, `git clean`, force operation or push; `.git` untouched; no database, memory file or credential read into a commit; no parent-folder project moved or deleted; old reports and evidence not rewritten.
+No `git reset --hard`, `git clean`, force operation; no history rewriting; no database, memory file or credential committed; no existing directory overwritten or deleted; old reports and evidence not rewritten.

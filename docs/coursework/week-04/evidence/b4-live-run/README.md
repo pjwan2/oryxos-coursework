@@ -8,6 +8,6 @@ Output of a manual verification run of the real fat JAR (`java -jar oryxos-boot-
 | `after-restart-output.txt` | 5 checks after killing and restarting the JVM on the same database |
 | `db-before.txt`, `db-after.txt` | SQLite contents behind the UI before and after the restart (identical) |
 | `screenshots/*.png` | headless Chrome screenshots, 1280x900 (`main-*` first run, `after-restart-*` after the restart) |
-| `verify.mjs`, `db.py` | the scripts that produced them. They are scratch tooling: paths to the author's temp directory are hard-coded, and `puppeteer-core` is not a dependency of the project (`npm i puppeteer-core` in a separate folder, set the Chrome path). |
+| `verify.mjs`, `db.py` | the scripts that produced them. They are scratch tooling (the path of the author's temp directory was replaced by `ORYXOS_VERIFY_WS` / `<WORKDIR>` when the repository was published; the scripts were not re-run after that edit), and `puppeteer-core` is not a dependency of the project (`npm i puppeteer-core` in a separate folder, set the Chrome path). |
 
 Screenshots and the automated checks are not a substitute for a person looking at the pages.

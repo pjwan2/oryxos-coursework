@@ -3,12 +3,12 @@
 
     python scripts/package_week04.py
 
-Reads (all tracked in Git):  docs/coursework/week-04/*  and the hand-written files already in
-deliverables/week-04/ (README.md, architecture.md, source-reference.md).
+Reads (all tracked in Git):  docs/coursework/week-04/*  and the two hand-written files already in
+deliverables/week-04/ (README.md, source-reference.md).
 Writes:
     deliverables/week-04/...                         the submission folder (copies refreshed from docs/)
-    deliverables/oryxos-week-04-materials.zip        ONLY the submission folder
-    deliverables/oryxos-source-<commit>.zip               `git archive` of HEAD: tracked files only, so no
+    deliverables/oryxos-week-04-coursework.zip        ONLY the submission folder
+    deliverables/oryxos-week-04-source.zip                 `git archive` of HEAD: tracked files only, so no
                                                      databases, logs, .env, node_modules or build output
 Nothing is uploaded or pushed. Exit code 1 if the safety scan finds anything.
 """
@@ -34,19 +34,19 @@ SECRET_PATTERNS = [
 
 
 def refresh_copies():
-    required = ["acceptance-report.md", "requirements-matrix.md", "known-limitations.md"]
+    required = ["acceptance-report.md", "requirements-matrix.md", "known-limitations.md", "architecture.md"]
     for name in required:
         if not (WEEK / name).is_file():
             sys.exit(f"missing {WEEK / name}: write the report first")
     (OUT / "design").mkdir(parents=True, exist_ok=True)
-    for name in ("requirements-matrix.md", "acceptance-report.md", "known-limitations.md"):
+    for name in ("requirements-matrix.md", "acceptance-report.md", "known-limitations.md", "architecture.md"):
         shutil.copy2(WEEK / name, OUT / name)
     for name in ("memory-design.md", "sandbox-design.md", "scheduler-design.md", "web-service-design.md"):
         shutil.copy2(WEEK / name, OUT / "design" / name)
     evidence_src = WEEK / "evidence"
     if evidence_src.is_dir():
         shutil.copytree(evidence_src, OUT / "evidence", dirs_exist_ok=True)
-    for name in ("README.md", "architecture.md", "source-reference.md"):
+    for name in ("README.md", "source-reference.md"):
         if not (OUT / name).is_file():
             sys.exit(f"missing hand-written {OUT / name}")
 
@@ -78,12 +78,12 @@ def main():
     problems = scan("materials", ((p.relative_to(OUT).as_posix(), p.read_bytes()) for p in files))
 
     commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=REPO, text=True).strip()
-    materials = REPO / "deliverables" / "oryxos-week-04-materials.zip"
-    source = REPO / "deliverables" / f"oryxos-source-{commit}.zip"
-    for pattern in ("OryxOS-*.zip", "oryxos-source-*.zip"):  # also the pre-rename names
+    materials = REPO / "deliverables" / "oryxos-week-04-coursework.zip"
+    source = REPO / "deliverables" / "oryxos-week-04-source.zip"
+    for pattern in ("OryxOS-*.zip", "oryxos-source-*.zip", "oryxos-week-04-*.zip"):  # stale archives
         for old in REPO.joinpath("deliverables").glob(pattern):
             old.unlink()
-    subprocess.check_call(["git", "archive", "--format=zip", f"--output={source}", "HEAD"], cwd=REPO)
+    subprocess.check_call(["git", "archive", "--format=zip", "--prefix=oryxos-coursework/", f"--output={source}", "HEAD"], cwd=REPO)
 
     with zipfile.ZipFile(source) as z:
         problems += scan("source", ((i.filename, z.read(i) if not i.is_dir() else None) for i in z.infolist()))

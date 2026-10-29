@@ -83,7 +83,7 @@ curl -s http://127.0.0.1:8080/api/v1/health
 | Symptom | Likely cause |
 |---|---|
 | Maven fails in `oryxos-web` at `validate` with "The Vue admin console is not built" | run the npm steps of section 1 |
-| `Database migration failed: path to '/c/Users/...' does not exist` | a Git-Bash style path was given to Java; use a Windows path (`C:/...`) in `ORYXOS_JDBC_URL` and other Java arguments |
+| `Database migration failed: path to '/c/...' does not exist` | a Git-Bash style path was given to Java; use a Windows path (`C:/...`) in `ORYXOS_JDBC_URL` and other Java arguments |
 | `Startup failed: ... settings.sandbox ...` | an invalid sandbox declaration in a Profile or in `oryxos.sandbox.*`; the message names the file and key |
 | `400 Malformed request body` from curl on Windows | non-UTF-8 body (Git Bash sends the console code page); send UTF-8 |
 | `403` on `/api/v1/sessions` etc. | the request was not from loopback, carried a forwarded or foreign `Origin`/`Host` header; call it directly on `127.0.0.1` |

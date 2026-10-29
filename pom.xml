@@ -13,8 +13,8 @@
     <artifactId>oryxos-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>OryxOS · course Gate 1</name>
-    <description>Course-aligned Agent Provider increment; not a finished Agent OS.</description>
+    <name>OryxOS Coursework</name>
+    <description>Java 21 and Spring Boot AI Agent Runtime — coursework implementation with memory, sandboxing, scheduling and observability.</description>
     <modules>
     <module>oryxos-core</module>
     <module>oryxos-provider</module>

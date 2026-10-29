@@ -6,7 +6,8 @@ const BASE = 'http://127.0.0.1:8098'
 const SHOTS = new URL('./shots/', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')
 const phase = process.argv[2] ?? 'main'
 mkdirSync(SHOTS, { recursive: true })
-const WS = 'C:/Users/USER/AppData/Local/Temp/claude/c--Users-USER-Downloads-OryxOS-V1/aebf54e6-a98f-4495-b94c-b23641648078/scratchpad/b4run/ws'
+// Directory that holds the sandbox workspaces of the profiles under test (set before running).
+const WS = process.env.ORYXOS_VERIFY_WS ?? '<WORKDIR>/ws'
 
 const results = []
 const check = (name, ok, detail = '') => {

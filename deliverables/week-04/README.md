@@ -1,6 +1,6 @@
-# OryxOS 第 4 周作业提交材料
+# OryxOS Coursework — 第 4 周作业提交材料
 
-Written for: 极客时间 AI 编程实战营第 4 周作业的评阅者。本包只含说明、设计文档和验收证据；**源码**见 `source-reference.md`（另有独立的源码 ZIP，或以仓库地址提交，取决于课程平台要求，见下方"提交方式"）。
+Written for: 极客时间 AI 编程实战营第 4 周作业的评阅者。本包只含说明、设计文档和验收证据；**源码**以 GitHub 仓库 `oryxos-coursework` 的分支 `submission/week-04` 为准（见 `source-reference.md`）；`oryxos-week-04-source.zip` 只是备份。
 
 ## 本周内容
 
@@ -32,12 +32,14 @@ Written for: 极客时间 AI 编程实战营第 4 周作业的评阅者。本包
 5. 管理台由自动化的无头浏览器检查和单元测试验证，**没有人工浏览器验收**。
 6. 老师的评分标准和提交规则不在仓库里，相关判断标为"等待核对"。
 
-## 提交方式（等待核对）
+## 提交方式
 
-仓库内没有课程平台的提交说明。可选做法（**由你决定，本次整理没有推送远程、没有登录平台、没有提交任何东西**）：
+课程规则（来自课程平台说明，未核实具体页面）：作业代码推送到个人 GitHub 或 Gitee，把仓库链接填到「本周作业」下方的提交框。本包是备份和本地留档：
 
-- 上传源码 ZIP（`deliverables/oryxos-source-<提交>.zip`，由 `git archive` 生成，只含 Git 跟踪的文件）和本材料 ZIP（`deliverables/oryxos-week-04-materials.zip`）；或
-- 把仓库推送到你自己的远程后提交地址（推送需要你的批准）。
+- `oryxos-week-04-coursework.zip`：本文件夹的全部内容（说明、矩阵、报告、设计、证据）；
+- `oryxos-week-04-source.zip`：`git archive` 生成的源码，只含 Git 跟踪的文件。
+
+两个 ZIP 由 `python scripts/package_week04.py` 生成，不进入 Git；生成时会扫描数据库、日志、`.env`、构建产物、密钥特征。
 
 ## 如何复现
 

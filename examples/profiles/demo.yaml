@@ -1,0 +1,14 @@
+name: demo
+description: Network-free test profile
+identity:
+  agent_name: Demo
+  prompt: You are a helpful demo agent.
+provider:
+  name: mock
+  model: mock-echo
+  temperature: 0.2
+tools: []
+skills: []
+mcp_servers: []
+notify_channels: []
+schedules: []

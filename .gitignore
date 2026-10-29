@@ -1,0 +1,13 @@
+**/target/
+.idea/
+.vscode/
+.classpath
+.project
+.settings/
+*.log
+.env
+.oryxos/
+.DS_Store
+
+*.db
+*.db-journal

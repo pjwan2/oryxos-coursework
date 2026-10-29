@@ -373,3 +373,142 @@ Checkstyle、PMD、SpotBugs 全部通过。B1 的 207 个测试全部保留并�
 - 防重叠、失败隔离、失败审计需要新表或复用 `tool_invocations`/`llm_calls`；**审计表加列需要先决定迁移方式**。
 - Profile 沙箱缓存的驱逐策略（动态更新/删除 Agent 时）。
 - 时区与 cron 的配置校验（与本轮同样要"非法配置启动失败"）。
+
+---
+
+## 阶段 B3：Scheduler + SQLite 迁移 + 持久化任务管理（第 25、28 节后端部分）
+
+### 验收命令与结果
+
+```
+mvn -B -ntp spotless:apply
+mvn -B -ntp clean verify      # BUILD SUCCESS，九个模块全部 SUCCESS
+```
+
+SpotBugs、PMD、Checkstyle、spotless 均开启，未关闭、未加排除规则。构建过程中它们各抓到一次真实问题并已改代码修复：PMD `CheckResultSet`/`UselessParentheses`/`AvoidUsingHardCodedIP`，SpotBugs `EI_EXPOSE_REP2`（`JdbcTemplate`）、`SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE`（`VACUUM INTO` 改绑定参数）、`CT_CONSTRUCTOR_THROW`（`AgentScheduler` 改为 `final`）。
+
+| 模块 | 测试数 | 跳过 | 失败 |
+|---|---|---|---|
+| core | 33 | 0 | 0 |
+| provider | 31 | 0 | 0 |
+| tool | 106 | 4 | 0 |
+| storage | 29 | 0 | 0 |
+| memory | 80 | 0 | 0 |
+| scheduler | 42 | 0 | 0 |
+| cli | 9 | 0 | 0 |
+| web | 17 | 0 | 0 |
+| boot | 80 | 0 | 0 |
+| **合计** | **427** | **4** | **0** |
+
+通过 423、跳过 4（Windows 创建符号链接缺权限，同 B2）、失败 0。B2 的 310 个测试全部保留；对既有代码的唯一接口改动是 `ToolCallEvent` 增加 `errorMessage` 组件（保留了原 6 参数构造器，既有调用与测试不变）。
+
+按任务要求的测试类：`AgentSchedulerTest`(26)、`ScheduleConfigValidationTest`(13)、`ScheduledTaskStoreTest`(9)、`SqliteMigrationTest`(20)、`ScheduleApiControllerTest`(17)、`ScheduledTaskE2ETest`(10)、`RestartRecoveryTest`(4)、`MultiAgentSchedulerIsolationTest`(3)；另有 `MigrationStartupTest`(6)、`SafeErrorTextTest`(9)。
+
+变异检查：临时去掉单任务防重叠锁，`AgentSchedulerTest` 中 3 个测试失败（并发触发 16 次时 16 次都执行），说明重叠测试确实在验证锁；锁已还原。
+
+### 第一部分：数据库迁移（不引入 Flyway）
+
+- `oryxos-storage/.../migration/`：`Migration`（版本、步骤、SHA-256 校验和）、`Migrations`（追加式列表）、`SqliteMigrator`、`MigrationReport`、`DatabaseMigrationConfiguration`。
+- 版本记录在 `schema_migrations(version, description, checksum, applied_at)`。规则：已记录版本必须恰为 1..n（缺口、数据库比程序新、历史迁移校验和被改动，都**拒绝启动**）；每个迁移在 `BEGIN IMMEDIATE` 事务里与版本行一起提交，失败回滚。
+- V1 基线（四张既有表，`IF NOT EXISTS`）；V2 `tool_invocations.error_message`（先用 `PRAGMA table_info` 检查列是否存在才 `ALTER TABLE`）；V3 `scheduled_tasks`、`task_executions`。
+- 新库：直接执行完整 `db/schema.sql` 并盖上全部版本；旧库：逐步升级。`SqliteMigrationTest` 用表/列/索引逐项比对两条路径的结果必须一致，也比对"只靠迁移步骤建库"与 `schema.sql` 一致，防止两份定义漂移。
+- 已有数据库文件：升级前 `VACUUM INTO` 备份（`<库>.pre-v<旧版本>-<时间>.bak`，**不自动删除**），再在备份的副本上演练升级并核对每张旧表行数不减，成功后才改真实文件；演练失败则原库不动。升级后再次核对行数。备份可用 `oryxos.database.backup-before-migrate=false` 关闭。
+- 启动顺序：`spring.sql.init.mode=never`，迁移在 `databaseMigration` Bean 里完成，JPA 的 `EntityManagerFactory` 与 JDBC 存储通过 `BeanFactoryPostProcessor` 依赖它；迁移失败使上下文创建失败，Web 服务器与调度器都不会启动（`MigrationStartupTest` 用 SERVLET 类型验证）。`ddl-auto` 仍为 `none`。
+- `MigrationException` 不带原因链，消息已含 SQLite 原因：命令行只打印根因，必须就是这句话。
+
+### 审计 `error_message` 脱敏
+
+- `SafeErrorText`（core）：URL 只保留 `scheme://host/…`（去掉 userinfo/路径/query）；`api_key`、`token`、`password`、`Authorization: Bearer …` 等键值对替换为 `<redacted>`；24 位以上不透明串屏蔽；控制字符压平；最长 200 字。`ToolCallEvent` 在构造时强制脱敏，不可绕过。
+- 异常**从不**把 `getMessage()` 写入审计：工具抛异常记 `Tool threw (<类名>)`；沙箱拒绝记拒绝原因（再经脱敏）；调度失败记 `Agent run failed (<类名>)`。
+- 历史行的 `error_message` 保持 NULL，不编造。
+
+### 第二部分：AgentScheduler
+
+- `oryxos-scheduler`：`ScheduleConfigParser`（严格校验）、`AgentScheduler`（`ScheduleService` + `SmartLifecycle`）；端口与记录类型在 core 的 `io.oryxos.core.schedule`，实现 `JdbcScheduledTaskStore` 在 storage。Spring `TaskScheduler` + `CronTrigger(cron, ZoneId)`，不自带 cron 引擎。
+- 校验（非法即启动失败，报错带 Profile 名与条目位置）：id/cron/zone/message 四项必填且为文本；cron 为 Spring **六位**（秒在前，五位 Unix 写法会被拒）；zone 必须显式给出；未知键、同 Profile 重复 id、不安全的 id/Profile 名、永不触发、**间隔小于 30 秒**（防止无人值守时意外高频调用模型）、message 超 2000 字均拒绝。
+- 任务 ID = `<profile>.<id>`（点号不会出现在两部分里，所以跨 Profile 唯一）。
+- 身份：`channel=scheduler`、`user=scheduler`、`profile=<名>`，会话 ID 由与 CLI/HTTP 相同的 `SessionIds` 生成，业务全部走 `AgentService.process`。**仓库里没有名为 `SessionManager` 的类**，我把"现有 SessionManager"对应到 `AgentSessionStore` + `SessionIds`（待确认是否即课程所指）。因此同一 Profile 的所有定时任务共用 `scheduler:scheduler:<profile>` 一个会话。
+- 单任务防重叠：JVM 内的单飞锁；cron 触发遇到正在运行则跳过且不写历史；`runNow` 遇到正在运行抛 409。并发 16 个触发只执行 1 次。
+- `runNow` 在调用线程同步执行，返回执行记录（失败也是 200 且 `success=false`）。**手动运行不受 enabled 约束**（视为有意操作，记 `trigger=manual`，不改变 enabled）；cron 遇到 disabled 直接跳过，不写历史。
+- 失败不会拖垮调度器：运行异常被记录为 FAILED，锁在 `finally` 释放；记录入库本身失败也只记日志，不外抛。
+- 持久化：`run_count`、`last_status`、`last_run_at`、`next_run_at`、enabled 全部入库；重启后重新注册触发，历史、计数、enabled 不重置。`definition_hash`（额外列）记录上次同步的 Profile 定义：Profile 文件未变则保留经 API 修改的 cron/zone/message，文件变了则以文件为准（enabled 与历史始终保留）。
+- 全局开关 `oryxos.scheduler.enabled`（默认 true；`BootCliRuntime` 对一次性命令传 false）：false 时不注册任何触发、`runNow/update` 返回 409，但**启动时仍校验所有 schedules**。从 Profile 中删掉的任务不再列出或可运行，历史保留在库里。
+
+### 第三部分：与 B2 安全规则的关系
+
+- 调度运行就是普通的 `AgentService.process`，沙箱仍由 `ToolContext.profile()` 推导，有效权限 = Profile 声明 ∩ 运维上限，不比手动 Chat 大。`ScheduledTaskE2ETest` 证明：调度发起的 `file_write` 写到未授权目录被 `SandboxDenied`，文件未创建，审计行带可读原因；调度发起的 `http_get`（URL 含 `key=SECRETKEY`）被拒，原因里不含密钥。
+- 声明了 `tools` 却没有 `settings.sandbox` 的带调度 Profile，启动时 WARN。
+- 测试里没有任何真实 Webhook/网络调用；`notify` 工具未在调度测试中使用。
+- **只保证单实例防重叠，不支持多实例分布式 Exactly-Once**：锁在进程内存里，两个实例连同一个库会各触发一次。
+
+### 第四部分：运营 API（`/api/v1/schedules`，统一 `ApiResponse`）
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/v1/schedules` | 列表（含 running、nextRunAt、lastStatus、runCount） |
+| GET | `/api/v1/schedules/{id}/executions?limit=` | 新→旧，默认 50，上限 200 |
+| POST | `/api/v1/schedules/{id}/run` | 立即执行（仅本机） |
+| PUT | `/api/v1/schedules/{id}` | 修改 enabled/cron/zone/message（仅本机） |
+
+错误：未知任务 404，校验失败 400（带校验原因），运行中/调度器关闭 409，非本机写 403。本地可信访问（`LocalAccess`）：对端地址必须是回环；出现 `X-Forwarded-For`/`Forwarded` 视为经代理而拒绝；有 `Origin` 头时必须是 localhost/回环 IP（挡住网页跨站驱动本机 API）。服务本身仍绑定 `127.0.0.1`。**这是过渡措施，不是认证**。
+另外给 `GlobalExceptionHandler` 补了参数类型不匹配的 400（之前会落到 500）。
+
+### 真实 JAR 运行证据（独立 JVM，复制仓库根的旧库 `oryxos-dev.db`，端口 8097）
+
+旧库升级前后行数：
+
+| 表 | 升级前（备份文件） | 升级后 |
+|---|---|---|
+| sessions | 7 | 7（之后因调度新增 2 个会话） |
+| tool_invocations | 7 | 7（之后新增调度审计行） |
+| llm_calls | 0 | 0 |
+| memory_entries | （旧库没有） | 0（V1 补建） |
+| scheduled_tasks / task_executions / schema_migrations | （没有） | 3 / 0 / 3 |
+
+启动日志：`Backed up the database to …legacy.db.pre-v0-…bak`、`Rehearsal on a copy succeeded (versions [1, 2, 3])`、`Migrated database from version 0 to 3`。备份文件保留，其内容仍是升级前的 3 张表、行数 7/7。
+
+三个任务（`demo-sched.tick` cron `0 * * * * *` Asia/Shanghai；`demo-sched.denied`；`demo-broken.boom` America/New_York）登记后执行了：手动成功、手动沙箱拒绝、手动失败、**真实 cron 在 08:49:00.015Z 准点触发一次**。`scheduled_tasks`：
+
+```
+demo-broken.boom   0 0 3 1 1 *  America/New_York  enabled=1  next=2027-01-01T08:00:00Z  last=FAILED   run_count=1
+demo-sched.denied  0 0 3 1 1 *  UTC               enabled=1  next=2027-01-01T03:00:00Z  last=SUCCESS  run_count=1
+demo-sched.tick    0 * * * * *  Asia/Shanghai      enabled=1  next=…08:50:00Z            last=SUCCESS  run_count=2
+```
+
+`task_executions`：
+
+```
+1 demo-sched.tick    scheduler:scheduler:demo-sched   manual  success=1  error=NULL
+2 demo-sched.denied  scheduler:scheduler:demo-sched   manual  success=1  error=NULL
+3 demo-broken.boom   scheduler:scheduler:demo-broken  manual  success=0  "Agent run failed (IllegalArgumentException)"
+4 demo-sched.tick    scheduler:scheduler:demo-sched   cron    success=1  error=NULL
+```
+
+审计：`tool_invocations` 新增一行 `file_write, success=0, SandboxDenied, "Path outside allowed WRITE roots"`，`ws/outside.txt` 未创建。带 `X-Forwarded-For` 的 POST 返回 403。
+
+重启恢复：用 PUT 停用 `tick`（`nextRunAt` 变 null）→ 结束进程 → 库中 `enabled=0, run_count=2` → 重新启动：日志显示 `enabled=false, runs so far=2`，三个任务计数与状态全部保留，`tick` 的执行历史 #4(cron)、#1(manual) 仍在，**等待 65 秒后 `tick` 仍只有 2 条执行**（停用的 cron 不触发）。第二次启动没有再迁移、没有再备份。
+
+### 新增与修改的文件
+
+core：`agent/SafeErrorText`、`agent/ToolCallEvent`（+errorMessage）、`schedule/{ScheduledTask,TaskExecution,ScheduledTaskStore,ScheduleService,ScheduleView,ScheduleUpdate,ScheduleConfigException,ScheduleNotFoundException,TaskAlreadyRunningException,SchedulerDisabledException}`；
+storage：`migration/{Migration,Migrations,MigrationException,MigrationReport,SqliteMigrator,DatabaseMigrationConfiguration}`、`JdbcScheduledTaskStore`、`ToolInvocationEntity`、`db/schema.sql`；
+tool：`AuditedToolExecutor`；
+scheduler：`ScheduleConfig`、`ScheduleConfigParser`、`AgentScheduler`（删除占位 `SchedulerModule`）、`pom.xml`；
+web：`ScheduleApiController`、`LocalAccess`、`LocalAccessOnlyException`、`GlobalExceptionHandler`、`pom.xml`；
+boot：`SchedulerConfiguration`、`application.yaml`（`spring.sql.init.mode=never`、`oryxos.database.*`、`oryxos.scheduler.*`）；
+其他：`.gitignore`（`*.bak`、`*.tmp`）、`examples/profiles/scheduled-example.yaml`；
+测试：见上表，另有 `SchedulerFixtures`、`ScheduleTestEnvironment`。
+
+### 未完成和无法验证
+
+1. **Vue 管理页留给 B4**（调度列表、执行历史、启停、立即运行、编辑页均未做）。B3 完成不代表第 28 节全部完成。
+2. 没有认证：本地可信访问只是过渡；`GET` 接口未限制本机（服务绑定回环）。
+3. 单实例防重叠，无分布式锁、无 Exactly-Once；多实例同库会重复触发。
+4. 迁移的并发保护靠 SQLite 写锁，不是分布式迁移锁；备份文件不会自动清理，需运维处理。
+5. 同一 Profile 的所有定时任务共用一个会话，历史无限增长（`PromptBuilder` 只取最近 20 条窗口，但库里的 `messages_json` 会变大）；没有会话滚动/归档策略。
+6. 任务"成功"的定义是 `AgentService.process` 没抛异常；模型回复"工具被拒绝"仍记 SUCCESS，拒绝只体现在 `tool_invocations`。是否把它算作失败需要产品决定。
+7. cron 触发错过（进程停机期间）不补跑；夏令时跳变日按 Spring `CronExpression` 行为。
+8. 手动运行不受 enabled 约束是我的设计选择，课程若另有约定需调整（待确认）。
+9. 未逐条验证 `SessionManager` 在课程中的确切含义（见上）。
+10. 真实 LLM、真实 MCP、真实 Mem0、真实 Webhook 仍未验证；本轮所有调度运行使用 Mock 模型。
+11. Profile 沙箱缓存的驱逐策略仍未做（阶段 C 动态 Agent 时需要）。

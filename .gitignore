@@ -5,6 +5,8 @@ target/
 *.log
 *.db
 *.db-*
+*.bak
+*.tmp
 .env
 .env.*
 !.env.example

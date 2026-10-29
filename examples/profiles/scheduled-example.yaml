@@ -1,0 +1,27 @@
+# A profile with schedules (lesson 25/28). Copy it into your profile directory to try it.
+#
+# Every schedule needs all four keys; cron is Spring's SIX-field form (seconds first), the zone is
+# mandatory so the behaviour does not depend on the machine's time zone, and a cron that fires more
+# often than every 30 seconds is rejected at startup. The task id is "<profile>.<id>", here
+# "scheduled-example.morning-brief".
+#
+# A scheduled run is an ordinary chat as channel=scheduler, user=scheduler, profile=<name>, so the
+# sandbox below is the ONLY permission it has. Without a `settings.sandbox` section file, network and
+# shell tools are denied (default deny) and a warning is logged at startup.
+name: scheduled-example
+description: Morning briefing that runs by itself
+provider: {name: mock, model: mock-echo, temperature: 0.2}
+tools: [file_read]
+settings:
+  max_iterations: 5
+  sandbox:
+    read_roots: [".oryxos/workspace/briefing"]
+schedules:
+  - id: morning-brief
+    cron: "0 0 9 * * MON-FRI"
+    zone: Asia/Shanghai
+    message: "Summarise today's briefing notes."
+  - id: weekly-review
+    cron: "0 30 17 * * FRI"
+    zone: Asia/Shanghai
+    message: "Write the weekly review."

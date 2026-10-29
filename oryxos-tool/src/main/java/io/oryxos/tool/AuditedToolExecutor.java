@@ -1,6 +1,7 @@
 package io.oryxos.tool;
 
 import io.oryxos.core.agent.AgentToolExecutor;
+import io.oryxos.core.agent.SafeErrorText;
 import io.oryxos.core.agent.ToolAction;
 import io.oryxos.core.agent.ToolCallAudit;
 import io.oryxos.core.agent.ToolCallEvent;
@@ -41,6 +42,7 @@ public final class AuditedToolExecutor implements AgentToolExecutor {
               action.name(),
               false,
               error.getClass().getSimpleName(),
+              SafeErrorText.ofException("Tool threw", error),
               elapsed(started),
               Instant.now()));
       throw error;
@@ -51,6 +53,7 @@ public final class AuditedToolExecutor implements AgentToolExecutor {
             action.name(),
             output.success(),
             categoryOf(output),
+            messageOf(output),
             elapsed(started),
             Instant.now()));
     return output;
@@ -61,6 +64,15 @@ public final class AuditedToolExecutor implements AgentToolExecutor {
       return null;
     }
     return output.isDenied() ? "SandboxDenied" : "ToolReturnedFailure";
+  }
+
+  /** Readable reason for the audit row; sanitized again by {@link ToolCallEvent}. */
+  private static String messageOf(ToolOutput output) {
+    if (output.success()) {
+      return null;
+    }
+    String text = output.errorMessage();
+    return output.isDenied() ? text.substring(ToolOutput.DENIED_PREFIX.length()) : text;
   }
 
   private static long elapsed(long started) {

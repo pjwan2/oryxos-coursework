@@ -1,5 +1,9 @@
 package io.oryxos.web.api;
 
+import io.oryxos.core.schedule.ScheduleConfigException;
+import io.oryxos.core.schedule.ScheduleNotFoundException;
+import io.oryxos.core.schedule.SchedulerDisabledException;
+import io.oryxos.core.schedule.TaskAlreadyRunningException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -9,6 +13,7 @@ import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -16,6 +21,31 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
   private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+  /** Validation text of our own (cron, zone, message); it never echoes caller input. */
+  @ExceptionHandler(ScheduleConfigException.class)
+  public ResponseEntity<ApiResponse<Void>> invalidSchedule(ScheduleConfigException exception) {
+    return ResponseEntity.badRequest()
+        .body(ApiResponse.error(400, "Invalid schedule: " + exception.getMessage()));
+  }
+
+  @ExceptionHandler(ScheduleNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> unknownSchedule(ScheduleNotFoundException exception) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(404, "Unknown schedule"));
+  }
+
+  @ExceptionHandler({TaskAlreadyRunningException.class, SchedulerDisabledException.class})
+  public ResponseEntity<ApiResponse<Void>> scheduleConflict(RuntimeException exception) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(409, exception.getMessage()));
+  }
+
+  @ExceptionHandler(LocalAccessOnlyException.class)
+  public ResponseEntity<ApiResponse<Void>> localOnly(LocalAccessOnlyException exception) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        .body(ApiResponse.error(403, "Management writes are limited to local access"));
+  }
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ApiResponse<Void>> badRequest(IllegalArgumentException exception) {
@@ -31,6 +61,11 @@ public class GlobalExceptionHandler {
     log.warn("Rejected unreadable request body: {}", e.getClass().getSimpleName());
     return ResponseEntity.badRequest()
         .body(ApiResponse.error(400, "Malformed request body: send valid JSON encoded as UTF-8"));
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<ApiResponse<Void>> badParameter(MethodArgumentTypeMismatchException e) {
+    return ResponseEntity.badRequest().body(ApiResponse.error(400, "Invalid request parameter"));
   }
 
   @ExceptionHandler(HttpMediaTypeNotSupportedException.class)

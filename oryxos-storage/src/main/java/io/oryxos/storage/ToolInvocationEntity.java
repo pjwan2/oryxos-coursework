@@ -28,6 +28,9 @@ public class ToolInvocationEntity {
   @Column(name = "error_category")
   private String errorCategory;
 
+  @Column(name = "error_message")
+  private String errorMessage;
+
   @Column(name = "duration_ms", nullable = false)
   private long durationMs;
 
@@ -41,6 +44,7 @@ public class ToolInvocationEntity {
     this.toolName = event.toolName();
     this.success = event.success();
     this.errorCategory = event.errorCategory();
+    this.errorMessage = event.errorMessage();
     this.durationMs = event.durationMs();
     this.occurredAt = event.occurredAt();
   }
@@ -63,5 +67,9 @@ public class ToolInvocationEntity {
 
   public String getErrorCategory() {
     return errorCategory;
+  }
+
+  public String getErrorMessage() {
+    return errorMessage;
   }
 }

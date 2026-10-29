@@ -19,8 +19,8 @@ spring:
     database-platform: org.hibernate.community.dialect.SQLiteDialect
   sql:
     init:
-      mode: always
-      schema-locations: classpath:db/schema.sql
+      # The schema is owned by SqliteMigrator (oryxos-storage), which runs before any other bean.
+      mode: never
 management:
   endpoints:
     web:
@@ -45,6 +45,11 @@ logging:
 
 # Only the local mock model is active by default. DeepSeek is enabled when an API key exists.
 oryxos:
+  database:
+    backup-before-migrate: true   # VACUUM INTO a .bak and rehearse on a copy before upgrading a file
+  scheduler:
+    enabled: ${ORYXOS_SCHEDULER_ENABLED:true}
+    pool-size: 4
   profile-directory: ${ORYXOS_PROFILE_DIR:.oryxos/profiles}
   providers:
     - name: mock

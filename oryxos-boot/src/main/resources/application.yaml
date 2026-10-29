@@ -55,3 +55,12 @@ oryxos:
       model: deepseek-chat
       base-url: https://api.deepseek.com
       api-key: ${DEEPSEEK_API_KEY:}
+  # Long-term memory (lesson 21/22). backend: markdown (default) | sqlite | mem0
+  memory:
+    backend: ${ORYXOS_MEMORY_BACKEND:markdown}
+    markdown-path: ${ORYXOS_MEMORY_FILE:.oryxos/memory/MEMORY.md}
+    archival-max-entries: 100
+    archival-max-chars: 4000
+    # mem0-base-url: http://localhost:8000   # only when backend=mem0 (unverified against real Mem0)
+    # mem0-user-id: oryxos
+    # mem0-api-key: ${MEM0_API_KEY:}

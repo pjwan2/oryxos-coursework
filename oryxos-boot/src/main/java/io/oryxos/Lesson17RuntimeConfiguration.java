@@ -4,6 +4,7 @@ import io.oryxos.cli.PaymentScriptedGateway;
 import io.oryxos.core.agent.AgentService;
 import io.oryxos.core.agent.AgentSessionStore;
 import io.oryxos.core.agent.AgentToolExecutor;
+import io.oryxos.core.agent.ContextLoader;
 import io.oryxos.core.agent.ModelGateway;
 import io.oryxos.core.agent.PromptBuilder;
 import io.oryxos.core.agent.ReActLoop;
@@ -14,6 +15,7 @@ import io.oryxos.provider.SpringAiModelGateway;
 import io.oryxos.tool.AuditedToolExecutor;
 import io.oryxos.tool.RegistryToolExecutor;
 import java.time.Clock;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,16 +39,25 @@ public class Lesson17RuntimeConfiguration {
     return new AuditedToolExecutor(new RegistryToolExecutor(registry), audit);
   }
 
+  /** One prompt builder for every loop; ContextLoaders (bootstrap, memory) are injected here. */
+  @Bean
+  public PromptBuilder promptBuilder(List<ContextLoader> contextLoaders) {
+    return new PromptBuilder(Clock.systemUTC(), 20, contextLoaders);
+  }
+
   @Bean("lesson17Loop")
   @Primary
   public ReActLoop scriptedLoop(
-      @Qualifier("lesson17ModelGateway") ModelGateway gateway, AgentToolExecutor tools) {
-    return new ReActLoop(gateway, tools, new PromptBuilder(Clock.systemUTC(), 20));
+      @Qualifier("lesson17ModelGateway") ModelGateway gateway,
+      AgentToolExecutor tools,
+      PromptBuilder prompts) {
+    return new ReActLoop(gateway, tools, prompts);
   }
 
   @Bean("springAiReActLoop")
-  public ReActLoop springAiLoop(SpringAiModelGateway gateway, AgentToolExecutor tools) {
-    return new ReActLoop(gateway, tools, new PromptBuilder(Clock.systemUTC(), 20));
+  public ReActLoop springAiLoop(
+      SpringAiModelGateway gateway, AgentToolExecutor tools, PromptBuilder prompts) {
+    return new ReActLoop(gateway, tools, prompts);
   }
 
   @Bean("lesson17AgentService")

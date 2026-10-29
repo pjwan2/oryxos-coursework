@@ -1,0 +1,13 @@
+name: memory-demo
+description: Offline agent that can remember and recall facts
+identity:
+  prompt: "You are an assistant with long-term memory. Use save_memory to remember facts the user asks you to remember."
+provider:
+  name: mock
+  model: mock-echo
+  temperature: 0.2
+tools:
+  - save_memory
+  - recall_memory
+settings:
+  max_iterations: 10

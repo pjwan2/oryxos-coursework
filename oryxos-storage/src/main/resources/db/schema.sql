@@ -33,3 +33,12 @@ CREATE TABLE IF NOT EXISTS tool_invocations (
     occurred_at TIMESTAMP NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_tool_session ON tool_invocations(session_id);
+
+-- Long-term memory (lesson 21/22). scope is CORE or ARCHIVAL; saved_on is an ISO date.
+CREATE TABLE IF NOT EXISTS memory_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    scope TEXT NOT NULL CHECK (scope IN ('CORE', 'ARCHIVAL')),
+    content TEXT NOT NULL,
+    saved_on TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_memory_scope ON memory_entries(scope, id);

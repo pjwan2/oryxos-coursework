@@ -23,7 +23,19 @@ public class ProfileLoader {
   private final Path directory;
   private final Set<String> registeredProviders;
 
+  private final boolean anyProvider;
+
+  /** Lenient reader for listing only: every provider name is accepted. */
+  public static ProfileLoader forListing(Path directory) {
+    return new ProfileLoader(directory, Set.of(), true);
+  }
+
   public ProfileLoader(Path directory, Set<String> registeredProviders) {
+    this(directory, registeredProviders, false);
+  }
+
+  private ProfileLoader(Path directory, Set<String> registeredProviders, boolean anyProvider) {
+    this.anyProvider = anyProvider;
     this.directory = directory;
     this.registeredProviders = Set.copyOf(registeredProviders);
   }
@@ -70,7 +82,7 @@ public class ProfileLoader {
     Map<String, Object> provider = asMap(src.get("provider"));
     String providerName = required(provider, "name");
     String model = required(provider, "model");
-    if (!registeredProviders.contains(providerName)) {
+    if (!anyProvider && !registeredProviders.contains(providerName)) {
       throw new IllegalArgumentException(
           "Profile " + name + " uses unknown provider: " + providerName);
     }

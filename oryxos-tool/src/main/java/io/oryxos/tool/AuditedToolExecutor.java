@@ -50,10 +50,17 @@ public final class AuditedToolExecutor implements AgentToolExecutor {
             sessionId,
             action.name(),
             output.success(),
-            output.success() ? null : "ToolReturnedFailure",
+            categoryOf(output),
             elapsed(started),
             Instant.now()));
     return output;
+  }
+
+  private static String categoryOf(ToolOutput output) {
+    if (output.success()) {
+      return null;
+    }
+    return output.isDenied() ? "SandboxDenied" : "ToolReturnedFailure";
   }
 
   private static long elapsed(long started) {

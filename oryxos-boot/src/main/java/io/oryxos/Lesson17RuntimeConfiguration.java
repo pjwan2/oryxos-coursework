@@ -8,10 +8,11 @@ import io.oryxos.core.agent.ModelGateway;
 import io.oryxos.core.agent.PromptBuilder;
 import io.oryxos.core.agent.ReActLoop;
 import io.oryxos.core.agent.ToolCallAudit;
+import io.oryxos.core.tool.ToolRegistry;
 import io.oryxos.provider.ProfileRegistry;
 import io.oryxos.provider.SpringAiModelGateway;
 import io.oryxos.tool.AuditedToolExecutor;
-import io.oryxos.tool.DemoToolExecutor;
+import io.oryxos.tool.RegistryToolExecutor;
 import java.time.Clock;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -32,8 +33,8 @@ public class Lesson17RuntimeConfiguration {
   }
 
   @Bean
-  public AgentToolExecutor lesson17Tools(ToolCallAudit audit) {
-    return new AuditedToolExecutor(new DemoToolExecutor(), audit);
+  public AgentToolExecutor lesson17Tools(ToolRegistry registry, ToolCallAudit audit) {
+    return new AuditedToolExecutor(new RegistryToolExecutor(registry), audit);
   }
 
   @Bean("lesson17Loop")

@@ -1,6 +1,8 @@
 package io.oryxos.core.agent;
 
 import io.oryxos.core.profile.AgentProfile;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /** Small, testable Reason -> Act -> Observe orchestrator, with hard stop condition. */
@@ -40,33 +42,27 @@ public final class ReActLoop {
         session.append(new AgentMessage(AgentMessage.Role.ASSISTANT, decision.text()));
         return decision.text();
       }
-      // The choice and outcome are both in the transcript. Never execute in Provider.
+      // One native assistant message can request several tools; keep all
+      // calls together, then persist one matching tool-response message.
+      session.append(AgentMessage.requests(decision.actions()));
+      List<AgentMessage.ToolReply> replies = new ArrayList<>();
       for (ToolAction action : decision.actions()) {
-        session.append(
-            new AgentMessage(
-                AgentMessage.Role.ASSISTANT, "TOOL_CALL " + action.id() + " " + action.name()));
         ToolOutput output;
         try {
           output = tools.execute(session.id(), profile, action);
         } catch (RuntimeException failure) {
-          // The durable session must show that the tool was attempted.
-          session.append(
-              new AgentMessage(
-                  AgentMessage.Role.TOOL,
-                  "TOOL_RESULT "
-                      + action.id()
-                      + " "
-                      + action.name()
-                      + " ERROR "
-                      + failure.getClass().getSimpleName()));
+          // Preserve partial evidence; never call a model again after an
+          // incomplete batch or an authorization exception.
+          replies.add(
+              new AgentMessage.ToolReply(
+                  action.id(), action.name(), "ERROR " + failure.getClass().getSimpleName()));
+          session.append(AgentMessage.replies(replies));
           throw failure;
         }
         String observation = output.success() ? output.content() : "ERROR " + output.errorMessage();
-        session.append(
-            new AgentMessage(
-                AgentMessage.Role.TOOL,
-                "TOOL_RESULT " + action.id() + " " + action.name() + " " + observation));
+        replies.add(new AgentMessage.ToolReply(action.id(), action.name(), observation));
       }
+      session.append(AgentMessage.replies(replies));
     }
     String exhausted = "达到最大轮数，已停止";
     session.append(new AgentMessage(AgentMessage.Role.ASSISTANT, exhausted));

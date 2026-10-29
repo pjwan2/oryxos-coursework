@@ -9,17 +9,25 @@ import io.oryxos.core.agent.PromptBuilder;
 import io.oryxos.core.agent.ReActLoop;
 import io.oryxos.core.agent.ToolCallAudit;
 import io.oryxos.provider.ProfileRegistry;
+import io.oryxos.provider.SpringAiModelGateway;
 import io.oryxos.tool.AuditedToolExecutor;
 import io.oryxos.tool.DemoToolExecutor;
 import java.time.Clock;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
-/** Offline lesson 17 app wiring. Do not mistake this mock for the production provider bridge. */
+/**
+ * Two independent application entry points share the same ToolExecutor and storage. The original
+ * scripted Payment Lab stays the default for existing tests; /labs/spring-ai/payment uses a real
+ * ChatModel via ProviderService.
+ */
 @Configuration
 public class Lesson17RuntimeConfiguration {
-  @Bean
-  public ModelGateway lesson17ModelGateway() {
+  @Bean("lesson17ModelGateway")
+  @Primary
+  public ModelGateway scriptedModelGateway() {
     return new PaymentScriptedGateway();
   }
 
@@ -28,14 +36,32 @@ public class Lesson17RuntimeConfiguration {
     return new AuditedToolExecutor(new DemoToolExecutor(), audit);
   }
 
-  @Bean
-  public ReActLoop lesson17Loop(ModelGateway gateway, AgentToolExecutor tools) {
+  @Bean("lesson17Loop")
+  @Primary
+  public ReActLoop scriptedLoop(
+      @Qualifier("lesson17ModelGateway") ModelGateway gateway, AgentToolExecutor tools) {
     return new ReActLoop(gateway, tools, new PromptBuilder(Clock.systemUTC(), 20));
   }
 
-  @Bean
-  public AgentService lesson17AgentService(
-      ReActLoop loop, ProfileRegistry registry, AgentSessionStore store) {
+  @Bean("springAiReActLoop")
+  public ReActLoop springAiLoop(SpringAiModelGateway gateway, AgentToolExecutor tools) {
+    return new ReActLoop(gateway, tools, new PromptBuilder(Clock.systemUTC(), 20));
+  }
+
+  @Bean("lesson17AgentService")
+  @Primary
+  public AgentService scriptedAgentService(
+      @Qualifier("lesson17Loop") ReActLoop loop,
+      ProfileRegistry registry,
+      AgentSessionStore store) {
+    return new AgentService(loop, registry, store);
+  }
+
+  @Bean("springAiAgentService")
+  public AgentService springAiAgentService(
+      @Qualifier("springAiReActLoop") ReActLoop loop,
+      ProfileRegistry registry,
+      AgentSessionStore store) {
     return new AgentService(loop, registry, store);
   }
 }

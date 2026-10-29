@@ -1,0 +1,16 @@
+# Copy to .oryxos/profiles/payment-real.yaml ONLY after setting DEEPSEEK_API_KEY.
+name: payment-real
+description: Read-only payment inquiry with real LLM function calling
+identity:
+  prompt: >-
+    You are a payment inquiry assistant. Use the get_payment tool to look up payment IDs.
+    Never invent payment status or amount. If the tool fails, clearly say the lookup failed.
+    Do not claim a payment was completed unless the tool explicitly says so.
+provider:
+  name: deepseek
+  model: deepseek-chat
+  temperature: 0.1
+tools:
+  - get_payment
+settings:
+  max_iterations: 6

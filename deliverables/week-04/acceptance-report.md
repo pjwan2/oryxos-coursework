@@ -54,6 +54,7 @@ Written for: 作业评阅者与项目所有者。本报告对**发布用的提�
 
 - 前端 vitest 另有 28 个。
 - **4 个跳过**是 `PathSecurityTest` 里的符号链接测试（本机 Windows 账号没有创建符号链接的权限）；如实记录为跳过，没有被算作通过。同一条解析路径的 junction 版本测试执行并通过。
+- 推送到 GitHub 后，Actions（Ubuntu）对 `b20da24` 的运行 40889002376 也得到 502 / 4 跳过 / BUILD SUCCESS；Linux 上的 4 个跳过项很可能是另外 4 个仅限 Windows 的测试，详见 [known-limitations.md](known-limitations.md) B 节（推断，非逐测试证据）。
 - 与 `f31fd9f` 基线逐类相同（含 `ArchitectureRulesTest` 8 个、`WebSmokeIT` 5 个）；这次是重新执行的结果，不是复制。
 
 ## 4. 逐项核对

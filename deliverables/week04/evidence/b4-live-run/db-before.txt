@@ -1,0 +1,16 @@
+sessions: [('scheduler:scheduler:ops', 6), ('scheduler:scheduler:flaky', 1), ('api:alice:ops', 8), ('web:bob:memory-demo', 2), ('web:alice:ops', 6)]
+tool_invocations:
+   {'session_id': 'web:alice:ops', 'tool_name': 'file_read', 'success': 1, 'error_category': None, 'error_message': None}
+   {'session_id': 'api:alice:ops', 'tool_name': 'save_memory', 'success': 1, 'error_category': None, 'error_message': None}
+   {'session_id': 'api:alice:ops', 'tool_name': 'save_memory', 'success': 1, 'error_category': None, 'error_message': None}
+   {'session_id': 'scheduler:scheduler:ops', 'tool_name': 'file_write', 'success': 0, 'error_category': 'SandboxDenied', 'error_message': 'Path outside allowed WRITE roots'}
+memory_entries: [{'scope': 'CORE', 'content': 'Alice prefers green tea'}, {'scope': 'ARCHIVAL', 'content': 'Quarterly review is in October'}]
+scheduled_tasks:
+   {'task_id': 'flaky.boom', 'enabled': 1, 'run_count': 1, 'last_status': 'FAILED'}
+   {'task_id': 'ops.report', 'enabled': 0, 'run_count': 1, 'last_status': 'SUCCESS'}
+   {'task_id': 'ops.write-outside', 'enabled': 1, 'run_count': 1, 'last_status': 'SUCCESS'}
+task_executions:
+   {'id': 1, 'task_id': 'ops.write-outside', 'trigger_type': 'manual', 'success': 1, 'error_message': None}
+   {'id': 2, 'task_id': 'flaky.boom', 'trigger_type': 'manual', 'success': 0, 'error_message': 'Agent run failed (IllegalArgumentException)'}
+   {'id': 3, 'task_id': 'ops.report', 'trigger_type': 'manual', 'success': 1, 'error_message': None}
+schema_migrations: [1, 2, 3]

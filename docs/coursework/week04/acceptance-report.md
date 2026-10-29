@@ -26,7 +26,7 @@ Written for: 作业评阅者与你自己（核对"哪些真的验证过"）。�
 | 3 | `npm test`（vitest） | 3 个文件、**28 个测试全部通过** | `02-npm-test.txt` |
 | 4 | `npm run build`（vite build + `check-build.mjs`） | 成功；`check-build: ok (16 files, 3 assets)`（无外部 URL、无 source map、无疑似凭证） | `03-npm-build.txt` |
 | 5 | `mvn -B -ntp spotless:apply` | BUILD SUCCESS；执行后 `git status` **为空**（格式化没有改动任何文件） | `04-mvn-spotless-apply.txt`、`04b-git-status-after-spotless.txt` |
-| 6 | `mvn -B -ntp clean verify` | **BUILD SUCCESS**，九个模块全部 SUCCESS，用时 2 分 38 秒，**没有使用 `-DskipTests`**，没有关闭任何检查 | `05-mvn-clean-verify.log` |
+| 6 | `mvn -B -ntp clean verify` | **BUILD SUCCESS**，九个模块全部 SUCCESS，用时 2 分 38 秒，**没有使用 `-DskipTests`**，没有关闭任何检查 | `05-mvn-clean-verify.txt` |
 | 7 | `python scripts/test_summary.py` | 见第 3 节 | `evidence/test-summary.md` |
 | 8 | 检查 fat JAR 内容 | JAR 85.7 MB；内嵌的 `oryxos-web-0.1.0-SNAPSHOT.jar` 含 `static/admin/index.html` 和全部资源 | `06-jar.txt`；`WebSmokeIT` 也在构建中自动检查 |
 | 9 | `python scripts/week04_live_check.py --jar …`（真实 JAR，临时目录） | **77/77 检查通过** | `evidence/live-check.txt` |
@@ -61,7 +61,7 @@ Written for: 作业评阅者与你自己（核对"哪些真的验证过"）。�
 
 | 要求 | 结果 | 证据 |
 |---|---|---|
-| Maven 九模块全部成功 | **通过** | `05-mvn-clean-verify.log` Reactor Summary |
+| Maven 九模块全部成功 | **通过** | `05-mvn-clean-verify.txt` Reactor Summary |
 | 既有 427 个测试无回退，新测试全部计入 | **通过**（502） | 第 3 节 |
 | 4 个符号链接测试继续如实记录 | **如实记录为跳过** | `test-summary.md` 中 `PathSecurityTest` 18 / 跳过 4 |
 | Memory Markdown / SQLite 正常 | **通过** | `live-check.txt` 两个后端各 11 项；契约测试三后端；`MemoryRestartTest` |

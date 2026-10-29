@@ -1,4 +1,4 @@
-# Static analysis and test gates (from 05-mvn-clean-verify.log, clean checkout of f31fd9f50202526defbf8942d25d01fe4acfda18)
+# Static analysis and test gates (from 05-mvn-clean-verify.txt, clean checkout of f31fd9f50202526defbf8942d25d01fe4acfda18)
      10 [INFO] You have 0 Checkstyle violations.
       9 [INFO] Error size is 0
       9 [INFO] BugInstance size is 0

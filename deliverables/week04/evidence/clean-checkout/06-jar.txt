@@ -1,0 +1,20 @@
+-rw-r--r-- 1 USER 197121 85736843 Oct 29 23:02 oryxos-boot/target/oryxos-boot-0.1.0-SNAPSHOT.jar
+nested BOOT-INF/lib/oryxos-web-0.1.0-SNAPSHOT.jar
+static/admin/
+static/admin/assets/
+static/admin/assets/index-CG5UbDSW.js
+static/admin/assets/index-lT8Y3Dme.css
+static/admin/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2
+static/admin/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2
+static/admin/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2
+static/admin/assets/inter-greek-wght-normal-CkhJZR-_.woff2
+static/admin/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2
+static/admin/assets/inter-latin-wght-normal-Dx4kXJAl.woff2
+static/admin/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2
+static/admin/assets/jetbrains-mono-cyrillic-wght-normal-D73BlboJ.woff2
+static/admin/assets/jetbrains-mono-greek-wght-normal-Bw9x6K1M.woff2
+static/admin/assets/jetbrains-mono-latin-ext-wght-normal-DBQx-q_a.woff2
+static/admin/assets/jetbrains-mono-latin-wght-normal-B9CIFXIH.woff2
+static/admin/assets/jetbrains-mono-vietnamese-wght-normal-Bt-aOZkq.woff2
+static/admin/favicon.svg
+static/admin/index.html

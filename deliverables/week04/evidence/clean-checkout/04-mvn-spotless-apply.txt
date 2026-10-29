@@ -1,0 +1,123 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] OryxOS ， course Gate 1                                             [pom]
+[INFO] oryxos-core                                                        [jar]
+[INFO] oryxos-provider                                                    [jar]
+[INFO] oryxos-tool                                                        [jar]
+[INFO] oryxos-storage                                                     [jar]
+[INFO] oryxos-memory                                                      [jar]
+[INFO] oryxos-scheduler                                                   [jar]
+[INFO] oryxos-cli                                                         [jar]
+[INFO] oryxos-web                                                         [jar]
+[INFO] oryxos-boot                                                        [jar]
+[INFO] 
+[INFO] ----------------------< io.oryxos:oryxos-parent >-----------------------
+[INFO] Building OryxOS ， course Gate 1 0.1.0-SNAPSHOT                    [1/10]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-parent ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] 
+[INFO] -----------------------< io.oryxos:oryxos-core >------------------------
+[INFO] Building oryxos-core 0.1.0-SNAPSHOT                               [2/10]
+[INFO]   from oryxos-core\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-core ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 57 files clean - 0 were changed to be clean, 57 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ---------------------< io.oryxos:oryxos-provider >----------------------
+[INFO] Building oryxos-provider 0.1.0-SNAPSHOT                           [3/10]
+[INFO]   from oryxos-provider\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-provider ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 22 files clean - 0 were changed to be clean, 22 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] -----------------------< io.oryxos:oryxos-tool >------------------------
+[INFO] Building oryxos-tool 0.1.0-SNAPSHOT                               [4/10]
+[INFO]   from oryxos-tool\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-tool ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 36 files clean - 0 were changed to be clean, 36 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ----------------------< io.oryxos:oryxos-storage >----------------------
+[INFO] Building oryxos-storage 0.1.0-SNAPSHOT                            [5/10]
+[INFO]   from oryxos-storage\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-storage ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 20 files clean - 0 were changed to be clean, 20 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ----------------------< io.oryxos:oryxos-memory >-----------------------
+[INFO] Building oryxos-memory 0.1.0-SNAPSHOT                             [6/10]
+[INFO]   from oryxos-memory\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-memory ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 16 files clean - 0 were changed to be clean, 16 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ---------------------< io.oryxos:oryxos-scheduler >---------------------
+[INFO] Building oryxos-scheduler 0.1.0-SNAPSHOT                          [7/10]
+[INFO]   from oryxos-scheduler\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-scheduler ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 7 files clean - 0 were changed to be clean, 7 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ------------------------< io.oryxos:oryxos-cli >------------------------
+[INFO] Building oryxos-cli 0.1.0-SNAPSHOT                                [8/10]
+[INFO]   from oryxos-cli\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-cli ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 6 files clean - 0 were changed to be clean, 6 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] ------------------------< io.oryxos:oryxos-web >------------------------
+[INFO] Building oryxos-web 0.1.0-SNAPSHOT                                [9/10]
+[INFO]   from oryxos-web\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-web ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 24 files clean - 0 were changed to be clean, 24 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] -----------------------< io.oryxos:oryxos-boot >------------------------
+[INFO] Building oryxos-boot 0.1.0-SNAPSHOT                              [10/10]
+[INFO]   from oryxos-boot\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:2.46.1:apply (default-cli) @ oryxos-boot ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 27 files clean - 0 were changed to be clean, 27 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for OryxOS ， course Gate 1 0.1.0-SNAPSHOT:
+[INFO] 
+[INFO] OryxOS ， course Gate 1 ............................. SUCCESS [  0.368 s]
+[INFO] oryxos-core ........................................ SUCCESS [  1.248 s]
+[INFO] oryxos-provider .................................... SUCCESS [  0.343 s]
+[INFO] oryxos-tool ........................................ SUCCESS [  0.637 s]
+[INFO] oryxos-storage ..................................... SUCCESS [  0.301 s]
+[INFO] oryxos-memory ...................................... SUCCESS [  0.283 s]
+[INFO] oryxos-scheduler ................................... SUCCESS [  0.163 s]
+[INFO] oryxos-cli ......................................... SUCCESS [  0.109 s]
+[INFO] oryxos-web ......................................... SUCCESS [  0.307 s]
+[INFO] oryxos-boot ........................................ SUCCESS [  0.357 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.555 s
+[INFO] Finished at: 2026-10-29T23:00:21+11:00
+[INFO] ------------------------------------------------------------------------
+exit=0

@@ -622,7 +622,7 @@ SpotBugs、PMD、Checkstyle、spotless 全部开启，没有关闭或加排除�
 
 ### 真实 JAR 运行证据（独立 JVM，端口 8098，新建临时 SQLite，Mock 模型）
 
-三个 Profile（`ops` 带沙箱与两个定时任务，`flaky` 每次运行都失败，`memory-demo`）；记忆后端 `sqlite`。Chrome（Puppeteer 无头）驱动真实页面，脚本与输出在 `docs/evidence/b4/`，截图在 `docs/evidence/b4/screenshots/`。
+三个 Profile（`ops` 带沙箱与两个定时任务，`flaky` 每次运行都失败，`memory-demo`）；记忆后端 `sqlite`。Chrome（Puppeteer 无头）驱动真实页面，脚本与输出在 `docs/coursework/week04/evidence/b4-live-run/`，截图在 `docs/coursework/week04/evidence/b4-live-run/screenshots/`。
 
 - 首次运行 **27/27** 检查通过（`main-output.txt`），包括：`/admin/` 打开、深链接刷新不 404、六页数据与 API 一致（会话行数、Profile 卡片、工具列表）、中文消息、System 页无密钥/路径、手动运行沙箱拒绝（技术状态"finished without error"，审计"1 denied by the sandbox"+警告）、失败运行（`Agent run failed (IllegalArgumentException)`）、停用后手动运行、历史展开、注入 503 的错误态（文案+HTTP 503+Trace Id+重试）、未知前端路由回退、控制台零错误。
 - SQLite 与界面对照（`db-before.txt`）：
@@ -648,12 +648,12 @@ storage：`JpaAgentSessionStore`（列表/删除/计数）、`JpaToolCallHistory
 web：`SessionApiController`、`AgentApiController`、`ProfileApiController`、`MemoryApiController`、`ToolApiController`、`SystemApiController`、`AgentInvoker`、`SessionRef`、`InvalidRequestException`、`ApiNotFoundException`、`AdminIndexController`、`AdminUiConfiguration`、`GlobalExceptionHandler`、`LocalAccess`、`pom.xml`（enforcer）；
 boot：`pom.xml`（`build-info`、failsafe）；
 前端：`oryxos-web/src/main/frontend/`（`package.json`+lock、`vite.config.js`、`src/`、`tests/`、`scripts/check-build.mjs`）；
-其他：`.gitignore`、`README.md`、`scripts/build-all.sh`、`.claude/skills/oryxos-admin-ui/SKILL.md`、`docs/evidence/b4/`；
+其他：`.gitignore`、`README.md`、`scripts/build-all.sh`、`.claude/skills/oryxos-admin-ui/SKILL.md`、`docs/coursework/week04/evidence/b4-live-run/`；
 测试：见上表；两个既有测试替身（`AgentServiceTest.MemorySessions`、`SchedulerFixtures.InMemorySessions`）补了新接口方法，断言未改。
 
 ### 未完成和无法验证
 
-1. **没有人工浏览器验收。** 页面用无头 Chrome + Puppeteer 自动化检查并看过截图，这不等于人工逐页点验；真实浏览器里的观感、不同分辨率、Edge/Firefox 都没有验证。该验证脚本在 `docs/evidence/b4/`，里面写死了本机路径，不属于 `mvn verify` 门禁，也没有接入 CI。
+1. **没有人工浏览器验收。** 页面用无头 Chrome + Puppeteer 自动化检查并看过截图，这不等于人工逐页点验；真实浏览器里的观感、不同分辨率、Edge/Firefox 都没有验证。该验证脚本在 `docs/coursework/week04/evidence/b4-live-run/`，里面写死了本机路径，不属于 `mvn verify` 门禁，也没有接入 CI。
 2. **没有认证**，本地限制只是过渡（见上）；`LocalAccess` 对"本机其它进程/用户"无效。Profiles/Tools/System/Scheduler 的 GET 未限制本机。
 3. **没有真实 LLM**：REST 的 503/504 在真实 DeepSeek 上未验证；`ModelFailures` 的分类只用合成异常（`SocketTimeoutException`、`ConnectException`、HTTP 状态）单测过，没有看过真实 Spring AI/RestClient 超时抛出的异常链。401 之类密钥错误会走 500。
 4. **同一会话并发发消息会互相覆盖**（读-改-写，没有会话级锁）；调度器与 REST 同时写同一会话同理。管理台不发消息，所以界面不触发，但 API 可以。未处理。

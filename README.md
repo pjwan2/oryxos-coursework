@@ -2,7 +2,7 @@
 
 Coursework artifact built stage by stage: JDK 21, Spring Boot 3.5.x, Spring AI 1.1.4 and SQLite, nine Maven modules. It is NOT a finished Agent OS and has **no authentication**: run it only on a machine you trust. The server binds to `127.0.0.1` and refuses writes and sensitive reads that do not come from the local machine; that is a stop-gap, not security you can rely on.
 
-Progress, evidence and open items per stage: [`docs/course-progress.md`](docs/course-progress.md).
+Documentation index: [`docs/README.md`](docs/README.md). Architecture: [`docs/architecture/`](docs/architecture/overview.md). Week-4 assignment (design docs, requirements matrix, acceptance report, limitations): [`docs/coursework/week04/`](docs/coursework/week04/README.md). Progress and evidence per stage: [`docs/course-progress.md`](docs/course-progress.md).
 
 ## Build (reproducible)
 

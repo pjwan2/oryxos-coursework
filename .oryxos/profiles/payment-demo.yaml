@@ -1,0 +1,12 @@
+name: payment-demo
+description: Local payment read-only teaching agent
+identity:
+  prompt: "You are a read-only payment status demo assistant."
+provider:
+  name: mock
+  model: mock-echo
+  temperature: 0.2
+tools:
+  - get_payment
+settings:
+  max_iterations: 10

@@ -1,8 +1,8 @@
 # Architecture overview
 
-OryxOS is a small Agent runtime: a ReAct loop that talks to a model, calls tools under a per-agent sandbox, remembers things, and can be driven from a command line, an HTTP API or a clock. This page shows how the pieces fit. The rules between modules are in [module-boundaries.md](module-boundaries.md); the reasons for the main choices are in [design-decisions.md](design-decisions.md).
+OryxOS is a small Agent runtime: a ReAct loop that talks to a model, calls tools under a per-agent sandbox, remembers things, and can be driven from a command line, an HTTP API or a clock. This page shows how the pieces fit. The rules between modules are in [module-boundaries.md](module-boundaries.md); the reasons for the main choices are in [design-decisions.md](../decisions/design-decisions.md).
 
-Status: course increment after stage B4 (weeks 1 to 4). It is coursework, not a finished Agent OS, and it has no authentication (see [known limitations](../coursework/week04/known-limitations.md)).
+Status: course increment after stage B4 (weeks 1 to 4). It is coursework, not a finished Agent OS, and it has no authentication (see [known limitations](../coursework/week-04/known-limitations.md)).
 
 ## One engine, three entrances
 
@@ -43,7 +43,7 @@ Each entrance only translates its own input into `(channel, userId, profile, mes
 
 Because the session id is built by one function (`SessionIds`), the same conversation can be continued from any entrance and the scheduler's runs show up in the ordinary session list.
 
-There is one more `AgentService` bean, `lesson17AgentService`, wired to a scripted model (`PaymentScriptedGateway`). It only serves the lesson 17 payment lab endpoints under `/api/v1/labs/payment` and the tests that depend on them. It shares the same session store and the same audited tool executor; it is not a second session or tool system. See [design-decisions.md](design-decisions.md), D-08.
+There is one more `AgentService` bean, `lesson17AgentService`, wired to a scripted model (`PaymentScriptedGateway`). It only serves the lesson 17 payment lab endpoints under `/api/v1/labs/payment` and the tests that depend on them. It shares the same session store and the same audited tool executor; it is not a second session or tool system. See [design-decisions.md](../decisions/design-decisions.md), D-08.
 
 ## What is stored where
 
@@ -65,7 +65,7 @@ The database schema is owned by `oryxos-storage` (`db/schema.sql` for new files,
 
 ## Cross-cutting behaviour
 
-- **Permissions.** A tool can run only if (1) the Profile lists it and (2) the sandbox derived from that Profile allows the specific action. The sandbox is passed explicitly in `ToolContext`, never through a thread-local. Details: [sandbox-design.md](../coursework/week04/sandbox-design.md).
+- **Permissions.** A tool can run only if (1) the Profile lists it and (2) the sandbox derived from that Profile allows the specific action. The sandbox is passed explicitly in `ToolContext`, never through a thread-local. Details: [sandbox-design.md](../coursework/week-04/sandbox-design.md).
 - **Audit.** Every tool attempt (success, failure, refusal) and every model call is a database row. Error text in audit rows is sanitised (`SafeErrorText`): no URLs beyond host, no tokens, at most 200 characters.
 - **Errors toward clients.** The REST layer answers with one envelope `{code, message, data, timestamp}`; the 500 text is fixed and provider/exception messages are never returned.
 - **Observability.** Every HTTP response has `X-Trace-Id` (also in JSON logs via MDC); `/actuator/prometheus` for metrics; OpenAPI at `/v3/api-docs`.
@@ -81,4 +81,4 @@ The database schema is owned by `oryxos-storage` (`db/schema.sql` for new files,
 
 ## Where the admin console fits
 
-The Vue 3 console is a static bundle built from `oryxos-web/src/main/frontend/` into `oryxos-web/src/main/resources/static/admin/` and served by the same Spring Boot JAR. It only calls the public REST API; it has no privileged path into the server. See [web-service-design.md](../coursework/week04/web-service-design.md).
+The Vue 3 console is a static bundle built from `oryxos-web/src/main/frontend/` into `oryxos-web/src/main/resources/static/admin/` and served by the same Spring Boot JAR. It only calls the public REST API; it has no privileged path into the server. See [web-service-design.md](../coursework/week-04/web-service-design.md).

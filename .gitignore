@@ -11,6 +11,7 @@ target/
 .env.*
 !.env.example
 .oryxos/memory/
+.oryxos/workspace/
 .oryxos/**/*.db
 .idea/
 .vscode/
@@ -19,5 +20,14 @@ target/
 node_modules/
 oryxos-web/src/main/resources/static/admin/
 
-# Week-4 packaging output (scripts/package-week04.sh)
+# Course delivery archives (scripts/package_week04.py)
 deliverables/*.zip
+
+# Credentials and local overrides (templates live in config/ and are not named application*)
+*.pem
+*.key
+*.p12
+.env.local
+config/application*.yaml
+config/application*.yml
+config/application*.properties

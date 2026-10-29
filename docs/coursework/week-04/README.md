@@ -18,7 +18,7 @@ OryxOS 是课程项目：一个 Java 21 / Spring Boot 3.5 / Spring AI 的 Agent 
 1. [requirements-matrix.md](requirements-matrix.md)：六节课的"要求 → 代码 → 测试 → 证据 → 状态"。
 2. [acceptance-report.md](acceptance-report.md)：实际执行的命令、测试数量、通过/失败/跳过、Git 提交。
 3. [known-limitations.md](known-limitations.md)：**没有验证或没有实现的东西**（真实 LLM / MCP / Webhook / Mem0、4 个符号链接测试、无认证）。
-4. 架构：[overview](../../architecture/overview.md)、[module-boundaries](../../architecture/module-boundaries.md)、[design-decisions](../../architecture/design-decisions.md)。
+4. 架构：[overview](../../architecture/overview.md)、[module-boundaries](../../architecture/module-boundaries.md)、[design-decisions](../../decisions/design-decisions.md)。
 
 ## 怎么在干净环境里运行
 
@@ -62,9 +62,9 @@ python scripts/week04_live_check.py --jar oryxos-boot/target/oryxos-boot-0.1.0-S
 
 ```
 docs/architecture/            架构总览、模块边界、设计决策、工作区整理
-docs/coursework/week04/       本周设计文档、矩阵、验收报告、限制、evidence/
+docs/coursework/week-04/      本周设计文档、矩阵、验收报告、限制、evidence/
 docs/course-progress.md       各阶段（A、B1～B4）的完整过程记录
-deliverables/week04/          提交包的内容（由 scripts/package_week04.py 打包为 zip）
+deliverables/week-04/         提交包的内容（由 scripts/package_week04.py 打包为 zip）
 scripts/                      build-all.sh、week04_live_check.py、test_summary.py、package_week04.py
 ```
 

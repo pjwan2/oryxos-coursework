@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Summarise surefire/failsafe XML reports (run after `mvn verify`) as a Markdown table.
 
-    python scripts/test_summary.py > docs/coursework/week04/evidence/test-summary.md
+    python scripts/test_summary.py > docs/coursework/week-04/evidence/test-summary.md
 """
 import re
 import sys

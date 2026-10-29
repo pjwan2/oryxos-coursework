@@ -680,9 +680,9 @@ boot：`pom.xml`（`build-info`、failsafe）；
 不是新的功能阶段；把 A～B4 整理成可提交的第 4 周作业。完整内容见 [docs/README.md](README.md)：
 
 - 唯一主工程与工作区整理（含**未执行**的归档方案）：[architecture/workspace-layout.md](architecture/workspace-layout.md)
-- 架构审计与规则测试（`ArchitectureRulesTest`，8 个测试，无需改代码）：[architecture/module-boundaries.md](architecture/module-boundaries.md)、[architecture/design-decisions.md](architecture/design-decisions.md)
-- 四节课的设计文档、需求对照矩阵、已知限制：[coursework/week04/](coursework/week04/README.md)
-- 验收：对提交 `f31fd9f` 的干净克隆执行 `npm ci` / `npm test` / `npm run build` / `mvn spotless:apply` / `mvn clean verify`：**502 个测试，4 个跳过，0 个失败**，静态检查全部通过，真实 JAR 实机检查 77/77。报告：[coursework/week04/acceptance-report.md](coursework/week04/acceptance-report.md)，证据：[coursework/week04/evidence/](coursework/week04/evidence/README.md)
-- 提交包：`deliverables/week04/`（`scripts/package_week04.py` 生成 ZIP；没有推送、没有登录课程平台）
+- 架构审计与规则测试（`ArchitectureRulesTest`，8 个测试，无需改代码）：[architecture/module-boundaries.md](architecture/module-boundaries.md)、[decisions/design-decisions.md](decisions/design-decisions.md)
+- 四节课的设计文档、需求对照矩阵、已知限制：[coursework/week-04/](coursework/week-04/README.md)
+- 验收：对提交 `f31fd9f` 的干净克隆执行 `npm ci` / `npm test` / `npm run build` / `mvn spotless:apply` / `mvn clean verify`：**502 个测试，4 个跳过，0 个失败**，静态检查全部通过，真实 JAR 实机检查 77/77。报告：[coursework/week-04/acceptance-report.md](coursework/week-04/acceptance-report.md)，证据：[coursework/week-04/evidence/](coursework/week-04/evidence/README.md)
+- 提交包：`deliverables/week-04/`（`scripts/package_week04.py` 生成 ZIP；没有推送、没有登录课程平台）
 
 相对 B4 的代码改动只有一个测试类（`ArchitectureRulesTest`）和三个脚本（`scripts/`）。

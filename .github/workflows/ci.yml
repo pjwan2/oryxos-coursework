@@ -1,4 +1,4 @@
-name: OryxOS core CI
+name: OryxOS CI
 on:
   push:
   pull_request:
@@ -13,5 +13,19 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: oryxos-web/src/main/frontend/package-lock.json
+      # The admin console is built first: oryxos-web refuses to build without it.
+      - name: Front end (install, test, build)
+        working-directory: oryxos-web/src/main/frontend
+        run: |
+          npm ci
+          npm test
+          npm run build
       - name: Full reactor tests and quality gate
         run: mvn -B -ntp clean verify
+      - name: Documentation links
+        run: python3 scripts/check_doc_links.py

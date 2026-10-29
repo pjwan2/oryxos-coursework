@@ -3,12 +3,12 @@
 
     python scripts/package_week04.py
 
-Reads (all tracked in Git):  docs/coursework/week04/*  and the hand-written files already in
-deliverables/week04/ (README.md, architecture.md, source-reference.md).
+Reads (all tracked in Git):  docs/coursework/week-04/*  and the hand-written files already in
+deliverables/week-04/ (README.md, architecture.md, source-reference.md).
 Writes:
-    deliverables/week04/...                          the submission folder (copies refreshed from docs/)
-    deliverables/OryxOS-week04-materials.zip         ONLY the submission folder
-    deliverables/OryxOS-source-<commit>.zip          `git archive` of HEAD: tracked files only, so no
+    deliverables/week-04/...                         the submission folder (copies refreshed from docs/)
+    deliverables/oryxos-week-04-materials.zip        ONLY the submission folder
+    deliverables/oryxos-source-<commit>.zip               `git archive` of HEAD: tracked files only, so no
                                                      databases, logs, .env, node_modules or build output
 Nothing is uploaded or pushed. Exit code 1 if the safety scan finds anything.
 """
@@ -20,8 +20,8 @@ import zipfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-WEEK = REPO / "docs" / "coursework" / "week04"
-OUT = REPO / "deliverables" / "week04"
+WEEK = REPO / "docs" / "coursework" / "week-04"
+OUT = REPO / "deliverables" / "week-04"
 
 FORBIDDEN_NAMES = re.compile(r"(^|/)(\.env[^/]*|[^/]+\.(db|db-shm|db-wal|sqlite|bak|log|jar|class|pem|key)|node_modules|target|\.git)(/|$)")
 ALLOWED_NAMES = re.compile(r"(^|/)\.env\.example$")
@@ -78,10 +78,11 @@ def main():
     problems = scan("materials", ((p.relative_to(OUT).as_posix(), p.read_bytes()) for p in files))
 
     commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=REPO, text=True).strip()
-    materials = REPO / "deliverables" / "OryxOS-week04-materials.zip"
-    source = REPO / "deliverables" / f"OryxOS-source-{commit}.zip"
-    for old in REPO.joinpath("deliverables").glob("OryxOS-source-*.zip"):
-        old.unlink()
+    materials = REPO / "deliverables" / "oryxos-week-04-materials.zip"
+    source = REPO / "deliverables" / f"oryxos-source-{commit}.zip"
+    for pattern in ("OryxOS-*.zip", "oryxos-source-*.zip"):  # also the pre-rename names
+        for old in REPO.joinpath("deliverables").glob(pattern):
+            old.unlink()
     subprocess.check_call(["git", "archive", "--format=zip", f"--output={source}", "HEAD"], cwd=REPO)
 
     with zipfile.ZipFile(source) as z:

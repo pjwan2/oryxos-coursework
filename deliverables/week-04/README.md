@@ -36,7 +36,7 @@ Written for: 极客时间 AI 编程实战营第 4 周作业的评阅者。本包
 
 仓库内没有课程平台的提交说明。可选做法（**由你决定，本次整理没有推送远程、没有登录平台、没有提交任何东西**）：
 
-- 上传源码 ZIP（`deliverables/OryxOS-source-<提交>.zip`，由 `git archive` 生成，只含 Git 跟踪的文件）和本材料 ZIP（`deliverables/OryxOS-week04-materials.zip`）；或
+- 上传源码 ZIP（`deliverables/oryxos-source-<提交>.zip`，由 `git archive` 生成，只含 Git 跟踪的文件）和本材料 ZIP（`deliverables/oryxos-week-04-materials.zip`）；或
 - 把仓库推送到你自己的远程后提交地址（推送需要你的批准）。
 
 ## 如何复现

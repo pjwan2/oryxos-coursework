@@ -7,7 +7,7 @@ through HTTP, then reads the SQLite file / MEMORY.md directly to compare with wh
 Every check prints PASS or FAIL; the exit code is 1 if any check failed.
 
     python scripts/week04_live_check.py --jar oryxos-boot/target/oryxos-boot-0.1.0-SNAPSHOT.jar \
-        --out docs/coursework/week04/evidence/live-check.txt
+        --out docs/coursework/week-04/evidence/live-check.txt
 
 Needs only Python 3.9+ and Java 21. Nothing here is a substitute for `mvn clean verify`.
 """

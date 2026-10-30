@@ -1,4 +1,4 @@
-JAR: oryxos-boot-0.1.0-SNAPSHOT.jar, scratch dir: <HOME>\AppData\Local\Temp\oryxos-week05-ot76sx_7
+JAR: oryxos-boot-0.1.0-SNAPSHOT.jar, scratch dir: <HOME>\AppData\Local\Temp\oryxos-week05-u8g2vh_j
 
 == Lesson 27: weather and memory through the real JAR
 PASS  weather answer comes from the fixture  -> Tool result: {"city":"Shanghai","temp_c":21,"sky":"clear"}
@@ -22,9 +22,9 @@ PASS  memory is GLOBAL: agent-web reads what agent-files saved (per-agent isolat
 
 == Lesson 28: scheduler, outcome, API
 PASS  scheduled weather run succeeded through AgentService
-PASS  outcome COMPLETED, tool succeeded  -> {"executionId": 1, "technicalStatus": "SUCCESS", "toolCalls": 1, "toolSucceeded": 1, "toolDenied": 0, "toolFailed": 0, "outcome": "COMPLETED", "note": "The run finished and every tool call succeeded.", "executionRef": "8c85751f-851a-419d-996d-508e82857ba3", "matchedBy": "execution_id", "caveat": null}
+PASS  outcome COMPLETED, tool succeeded  -> {"executionId": 1, "technicalStatus": "SUCCESS", "toolCalls": 1, "toolSucceeded": 1, "toolDenied": 0, "toolFailed": 0, "outcome": "COMPLETED", "note": "The run finished and every tool call succeeded.", "executionRef": "6331d81c-04c0-4d8e-b6a7-f40c70d9789e", "matchedBy": "execution_id", "caveat": null, "calls": [{"tool": "http_get", "success": true, "category": null, "reason": null}]}
 PASS  denied scheduled run: technical success, file not written
-PASS  outcome COMPLETED_WITH_TOOL_ISSUES, not a plain success  -> {"executionId": 2, "technicalStatus": "SUCCESS", "toolCalls": 1, "toolSucceeded": 0, "toolDenied": 1, "toolFailed": 0, "outcome": "COMPLETED_WITH_TOOL_ISSUES", "note": "The run finished, but 1 tool call(s) were refused or failed, so the requested action may not have happened. This is not a confirmed business success.", "executionRef": "7a19981d-aa67-48ee-b2db-7d0e9fb8905d", "matchedBy": "execution_id", "caveat": null}
+PASS  outcome COMPLETED_WITH_TOOL_ISSUES, not a plain success  -> {"executionId": 2, "technicalStatus": "SUCCESS", "toolCalls": 1, "toolSucceeded": 0, "toolDenied": 1, "toolFailed": 0, "outcome": "COMPLETED_WITH_TOOL_ISSUES", "note": "The run finished, but 1 tool call(s) were refused or failed, so the requested action may not have happened. This is not a confirmed business success.", "executionRef": "7a4722b2-0f10-4b10-8e1a-16a7bd566f67", "matchedBy": "execution_id", "caveat": null, "calls": [{"tool": "file_write", "success": false, "category": "SandboxDenied", "reason": "Path outside allowed WRITE roots"}]}
 PASS  stored lastStatus unchanged (API compatible)
 PASS  disabled flag in SQLite
 PASS  OpenAPI lists the outcome endpoint

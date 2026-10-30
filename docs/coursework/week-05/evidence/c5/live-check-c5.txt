@@ -1,0 +1,86 @@
+JAR: oryxos-boot-0.1.0-SNAPSHOT.jar, scratch dir: <TMP>
+
+== The three committed examples are installed and registered
+PASS  REST lists weather-daily, daily-tech-digest and github-daily  -> ['daily-tech-digest', 'github-daily', 'weather-daily']
+PASS  no directory was reported as invalid  -> {}
+PASS  weather-daily has only AGENT.md in its directory
+PASS  tech digest directory = AGENT.md + skills/digest-format.md
+PASS  github directory = AGENT.md + scripts/github_trending.py
+PASS  tools: weather = http_get + notify
+PASS  tools: github has shell_exec and no http_get
+PASS  committed schedules: 08:00, 09:00, 09:30, Asia/Shanghai
+PASS  the CLI lists the same three agents  -> daily-tech-digest  fake-openai/fake-model  tools=[http_get, file_read, notify, save_memory, recall_memory]
+github-daily  fake-openai/fake-model  tools=[shell_ex
+PASS  Health answers 200
+PASS  Swagger answers 200
+PASS  Admin answers 200
+
+== Manual runs over REST: weather, tech digest, github (the real Python script)
+PASS  weather: 3 model requests, 1 weather request, 1 notification
+PASS  weather: tool rows = http_get ok, notify ok (by execution id)
+PASS  weather: advice built from the fetched data  -> 北京：6.5℃，降水 1.2 mm，风速 34.0 km/h。偏凉，穿外套和长裤。有降水，记得带伞。风较大，注意防风。
+PASS  weather: the model saw a prompt without frontmatter or webhook address
+PASS  tech: tool rows = file_read, http_get, notify
+PASS  tech: skill text is NOT in the first prompt but arrives as a file_read result
+PASS  tech: 8 items, score order without a preference
+PASS  github: tool rows = shell_exec ok, notify ok
+PASS  github: the script itself called the GitHub API (created-date window, stars desc)  -> ['created:>=2026-03-04', 'created:>=2026-02-03']
+PASS  github: script JSON reached the model, script source did not
+PASS  github: three sections and the honest ranking note
+PASS  weather-daily: outcome COMPLETED, matched by execution id
+PASS  daily-tech-digest: outcome COMPLETED, matched by execution id
+PASS  github-daily: outcome COMPLETED, matched by execution id
+
+== Memory preference changes the report, per agent
+PASS  tech: remember a preference through the API
+PASS  each preference is in its own agent's MEMORY.md only
+PASS  the weather agent has no memory file
+PASS  tech: the same news is now ordered AI/chip first  -> ['New AI chip doubles inference speed', 'Open-source LLM beats benchmark', 'GPU shortage easing in 2026', 'Show HN: A tiny Rust web server']
+PASS  tech: the preference text was in the model's prompt
+PASS  github: the AI highlights now put RAG first
+PASS  github prompt never carries the tech preference
+
+== Failures are not business successes
+PASS  weather outage: technically finished, outcome COMPLETED_WITH_TOOL_ISSUES
+PASS  weather outage: the message says it failed and invents no weather
+PASS  weather outage: audit shows http_get fail, notify ok
+PASS  github: any other argument is refused by the sandbox and no process starts  -> ['shell_exec:fail:SandboxDenied', 'notify:ok:None']
+
+== The cron trigger of the running scheduler fires all three agents (no human call)
+PASS  each agent got exactly one new cron run
+PASS  the three reports reached the receiver  -> ['今日天气与穿搭', '科技日报', 'GitHub 日报']
+PASS  cron run of weather-daily: tool rows by execution id  -> ['http_get:ok:None', 'notify:ok:None']
+PASS  cron run of daily-tech-digest: tool rows by execution id  -> ['file_read:ok:None', 'http_get:ok:None', 'notify:ok:None']
+PASS  cron run of github-daily: tool rows by execution id  -> ['shell_exec:ok:None', 'notify:ok:None']
+PASS  the committed 08:00 / 09:00 / 09:30 schedules are back after the test
+
+== CLI path: the same agent, the same tools
+PASS  CLI chat ran the weather agent (reply 已发送, one notification)  -> 已发送
+PASS  CLI audit rows equal the REST and cron rows  -> ['http_get:ok:None', 'notify:ok:None']
+
+== Totals: every table agrees with what the servers saw
+PASS  no failed model call anywhere
+PASS  every scheduled tool call carries an execution id
+PASS  llm_calls rows = model requests the stub model received (every call is audited, none invented)  -> 40 vs 40
+
+== Admin console, in a real headless browser (Playwright)
+PASS  Agents list shows the three demo agents  -> ['daily-tech-digest', 'github-daily', 'weather-daily']
+PASS  overview shows tools, the 08:00 schedule and its zone
+PASS  manual run (after the confirm step) shows technical status and tool audit apart
+PASS  the run reached the receiver
+PASS  tool calls of the run are listed (http_get, notify)  -> ['✓ http_get', '✓ notify']
+PASS  Files tab shows the real AGENT.md
+PASS  Session tab sent the message; Memory tab shows it as this agent's private memory
+PASS  tech digest Files tab lists the skill file  -> ['AGENT.md', 'MEMORY.md', 'digest-format.md']
+PASS  github Files tab lists the script
+PASS  Scheduler page lists the three tasks
+PASS  no browser console or page errors  -> []
+
+== Restart: configuration, memory, schedule and audit survive
+PASS  after restart: the three agents are registered again  -> ['daily-tech-digest', 'github-daily', 'weather-daily']
+PASS  after restart: all five tables are identical
+PASS  after restart: agent files (AGENT.md, MEMORY.md, skills, scripts) are byte-identical
+PASS  after restart: schedules, zones and run counts are back
+PASS  after restart: an agent still runs end to end
+
+64/64 checks passed in 33s

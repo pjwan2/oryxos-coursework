@@ -1,0 +1,74 @@
+{
+ "generated_for": "2026-10-30",
+ "source": "GitHub Search Repositories API: repositories created inside a time window, ordered by stars. An approximation; NOT the official GitHub Trending list.",
+ "windows": {
+  "today": "created on or after 2026-10-29 (UTC)",
+  "month": "created on or after 2026-09-30 (UTC)",
+  "ai": "created on or after 2026-09-30 (UTC), any of the topics ai, llm, machine-learning, deep-learning, artificial-intelligence"
+ },
+ "today": [
+  {
+   "name": "valentderah/totk-pc-recomp",
+   "stars": 813,
+   "description": "Static recompilation of The Legend of Zelda: Tears of the Kingdom to native Windows x86-64, with a Vulkan renderer. Game files not included.",
+   "url": "https://github.com/valentderah/totk-pc-recomp"
+  },
+  {
+   "name": "paipiange/nvzhuang",
+   "stars": 532,
+   "description": "1407 张 AI 女装参考图集与虚拟试穿网站，支持中英检索、OpenAI Images / Gemini / 豆包及自定义 Base URL、API Key、模型。https://github.com/paipiange/nvzhuang",
+   "url": "https://github.com/paipiange/nvzhuang"
+  },
+  {
+   "name": "BryceYuuu/RUN",
+   "stars": 457,
+   "description": "RUN · 润：海外移居手册（欧洲 36 国 · 110 条路线 · 主要移民地区）",
+   "url": "https://github.com/BryceYuuu/RUN"
+  }
+ ],
+ "month": [
+  {
+   "name": "storytold/photocraft",
+   "stars": 74953,
+   "description": "PhotoCraft: An open-source, photo editor written by scratch in pure Rust",
+   "url": "https://github.com/storytold/photocraft"
+  },
+  {
+   "name": "Gathin23/cleanyourtv",
+   "stars": 45863,
+   "description": "Debloat any Android or Google TV over Wi-Fi and get an Apple TV-style home.",
+   "url": "https://github.com/Gathin23/cleanyourtv"
+  },
+  {
+   "name": "deepseek-ai/DeepInfer",
+   "stars": 24371,
+   "description": "DeepInfer: High-performance, large-scale inference framework for DeepSeek models",
+   "url": "https://github.com/deepseek-ai/DeepInfer"
+  }
+ ],
+ "ai": [
+  {
+   "name": "QingYunA/answer-me-with-html",
+   "stars": 4820,
+   "description": "Answer me with HTML — an agent skill that answers hard questions with a one-page HTML you can actually read. 让 AI Agent 用一页 HTML 回答复杂问题。",
+   "url": "https://github.com/QingYunA/answer-me-with-html"
+  },
+  {
+   "name": "onehumanbeing/esp32-iphone-agent",
+   "stars": 4113,
+   "description": "Let an AI model use a real iPhone with a $7 ESP32: AirPlay eyes, USB HID hands, any OpenAI-compatible vision model. No Mac, no developer account, no jailbreak.",
+   "url": "https://github.com/onehumanbeing/esp32-iphone-agent"
+  },
+  {
+   "name": "Folkbench/folkbench",
+   "stars": 3962,
+   "description": "AI API 中转站评测排行与切换工具：实测可用率、延迟与价格 · Open-source AI API relay benchmark, rankings & switcher for Claude Code / Codex",
+   "url": "https://github.com/Folkbench/folkbench"
+  }
+ ],
+ "meta": {
+  "limit": 3,
+  "requests": 7,
+  "empty": false
+ }
+}

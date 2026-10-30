@@ -134,3 +134,31 @@ weather fixture requests: ['/weather']
 | 定时任务的结果有精确的审计归属，技术成功与业务结果分开 | 就绪（`execution_id`） |
 | 无 Key 可复现的运行（假模型/Mock） | 就绪 |
 | 用真实模型跑 Demo | **未就绪**：没有验证过任何真实 LLM；需要 Key 和一次真实运行，并核对第 31 节要求（Demo 是两个还是三个仍待官方说明） |
+
+---
+
+# C5 补充验收（第 31 节：三个业务 Agent Demo）与最终结果
+
+| 项 | 结果 |
+|---|---|
+| `npm ci`、`npm test`、`npm run build` | 通过；**42** 个前端测试（C4 为 38，新增 4）；`check-build: ok` |
+| `mvn -B -ntp spotless:apply`、`mvn -B -ntp clean verify` | **BUILD SUCCESS**，九模块 + 父工程全部 SUCCESS；Checkstyle 0 违规、SpotBugs 0 BugInstance（9 个模块）、PMD、Spotless 通过；`evidence/c5/mvn-clean-verify-c5.txt` |
+| 测试数量 | **786 个：780 通过、6 跳过、0 失败**（C4 为 728，新增 58；第 4 周为 502）。6 个跳过与 C4 相同（4 个既有符号链接 + 2 个新增文件符号链接用例）；本机有 Python，所以依赖 Python 的测试都实际运行了。分模块见 `evidence/test-summary.md` |
+| 新增测试 | boot：`ExampleAgentsLoadTest` 4、`WeatherDailyAgentTest` 8、`TechDigestAgentTest` 9、`GitHubTrendingScriptTest` 12、`GitHubDailyAgentTest` 8、`AgentDemoSchedulerIT` 3、`AgentDemoAuditIT` 3、`AgentDemoIsolationTest` 5、`AgentDemoRestartIT` 1；scheduler：`ScheduleCrossDayTest` 4；web：`ScheduleOutcomeApiControllerTest` +1；前端 `agents.test.js` +4。共享夹具 `DemoSupport`、`AbstractAgentDemoIT` |
+| 真实 JAR：三个 Demo | `scripts/week05_c5_live_check.py`：**64/64**（`evidence/c5/live-check-c5.txt`）：已安装示例注册、REST/CLI 可见、手动运行、**真实 Cron 各触发一次**、CLI `chat`、记忆偏好改变排序、失败不算业务成功、沙箱拒绝其它参数、重启后五张表和文件字节相同、Playwright 无头 Chromium 操作管理台 |
+| 真实 JAR：回归 | 第 29/30 节 **96/96**（`evidence/live-check-c3-c4.txt`）；第 27/28 节 **31/31**（`evidence/live-check.txt`）；第 4 周 **77/77**（`evidence/week04-live-check-regression.txt`） |
+| Tier B 真实外部服务 | `evidence/c5/external-tier-b.txt`：**已验证**：Open-Meteo 直接 GET，以及经 JAR 真实 `http_get` 的天气 Agent；Hacker News Search（Algolia）；GitHub Search API（经真实脚本，未认证）。**未验证**：真实 LLM（没有 Key），真实 Webhook（没有授权目标） |
+| 过程中发现并修复的问题 | ① 脚本在 Windows 管道里用 ANSI 代码页输出，中文/省略号会乱码 → 脚本 stdout 强制 UTF-8；② 描述里的控制字符替换后出现连续空格 → 折叠空白；③ `AgentLoader` 把 `scripts/__pycache__/*.pyc` 当作 Agent 文件列出 → 过滤；④ `ExecutionOutcome` 新增的列表字段触发 SpotBugs → 防御性拷贝；⑤ 科技日报的脚本化模型把提示词里"优先关注 AI 和芯片"的**示例文字**当成了记忆 → 按 MemoryService 真正的标题 `## Long-term memory` 取记忆段 |
+| 对既有代码的改动 | 仅 `AgentLoader`（忽略 `__pycache__`）、`ScheduleOutcomeApiController`（outcome 增加 `calls` 明细）、管理台 `RunsPanel`；`SchedulerFixtures`（测试夹具）让执行 ID 透传；既有测试没有删除或放宽 |
+
+## C5 结论
+
+- 三个 Demo 在 Tier A（Mock/夹具）下完整通过；Tier B 中三个公开只读接口真实访问成功；**真实 LLM 与真实 Webhook 未验证**；**真实连续 48 小时运行未发生**；管理台无人工浏览器验收；仍然没有认证。
+- 不推送、不打 `week-05` 标签、不创建 `v0.1.0`，发布留给 C6。
+
+## 发布阻塞项（交给 C6）
+
+1. 没有真实 LLM 的验证（需要 Key 和一次真实运行；Demo 是两个还是三个仍待官方说明）。
+2. 第 5 周提交分支 `submission/week-05`、标签 `week-05` 尚未创建；课程平台提交未做。
+3. 管理台只有自动化验证；管理 API 无认证，只适合本机。
+4. 文档中的"待核对"项：老师的评分细则、提交页面的具体要求。

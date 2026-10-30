@@ -1,4 +1,4 @@
-# Week-5 evidence index (C1 to C4)
+# Week-5 evidence index (C1 to C5)
 
 Real output of commands run on the author's machine (Windows 10, JDK 21.0.2, Maven 3.9.16). Local paths were replaced by `<HOME>` and terminal colour codes removed.
 
@@ -14,5 +14,7 @@ Real output of commands run on the author's machine (Windows 10, JDK 21.0.2, Mav
 | `live-check-c3.txt` | `scripts/week05_agents_live_check.py --stage c3` on the real JAR: 22 checks (AGENT.md agent registered at startup, REST + CLI, name clash, schedule, sandbox, restart) |
 | `mvn-clean-verify-c4.txt` | `mvn -B -ntp clean verify` on the C4 code (lesson 30): nine modules SUCCESS, 728 tests, 6 skipped, 0 failed, static analysis clean |
 | `live-check-c3-c4.txt` | `scripts/week05_agents_live_check.py --stage all` on the final JAR: 96 checks (lesson 29 plus lesson 30, including a headless Chromium session against the real console) |
+| `c5/` | lesson 31: `mvn-clean-verify-c5.txt` (786 tests, 6 skipped, 0 failed), `live-check-c5.txt` (64 real-JAR checks for the three demos), `external-tier-b.txt` + the saved real responses (`external-open-meteo*.json/.txt`, `external-hn.json`, `external-github.json`) |
+| `live-check-c3-c4.txt`, `live-check.txt`, `week04-live-check-regression.txt` | re-run on the final C5 JAR: 96/96, 31/31, 77/77 |
 
 Not here, because it was never done: any run with a real LLM, MCP server, webhook, Mem0 server or weather API.

@@ -1,0 +1,7 @@
+Tier B (real external services) -- run at 2026-10-30 19:20:16 +1100
+VERIFIED      1. Open-Meteo direct GET  -> HTTP 200, current={"time": "2026-10-30T16:15", "interval": 900, "temperature_2m": 18.1, "precipitation": 0.0, "wind_speed_10m": 15.1, "weather_code": 0} (saved: external-open-meteo.json)
+VERIFIED      2. weather-daily through the JAR's real http_get  -> tool rows=[('http_get', 1, None), ('notify', 1, None)]; message: 北京：18.1℃，降水 0.0 mm，风速 15.1 km/h。温暖，穿薄外套。
+VERIFIED      3. Hacker News Search (Algolia)  -> HTTP 200, 30 hits, first: 'Patrick Stewart has died' (first 5 saved: external-hn.json)
+VERIFIED      4. GitHub Search API via github_trending.py  -> exit 0, today=3 month=3 ai=3, top month: storytold/photocraft (saved: external-github.json)
+NOT VERIFIED  5. Real LLM provider (DeepSeek)  -> no DEEPSEEK_API_KEY in the environment; nothing was called
+NOT VERIFIED  6. Real webhook (a chat group)  -> not attempted: no explicitly authorised target; all examples notify only http://127.0.0.1:18080/notify

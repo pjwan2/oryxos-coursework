@@ -1,4 +1,4 @@
-JAR: oryxos-boot-0.1.0-SNAPSHOT.jar, scratch dir: <HOME>\AppData\Local\Temp\oryxos-week05-agents-j0e9hmsg
+JAR: oryxos-boot-0.1.0-SNAPSHOT.jar, scratch dir: <HOME>\AppData\Local\Temp\oryxos-week05-agents-d1zh52oz
 
 == Lesson 29: AGENT.md directory -> running agent (no Java change, no repackaging)
 PASS  REST /profiles lists the AGENT.md agent  -> ['daily-reconcile', 'legacy', 'twin']
@@ -41,9 +41,9 @@ PASS  unknown agent -> 404
 == Lesson 30: dynamic schedule update and execution id
 PASS  PUT /agents/alpha applies the new definition  -> {'code': 0, 'message': 'ok', 'data': {'name': 'alpha', 'description': 'Second version', 'origin': 'agent-md', 'editable': True, 'provider': 'mock', 'model': 'mo
 PASS  schedule registered while running
-PASS  manual run succeeds and carries an execution id  -> {'id': 1, 'taskId': 'alpha.nightly', 'sessionId': 'scheduler:scheduler:alpha', 'trigger': 'manual', 'startedAt': '2026-10-30T06:59:03.887704200Z', 'success': True, 'errorMessage': None, 'durationMs':
+PASS  manual run succeeds and carries an execution id  -> {'id': 1, 'taskId': 'alpha.nightly', 'sessionId': 'scheduler:scheduler:alpha', 'trigger': 'manual', 'startedAt': '2026-10-30T08:19:03.616808100Z', 'success': True, 'errorMessage': None, 'durationMs':
 PASS  outcome is matched by execution id  -> {'executionId': 1, 'technicalStatus': 'SUCCESS', 'toolCalls': 1, 'toolSucceeded': 1, 'toolDenied': 0, 'toolFailed': 0, 'outcome': 'COMPLETED', 'note': 'The run finished and every tool call succeeded.'
-PASS  tool_invocations row carries the same id  -> [('file_read', 1, '51e8cbc3-5180-4a63-9118-6756abec96e7')]
+PASS  tool_invocations row carries the same id  -> [('file_read', 1, 'c46b6a7d-c408-4ee6-b0bc-59359f259d65')]
 PASS  task_executions row carries the id
 PASS  changed cron replaces the old schedule (one task, new cron, history kept)
 PASS  removing the schedule stops the task

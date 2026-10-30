@@ -1,0 +1,122 @@
+[
+ {
+  "_highlightResult": {
+   "author": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "j4mie"
+   },
+   "story_text": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "<a href=\"https://archive.ph/y4Egm\" rel=\"nofollow\">https://archive.ph/y4Egm</a><p><a href=\"https://en.wikipedia.org/wiki/Patrick_Stewart\" rel=\"nofollow\">https://en.wikipedia.org/wiki/Patrick_Stewart</a>"
+   },
+   "title": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "Patrick Stewart has died"
+   },
+   "url": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "https://www.nytimes.com/2026/10/29/arts/television/patrick-stewart-dead.html"
+   }
+  },
+  "objectID": "50294702",
+  "points": 2870,
+  "title": "Patrick Stewart has died",
+  "url": "https://www.nytimes.com/2026/10/29/arts/television/patrick-stewart-dead.html"
+ },
+ {
+  "_highlightResult": {
+   "author": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "kuberwastaken"
+   },
+   "title": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "We're releasing the weights of Mistral Large 4"
+   },
+   "url": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "https://mistral.ai/news/mistral-large-4-oss/"
+   }
+  },
+  "objectID": "50289418",
+  "points": 1406,
+  "title": "We're releasing the weights of Mistral Large 4",
+  "url": "https://mistral.ai/news/mistral-large-4-oss/"
+ },
+ {
+  "_highlightResult": {
+   "author": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "Tiberium"
+   },
+   "title": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "Binance-hacker-1029 – $5.6B stolen from Binance"
+   },
+   "url": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "https://arkm.com/explorer/entity/21a94755-f604-45e5-9501-6542e23005e8"
+   }
+  },
+  "objectID": "50296470",
+  "points": 1224,
+  "title": "Binance-hacker-1029 – $5.6B stolen from Binance",
+  "url": "https://arkm.com/explorer/entity/21a94755-f604-45e5-9501-6542e23005e8"
+ },
+ {
+  "_highlightResult": {
+   "author": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "ibobev"
+   },
+   "title": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "LLM Voice"
+   },
+   "url": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "https://martinfowler.com/bliki/LLM-Voice.html"
+   }
+  },
+  "objectID": "50290177",
+  "points": 454,
+  "title": "LLM Voice",
+  "url": "https://martinfowler.com/bliki/LLM-Voice.html"
+ },
+ {
+  "_highlightResult": {
+   "author": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "ea016"
+   },
+   "title": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "H.264 Is Magic (2016)"
+   },
+   "url": {
+    "matchLevel": "none",
+    "matchedWords": [],
+    "value": "https://sidbala.com/h-264-is-magic/"
+   }
+  },
+  "objectID": "50291054",
+  "points": 405,
+  "title": "H.264 Is Magic (2016)",
+  "url": "https://sidbala.com/h-264-is-magic/"
+ }
+]

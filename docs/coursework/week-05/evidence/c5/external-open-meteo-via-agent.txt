@@ -1,0 +1,3 @@
+weather-daily on the real JAR, real http_get -> api.open-meteo.com (model and chat group are local stand-ins)
+tool_invocations: [('http_get', 1, None), ('notify', 1, None)]
+notification received: 北京：18.1℃，降水 0.0 mm，风速 15.1 km/h。温暖，穿薄外套。

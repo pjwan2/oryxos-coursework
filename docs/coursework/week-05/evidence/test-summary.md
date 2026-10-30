@@ -7,11 +7,11 @@
 | oryxos-tool | 113 | 4 | 0 |
 | oryxos-memory | 90 | 0 | 0 |
 | oryxos-storage | 31 | 0 | 0 |
-| oryxos-scheduler | 52 | 0 | 0 |
+| oryxos-scheduler | 56 | 0 | 0 |
 | oryxos-cli | 9 | 0 | 0 |
-| oryxos-web | 89 | 0 | 0 |
-| oryxos-boot | 158 | 0 | 0 |
-| **Total** | **728** | **6** | **0** |
+| oryxos-web | 90 | 0 | 0 |
+| oryxos-boot | 211 | 0 | 0 |
+| **Total** | **786** | **6** | **0** |
 
 ## Per test class
 
@@ -70,20 +70,25 @@
 | oryxos-scheduler | AgentSchedulerTest | 26 | 0 | 0 | surefire |
 | oryxos-scheduler | MultiAgentSchedulerIsolationTest | 3 | 0 | 0 | surefire |
 | oryxos-scheduler | ScheduleConfigValidationTest | 13 | 0 | 0 | surefire |
+| oryxos-scheduler | ScheduleCrossDayTest | 4 | 0 | 0 | surefire |
 | oryxos-cli | OryxCliTest | 9 | 0 | 0 | surefire |
 | oryxos-web | AgentApiControllerTest | 6 | 0 | 0 | surefire |
 | oryxos-web | AgentManagementApiControllerTest | 16 | 0 | 0 | surefire |
 | oryxos-web | QueryApiControllersTest | 11 | 0 | 0 | surefire |
 | oryxos-web | ScheduleApiControllerTest | 17 | 0 | 0 | surefire |
-| oryxos-web | ScheduleOutcomeApiControllerTest | 11 | 0 | 0 | surefire |
+| oryxos-web | ScheduleOutcomeApiControllerTest | 12 | 0 | 0 | surefire |
 | oryxos-web | SessionApiControllerTest | 22 | 0 | 0 | surefire |
 | oryxos-web | WorkspaceApiControllerTest | 6 | 0 | 0 | surefire |
 | oryxos-boot | AdminAgentFlowTest | 11 | 0 | 0 | surefire |
 | oryxos-boot | AdminUiTest | 6 | 0 | 0 | surefire |
+| oryxos-boot | AgentDemoIsolationTest | 5 | 0 | 0 | surefire |
 | oryxos-boot | AgentPluginIntegrationTest | 9 | 0 | 0 | surefire |
 | oryxos-boot | ArchitectureRulesTest | 8 | 0 | 0 | surefire |
 | oryxos-boot | CliEndToEndTest | 6 | 0 | 0 | surefire |
+| oryxos-boot | ExampleAgentsLoadTest | 4 | 0 | 0 | surefire |
 | oryxos-boot | FullStackRestartRecoveryTest | 2 | 0 | 0 | surefire |
+| oryxos-boot | GitHubDailyAgentTest | 8 | 0 | 0 | surefire |
+| oryxos-boot | GitHubTrendingScriptTest | 12 | 0 | 0 | surefire |
 | oryxos-boot | MalformedRequestTest | 4 | 0 | 0 | surefire |
 | oryxos-boot | MemoryPromptIntegrationTest | 9 | 0 | 0 | surefire |
 | oryxos-boot | MemoryRestartTest | 3 | 0 | 0 | surefire |
@@ -104,4 +109,9 @@
 | oryxos-boot | SchedulerStabilityE2ETest | 6 | 0 | 0 | surefire |
 | oryxos-boot | SpringAiModelGatewayIntegrationTest | 4 | 0 | 0 | surefire |
 | oryxos-boot | SqliteMemoryPromptIntegrationTest | 9 | 0 | 0 | surefire |
+| oryxos-boot | TechDigestAgentTest | 9 | 0 | 0 | surefire |
+| oryxos-boot | WeatherDailyAgentTest | 8 | 0 | 0 | surefire |
+| oryxos-boot | AgentDemoAuditIT | 3 | 0 | 0 | failsafe |
+| oryxos-boot | AgentDemoRestartIT | 1 | 0 | 0 | failsafe |
+| oryxos-boot | AgentDemoSchedulerIT | 3 | 0 | 0 | failsafe |
 | oryxos-boot | WebSmokeIT | 5 | 0 | 0 | failsafe |

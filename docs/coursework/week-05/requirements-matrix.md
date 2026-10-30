@@ -1,4 +1,4 @@
-# 第 5 周需求对照矩阵（C1：第 27 节，C2：第 28 节，C3：第 29 节，C4：第 30 节）
+# 第 5 周需求对照矩阵（C1：第 27 节，C2：第 28 节，C3：第 29 节，C4：第 30 节，C5：第 31 节）
 
 每一项：**Requirement → Source → Test → Result → Evidence**。状态只用四种：
 
@@ -93,11 +93,30 @@ C4 在 C3 的 `register(agentDir)` 之上加了统一生命周期（`AgentLifecy
 | 30.11 | Vue 管理台：Agent 列表与详情五个部分（基本信息、生成、文件、会话、记忆）；真实 REST 数据；加载/空/错误状态；Scheduler 页读取准确的 outcome | `AgentsView`、`AgentDetailView`、`components/agent/*`；`SchedulerView` 改读 `/executions/{id}/outcome` | 前端 vitest 38（原 28 不变 + 新增 10：列表/问题目录/创建与拒绝、归档二次确认、生成不自动保存、文件树与保存失败、会话、共享记忆提示）；真实 JAR + Playwright 无头 Chromium（创建→概览→会话→改坏 AGENT.md 被拒→归档二次确认） | **Mock 验证通过**（自动化浏览器；**没有人工浏览器验收**） | `evidence/live-check-c4.txt` |
 | 30.12 | 创建→查询→修改→触发→归档→重启恢复 | 同上 | `AdminAgentFlowTest`（第 2～11 步）；真实 JAR（重启前后六张表逐行相同、归档 Agent 不回来、Beta 的文件与私有记忆不变） | **Mock 验证通过** | 同上 |
 
+## C5 — 第 31 节：三个业务 Agent Demo
+
+底座没有新增引擎：三个 Agent 只是 `examples/agents/` 下的 `AGENT.md` 目录，由第 29、30 节的加载、生命周期、调度、沙箱、记忆、审计运行。运行手册见 [demo-runbook.md](demo-runbook.md)，证据见 `evidence/c5/`。**"Mock" 只替换外部世界**（模型、天气/新闻/GitHub 接口、聊天群接收端）；AgentLoader、ReActLoop、ToolExecutor、Sandbox、Scheduler、Memory、SQLite、REST、管理台都是真实实现。脚本化的模型读取的是**同一份**指令、记忆段和工具结果，因此证明的是"我们的流水线给了模型正确的输入、并把它的输出送了出去"，**不证明真实 LLM 会照做**。
+
+| # | Requirement | Source | Test | Result | Evidence |
+|---|---|---|---|---|---|
+| 31.1 | 三个可版本控制的示例目录：`weather-daily/AGENT.md`；`daily-tech-digest/AGENT.md + skills/digest-format.md`；`github-daily/AGENT.md + scripts/github_trending.py`；运行时装入 `.oryxos/agents/` | `examples/agents/**`、`scripts/c5_install_agents.py` | boot `ExampleAgentsLoadTest`（4：原样提交的文件通过同一加载器/工具检查/沙箱解析/Cron 解析；权限最小：天气只有 2 个工具、一个外部主机，GitHub 只有 1 个脚本且没有 `http_get`，三者都没有 `file_write`，默认只通知本机接收端） | **Mock 验证通过** | `evidence/c5/mvn-clean-verify-c5.txt` |
+| 31.2 | Demo 1 天气：Open-Meteo，仅 `AGENT.md`，08:00，穿搭建议，`notify` | `weather-daily/AGENT.md` | boot `WeatherDailyAgentTest`（8：**API 创建后目录里只有 AGENT.md**；手动触发 3 次模型调用 / 1 次天气请求 / 1 条通知；审计 `http_get ok, notify ok`；会话 6 条按序完整；模型只被提供 2 个工具，提示词不含 frontmatter 和 webhook 地址；域名被拒→`SandboxDenied` 且通知写“天气获取失败”、不编造；API 500；接收端 500；缺字段） | **Mock 验证通过** | 同上；真实 JAR `evidence/c5/live-check-c5.txt` |
+| 31.3 | Demo 2 科技日报：`file_read` 读格式文件、读 Agent 专属记忆偏好、5–8 条、标题+点评+来源链接、`notify` | `daily-tech-digest/**` | boot `TechDigestAgentTest`（9：格式文件**未预加载**（首个提示词只有文件名），内容经 `file_read` 结果进入下一次请求，审计含 `file_read`；**偏好来自该 Agent 自己的 `MEMORY.md`，同一批新闻排序改变**（无偏好按分数；有偏好 AI/LLM/GPU 条目在前）；每条有来源链接，无链接的退回 HN 条目页；无新闻→“今天没有可用的科技新闻”不编造；新闻 503→工具失败、outcome 为 `COMPLETED_WITH_TOOL_ISSUES`；标题里的“Ignore all previous instructions…”只以工具结果出现、Agent 没有 shell；格式文件路径被改到声明目录之外→`SandboxDenied`，秘密不进模型） | **Mock 验证通过** | 同上 |
+| 31.4 | Demo 3 GitHub 日报：受信 Python 脚本经 `shell_exec`，输出 today/month/ai JSON，三段日报，偏好影响 AI 重点，`notify` | `github-daily/**` | boot `GitHubTrendingScriptTest`（12，真实 Python 对本地 GitHub 夹具：创建日期窗口 + star 降序的查询参数、**每个 AI 主题单独查询再合并去重**（不是 AND）、分页、`--limit` 范围、空结果、限流退出码 3（不重试）、服务器错误/非 JSON/超大响应退出码 4、网络错误退出码 2、非法 `--api-base`/日期退出码 5、描述截短并去控制字符、stderr 为空）；`GitHubDailyAgentTest`（8：审计 `shell_exec ok, notify ok`；**脚本确实运行**（夹具收到查询）；脚本 JSON 进入下一次模型请求、脚本源码不在任何提示词；偏好“RAG”让 RAG 项目排到 AI 重点之首；别的参数/程序→`SandboxDenied` 且进程不启动；限流→“GitHub 日报失败”不编造；空→“今天没有查到数据”；描述里的指令只是数据） | **Mock 验证通过** | 同上 |
+| 31.5 | 三条路径复用 `AgentService`：REST 手动、CLI、Scheduler Cron；**Cron 要真实观察到自动触发** | `AgentScheduler.execute`、`BootCliRuntime.chat` | boot `AgentDemoSchedulerIT`（3：三个 Agent 的 Cron 被改到几秒后，**调度器自己的触发器**各运行一次、各一条通知、审计按执行 ID 对账；REST/CLI/Cron 三条路径给模型的系统提示词逐字相同、工具序列相同、工具集相同）；真实 JAR（Cron、CLI `chat`） | **Mock 验证通过** | 同上 |
+| 31.6 | 连续两天推送 | `AgentScheduler` + 可移动时钟 | scheduler `ScheduleCrossDayTest`（4：第 1、2 天 08:00 Asia/Shanghai 各一次 `cron` 运行，起点相差 24 小时，执行 ID 不同，下一天已排好，会话累积；第一天失败不影响第二天；两天之间停用则第二天跳过且保留历史） | **用可控时钟验证**。**真实连续 48 小时的无人值守运行没有发生，待验证** | 同上 |
+| 31.7 | 审计对账、`execution_id` 关联准确、失败后不显示业务成功 | `AuditedToolExecutor`、`ScheduleOutcomeApiController` | boot `AgentDemoAuditIT`（3：三个运行逐个对账——模型服务器收到的请求数 = `llm_calls` 增量、工具行 = 预期序列、每次运行一行 `task_executions`、执行 ID 全不相同、调度类工具调用没有无 ID 的；REST 的 `/tool-calls` 与 SQLite 一致；天气+通知都失败 → `COMPLETED_WITH_TOOL_ISSUES`，存储的技术状态仍是 B3 语义） | **Mock 验证通过** | 同上 |
+| 31.8 | 每个 Agent 隔离：记忆、工具、权限、会话 | 第 30 节的私有记忆 + 每 Agent 沙箱 | boot `AgentDemoIsolationTest`（5：各写各的 `MEMORY.md`、天气 Agent 没有记忆文件、全局文件不含偏好；偏好不进别的 Agent 的提示词；各自只被提供自己的工具；未列出的工具 `SecurityException`、已列出的工具仍受各自沙箱限制（技术日报只能读 skills 目录、天气不能访问新闻主机、GitHub 只能跑一个脚本）；会话与工具审计不串） | **Mock 验证通过** | 同上 |
+| 31.9 | 重启后配置仍可用 | 同第 28/30 节 | boot `AgentDemoRestartIT`（1：重启前后五张表和三个 Agent 的 `AGENT.md`/`MEMORY.md` 逐行/逐字节相同；偏好、调度计数、时区保留；重启后仍能运行）；真实 JAR（重启后五张表相同、文件字节相同） | **Mock 验证通过** | 同上 |
+| 31.10 | 真实 fat JAR 端到端：加载、API 和管理台可见、手动触发、真实 Cron、工具与记忆、通知接收、精确执行 ID 对账、重启 | `scripts/week05_c5_live_check.py` | 64 项（见证据）：含 Playwright 无头 Chromium 打开 Agents 列表、详情、确认后运行、查看工具调用、Files 页看到真实 AGENT.md/脚本/技能文件、会话页发消息、记忆页看到私有记忆、Scheduler 页 | **Mock 验证通过**（自动化浏览器；无人工验收） | `evidence/c5/live-check-c5.txt` |
+| 31.11 | 管理台：在列表里找到、看配置和文件、手动触发、看会话、看专属记忆、看 Scheduler 记录、看 notify 与工具结果 | 复用第 30 节五标签页；**最小新增** `RunsPanel`（Overview 里的“Scheduled runs”）+ outcome 接口新增 `calls` 明细 | 前端 vitest 42（新增 4：列出最近运行并按需展开每个工具调用，拒绝显示为 ✗ + `SandboxDenied`；运行需确认、技术状态与工具审计分开；无 schedule 时说明；拒绝时显示服务器消息）；web `ScheduleOutcomeApiControllerTest`（12，+`calls` 顺序） | **Mock 验证通过** | 同上 |
+| 31.12 | Tier B 真实外部服务（各自记录成功/未验证） | `scripts/week05_c5_external_check.py` | 见 `evidence/c5/external-tier-b.txt` | **真实外部服务验证通过**：Open-Meteo（直接 GET 与经 JAR 的真实 `http_get`）、HN Search（Algolia）、GitHub Search API（经真实脚本，未认证）。**未验证**：真实 LLM（没有 Key）、真实 Webhook（没有授权目标） | `evidence/c5/` |
+
 ## 回归（第 4 周功能没有被破坏）
 
 | 项 | 结果 |
 |---|---|
-| 第 4 周的 502 个测试 | 全部仍在且通过；总数现为 728（见 [acceptance-report.md](acceptance-report.md)）。因新增 V4 迁移，仅把 `SqliteMigrationTest`/`MigrationStartupTest`/`week04_live_check.py` 里写死的"最新版本 = 3"改为 4（并新增 V3→V4 升级测试），断言没有放宽 |
+| 第 4 周的 502 个测试 | 全部仍在且通过；总数现为 786（见 [acceptance-report.md](acceptance-report.md)）。因新增 V4 迁移，仅把 `SqliteMigrationTest`/`MigrationStartupTest`/`week04_live_check.py` 里写死的"最新版本 = 3"改为 4（并新增 V3→V4 升级测试），断言没有放宽 |
 | 第 4 周 77 项真实 JAR 检查（`scripts/week04_live_check.py`） | 77/77（最终 JAR，`evidence/week04-live-check-regression.txt`） |
 | 管理台无头浏览器检查 | 27/27（`evidence/dashboard-headless-run.txt`） |
 | 4 个 Windows 符号链接测试 | 仍跳过，如实记录 |

@@ -1,4 +1,4 @@
-JAR: oryxos-boot-0.1.0-SNAPSHOT.jar (83838 KiB), scratch dir: <HOME>\AppData\Local\Temp\oryxos-week04-w9doy3vv
+JAR: oryxos-boot-0.1.0-SNAPSHOT.jar (83841 KiB), scratch dir: <HOME>\AppData\Local\Temp\oryxos-week04-2pjz5cop
 
 == Memory, backend=markdown (lessons 21/22)
 PASS  save CORE  -> Tool result: Saved to CORE memory
@@ -50,7 +50,7 @@ PASS  audit rows carry a safe readable reason
       audit: ('file_read', 0, 'SandboxDenied')
 
 == Web service, Swagger, Prometheus, admin console (lesson 26)
-PASS  GET /health 200 with ok + trace id  -> 771e68e2-c7d8-4a16-ab12-f1b420db8d4c
+PASS  GET /health 200 with ok + trace id  -> e28abd15-8f42-4c13-a7fb-50c23370d53a
 PASS  GET /info
 PASS  GET /profiles
 PASS  GET /tools has schemas
@@ -66,7 +66,7 @@ PASS  400: message over 32 KiB
 PASS  400: malformed JSON
 PASS  404: unknown session
 PASS  404: unknown agent
-PASS  500 returns a fixed text and leaks nothing  -> {"code": 500, "message": "Internal server error", "data": null, "timestamp": "2026-10-30T07:00:56.154430800Z"}
+PASS  500 returns a fixed text and leaks nothing  -> {"code": 500, "message": "Internal server error", "data": null, "timestamp": "2026-10-30T08:20:03.169064300Z"}
 PASS  403: Host header of a foreign name (DNS rebinding)
 PASS  403: forwarded request
 PASS  403: cross-site Origin on a write
@@ -84,7 +84,7 @@ PASS  missing asset stays 404
 PASS  tasks from Profile YAML are registered, enabled, never run
 PASS  time zone is kept per task
 PASS  next run is computed
-PASS  manual run succeeds through the shared AgentService  -> {"id": 1, "taskId": "ops.report", "sessionId": "scheduler:scheduler:ops", "trigger": "manual", "startedAt": "2026-10-30T07:01:03.091274400Z", "success": true, "errorMessage": null, "durationMs": 70, "executionId": "ab6d923a-b309-4cd4-9e85-33c828f66e63"}
+PASS  manual run succeeds through the shared AgentService  -> {"id": 1, "taskId": "ops.report", "sessionId": "scheduler:scheduler:ops", "trigger": "manual", "startedAt": "2026-10-30T08:20:10.161703100Z", "success": true, "errorMessage": null, "durationMs": 70, "executionId": "bf461bf9-0cd2-4d31-9ecd-5b6d740f3092"}
 PASS  run whose tool is refused: technical success, sandbox denial audited separately
 PASS  the scheduled call was denied by the sandbox in the audit
 PASS  unknown task is 404

@@ -4,6 +4,7 @@ import io.oryxos.core.agent.AgentService;
 import io.oryxos.core.agent.SafeErrorText;
 import io.oryxos.core.agent.SessionIds;
 import io.oryxos.core.profile.AgentProfile;
+import io.oryxos.core.schedule.ProfileScheduleSync;
 import io.oryxos.core.schedule.ScheduleConfigException;
 import io.oryxos.core.schedule.ScheduleNotFoundException;
 import io.oryxos.core.schedule.ScheduleService;
@@ -23,6 +24,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -51,7 +53,7 @@ import org.springframework.scheduling.support.CronTrigger;
  * <p>Single-instance only: the no-overlap lock lives in this JVM. Two application instances on the
  * same database would both fire; there is no distributed lock and no exactly-once guarantee.
  */
-public final class AgentScheduler implements ScheduleService, SmartLifecycle {
+public final class AgentScheduler implements ScheduleService, ProfileScheduleSync, SmartLifecycle {
   public static final String CHANNEL = "scheduler";
   public static final String USER = "scheduler";
 
@@ -66,7 +68,9 @@ public final class AgentScheduler implements ScheduleService, SmartLifecycle {
   private final TaskScheduler taskScheduler;
   private final Clock clock;
   private final boolean enabled;
-  private final Map<String, Definition> definitions = new LinkedHashMap<>();
+  // Insertion-ordered snapshot, replaced as a whole under the scheduler's monitor: readers never
+  // lock and never see a half-changed map; triggers are registered in profile order.
+  private volatile Map<String, Definition> definitions = Map.of();
   private final Map<String, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
   private final Set<String> running = ConcurrentHashMap.newKeySet();
   private volatile boolean started;
@@ -85,13 +89,15 @@ public final class AgentScheduler implements ScheduleService, SmartLifecycle {
     this.taskScheduler = Objects.requireNonNull(taskScheduler);
     this.clock = Objects.requireNonNull(clock);
     this.enabled = enabled;
+    Map<String, Definition> initial = new LinkedHashMap<>();
     for (AgentProfile profile : profiles.get()) {
       for (ScheduleConfig config : ScheduleConfigParser.parse(profile)) {
         String taskId = ScheduleConfigParser.taskId(profile.name(), config.id());
-        definitions.put(
+        initial.put(
             taskId, new Definition(taskId, profile.name(), config, hashOf(profile.name(), config)));
       }
     }
+    definitions = Collections.unmodifiableMap(initial);
   }
 
   public boolean schedulerEnabled() {
@@ -115,26 +121,95 @@ public final class AgentScheduler implements ScheduleService, SmartLifecycle {
     for (AgentProfile profile : profiles.get()) {
       byName.put(profile.name(), profile);
     }
-    for (Definition definition : definitions.values()) {
-      warnIfNoSandbox(byName.get(definition.profileName()), definition);
-      ScheduledTask task =
-          store.sync(
-              definition.taskId(),
-              definition.profileName(),
-              definition.config().cron(),
-              definition.config().zone().getId(),
-              definition.config().message(),
-              definition.hash());
-      Instant next = task.enabled() ? nextRun(task.cron(), task.zone()) : null;
-      store.updateNextRun(task.taskId(), next);
-      register(task);
-      log.info(
-          "Registered schedule {} (cron='{}', zone={}, enabled={}, runs so far={})",
-          task.taskId(),
-          task.cron(),
-          task.zone(),
-          task.enabled(),
-          task.runCount());
+    for (Definition definition : List.copyOf(definitions.values())) {
+      activate(definition, byName.get(definition.profileName()));
+    }
+  }
+
+  /** Stores the definition (keeping runtime state) and registers its trigger. */
+  private void activate(Definition definition, AgentProfile profile) {
+    warnIfNoSandbox(profile, definition);
+    ScheduledTask task =
+        store.sync(
+            definition.taskId(),
+            definition.profileName(),
+            definition.config().cron(),
+            definition.config().zone().getId(),
+            definition.config().message(),
+            definition.hash());
+    Instant next = task.enabled() ? nextRun(task.cron(), task.zone()) : null;
+    store.updateNextRun(task.taskId(), next);
+    register(task);
+    log.info(
+        "Registered schedule {} (cron='{}', zone={}, enabled={}, runs so far={})",
+        task.taskId(),
+        task.cron(),
+        task.zone(),
+        task.enabled(),
+        task.runCount());
+  }
+
+  // ---- dynamic registration --------------------------------------------------------------
+
+  /**
+   * Makes the scheduler match the schedules of this Profile while the application runs. The
+   * schedules are validated first, so an invalid one changes nothing. Schedules the Profile no
+   * longer declares are stopped (their rows and history stay); an unchanged schedule is left alone,
+   * a changed one has its old trigger cancelled before the new one is registered. A task the
+   * operator disabled stays disabled, and run counts are never reset.
+   */
+  @Override
+  public synchronized void registerProfile(AgentProfile profile) {
+    Objects.requireNonNull(profile, "profile");
+    Map<String, Definition> wanted = new LinkedHashMap<>();
+    for (ScheduleConfig config : ScheduleConfigParser.parse(profile)) {
+      String taskId = ScheduleConfigParser.taskId(profile.name(), config.id());
+      wanted.put(
+          taskId, new Definition(taskId, profile.name(), config, hashOf(profile.name(), config)));
+    }
+    for (Definition old : List.copyOf(definitions.values())) {
+      if (old.profileName().equals(profile.name()) && !wanted.containsKey(old.taskId())) {
+        forget(old.taskId());
+        cancel(old.taskId());
+      }
+    }
+    for (Definition definition : wanted.values()) {
+      Definition existing = remember(definition);
+      boolean unchanged = existing != null && existing.hash().equals(definition.hash());
+      if (started && enabled && !(unchanged && futures.containsKey(definition.taskId()))) {
+        activate(definition, profile);
+      }
+    }
+  }
+
+  @Override
+  public synchronized void unregisterProfile(String profileName) {
+    for (Definition definition : List.copyOf(definitions.values())) {
+      if (definition.profileName().equals(profileName)) {
+        forget(definition.taskId());
+        cancel(definition.taskId());
+      }
+    }
+  }
+
+  /** Adds or replaces a definition; returns the one it replaced. Caller holds the monitor. */
+  private Definition remember(Definition definition) {
+    Map<String, Definition> next = new LinkedHashMap<>(definitions);
+    Definition previous = next.put(definition.taskId(), definition);
+    definitions = Collections.unmodifiableMap(next);
+    return previous;
+  }
+
+  private void forget(String taskId) {
+    Map<String, Definition> next = new LinkedHashMap<>(definitions);
+    next.remove(taskId);
+    definitions = Collections.unmodifiableMap(next);
+  }
+
+  private void cancel(String taskId) {
+    ScheduledFuture<?> future = futures.remove(taskId);
+    if (future != null) {
+      future.cancel(false);
     }
   }
 
@@ -180,6 +255,10 @@ public final class AgentScheduler implements ScheduleService, SmartLifecycle {
   /** Cron entry point. Never throws: a failure here must not stop later firings. */
   public void fire(String taskId) {
     try {
+      if (!definitions.containsKey(taskId)) {
+        log.warn("Cron fired for schedule {} that is no longer registered: skipped", taskId);
+        return;
+      }
       ScheduledTask task = store.find(taskId).orElse(null);
       if (task == null) {
         log.warn("Cron fired for unknown schedule {}", taskId);

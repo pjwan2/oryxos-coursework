@@ -10,5 +10,7 @@ Real output of commands run on the author's machine (Windows 10, JDK 21.0.2, Mav
 | `live-check.txt` | `scripts/week05_live_check.py` on the real JAR: 31 checks (weather and memory with the real audit rows, isolation, scheduler and the `outcome` endpoint, JVM restart with a table-by-table comparison) |
 | `week04-live-check-regression.txt` | week-4's 77 live checks re-run on the same JAR: 77/77 |
 | `dashboard-headless-run.txt` | headless-browser run of the six dashboard pages on the same JAR: 27/27 (automated, not a human review) |
+| `mvn-clean-verify-c3.txt` | `mvn -B -ntp clean verify` on the C3 code (lesson 29): nine modules SUCCESS, 616 tests, 5 skipped, 0 failed |
+| `live-check-c3.txt` | `scripts/week05_agents_live_check.py --stage c3` on the real JAR: 22 checks (AGENT.md agent registered at startup, REST + CLI, name clash, schedule, sandbox, restart) |
 
 Not here, because it was never done: any run with a real LLM, MCP server, webhook, Mem0 server or weather API.

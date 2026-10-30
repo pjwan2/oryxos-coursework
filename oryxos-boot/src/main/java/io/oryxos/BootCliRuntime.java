@@ -4,6 +4,8 @@ import io.oryxos.cli.CliRuntime;
 import io.oryxos.core.agent.AgentService;
 import io.oryxos.core.profile.AgentProfile;
 import io.oryxos.provider.ProfileLoader;
+import io.oryxos.provider.agent.AgentDirectoryScanner;
+import io.oryxos.provider.agent.AgentLoader;
 import io.oryxos.tool.BuiltinTools;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -24,6 +27,7 @@ import org.springframework.core.NestedExceptionUtils;
 public final class BootCliRuntime implements CliRuntime {
   static final String VERSION = "0.1.0";
   private static final String DEFAULT_PROFILE_DIR = ".oryxos/profiles";
+  private static final String DEFAULT_AGENTS_DIR = ".oryxos/agents";
   private static final String DEFAULT_JDBC = "jdbc:sqlite:./oryxos-dev.db";
 
   /** Spring properties applied to the chat context (tests use this to isolate storage). */
@@ -43,6 +47,14 @@ public final class BootCliRuntime implements CliRuntime {
     return configured == null || configured.isBlank() ? DEFAULT_PROFILE_DIR : configured;
   }
 
+  private String agentsDirectory() {
+    String configured = overrides.get("oryxos.agents-directory");
+    if (configured == null) {
+      configured = System.getenv("ORYXOS_AGENTS_DIR");
+    }
+    return configured == null || configured.isBlank() ? DEFAULT_AGENTS_DIR : configured;
+  }
+
   private String jdbcUrl() {
     String configured = overrides.get("spring.datasource.url");
     if (configured == null) {
@@ -53,8 +65,14 @@ public final class BootCliRuntime implements CliRuntime {
 
   @Override
   public List<ProfileSummary> listProfiles() {
-    Map<String, AgentProfile> profiles =
-        ProfileLoader.forListing(Path.of(profileDirectory())).loadAll();
+    ProfileLoader listing = ProfileLoader.forListing(Path.of(profileDirectory()));
+    Map<String, AgentProfile> profiles = new TreeMap<>(listing.loadAll());
+    // Directory agents join the legacy profiles; on a name clash the legacy profile wins, exactly
+    // as it does when the application starts.
+    new AgentDirectoryScanner(Path.of(agentsDirectory()), new AgentLoader(listing, null, List.of()))
+        .scan()
+        .agents()
+        .forEach(agent -> profiles.putIfAbsent(agent.name(), agent.profile()));
     List<ProfileSummary> result = new ArrayList<>();
     profiles.values().stream()
         .sorted((a, b) -> a.name().compareTo(b.name()))

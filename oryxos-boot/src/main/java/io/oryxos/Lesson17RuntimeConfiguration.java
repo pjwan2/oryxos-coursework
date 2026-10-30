@@ -35,8 +35,11 @@ public class Lesson17RuntimeConfiguration {
   }
 
   @Bean
-  public AgentToolExecutor lesson17Tools(ToolRegistry registry, ToolCallAudit audit) {
-    return new AuditedToolExecutor(new RegistryToolExecutor(registry), audit);
+  public AgentToolExecutor lesson17Tools(
+      ToolRegistry registry, ToolCallAudit audit, ProfileRegistry profiles) {
+    // Each call is judged by the agent's CURRENT definition, so tightening a permission applies to
+    // the very next tool call, even inside a turn that started before the change.
+    return new AuditedToolExecutor(new RegistryToolExecutor(registry, profiles::get), audit);
   }
 
   /** One prompt builder for every loop; ContextLoaders (bootstrap, memory) are injected here. */

@@ -1,9 +1,11 @@
 package io.oryxos;
 
 import io.oryxos.core.agent.AgentService;
+import io.oryxos.core.profile.ProfileValidator;
 import io.oryxos.core.schedule.ScheduledTaskStore;
 import io.oryxos.provider.ProfileRegistry;
 import io.oryxos.scheduler.AgentScheduler;
+import io.oryxos.scheduler.ScheduleProfileValidator;
 import java.time.Clock;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +36,12 @@ public class SchedulerConfiguration {
     scheduler.setWaitForTasksToCompleteOnShutdown(true);
     scheduler.setAwaitTerminationSeconds(30);
     return scheduler;
+  }
+
+  /** Agents are only registered with schedules the scheduler would accept. */
+  @Bean
+  public ProfileValidator scheduleProfileValidator() {
+    return new ScheduleProfileValidator();
   }
 
   @Bean

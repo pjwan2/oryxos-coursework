@@ -1,5 +1,6 @@
 package io.oryxos;
 
+import io.oryxos.core.profile.ProfileChangeListener;
 import io.oryxos.core.sandbox.Sandbox;
 import io.oryxos.core.sandbox.SandboxConfigException;
 import io.oryxos.core.sandbox.SandboxSpec;
@@ -106,6 +107,12 @@ public class ToolConfiguration {
     declared.put("allow_private_networks", props.isAllowPrivateNetworks());
     SandboxSpec spec = SandboxSpec.parse(declared, "oryxos.sandbox");
     return new ProfileSandbox(SandboxPolicy.ceilingFromSpec(spec));
+  }
+
+  /** A changed or removed agent loses its cached sandbox policy at once. */
+  @Bean
+  public ProfileChangeListener sandboxInvalidation(Sandbox sandbox) {
+    return (name, before, after) -> sandbox.invalidate(name);
   }
 
   @Bean

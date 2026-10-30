@@ -1,0 +1,31 @@
+JAR: oryxos-boot-0.1.0-SNAPSHOT.jar, scratch dir: <HOME>\AppData\Local\Temp\oryxos-week05-agents-qioczl_j
+
+== Lesson 29: AGENT.md directory -> running agent (no Java change, no repackaging)
+PASS  REST /profiles lists the AGENT.md agent  -> ['daily-reconcile', 'legacy', 'twin']
+PASS  REST /profiles lists the legacy profile
+PASS  the invalid directory is not registered
+PASS  name clash: the legacy profile stays active  -> {'name': 'twin', 'description': 'LEGACY-TWIN', 'provider': {'name': 'mock', 'model': 'm', 'temperature': 0.0}, 'tools': [], 'skills': [], 'mcpServers': [], 'scheduleCount': 0, 'sandboxDeclared': False}
+PASS  declared schedule is registered with the scheduler
+PASS  scheduled_tasks row exists
+PASS  agent runs with the Mock provider  -> Mock response: hello plugin
+PASS  one audited model call
+PASS  declared sandbox lets it read its directory  -> Tool result: LEDGER-CONTENT
+PASS  anything else is denied  -> Tool result: ERROR SANDBOX_DENIED: Path outside allowed READ roots
+PASS  denial is audited as SandboxDenied
+PASS  no script was executed by loading or running the agent
+PASS  Health answers 200
+PASS  Swagger answers 200
+PASS  Admin answers 200
+
+== Lesson 29: the CLI sees the same agents
+PASS  `profile list` shows the AGENT.md agent and the legacy one  -> daily-reconcile  mock/m  tools=[file_read] | legacy  mock/m  tools=[] | twin  mock/m  tools=[]
+PASS  the invalid directory is reported (logged), not silently skipped
+
+== Lesson 29: restart keeps the agent, its schedule and the audit
+PASS  agent registered again after restart
+PASS  scheduled_tasks identical across restart
+PASS  llm_calls identical across restart
+PASS  tool_invocations identical across restart
+PASS  agent still answers
+
+22/22 checks passed in 22s

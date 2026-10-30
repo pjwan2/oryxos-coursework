@@ -1,15 +1,27 @@
 package io.oryxos.provider;
 
+import io.oryxos.core.profile.AgentProfile;
+import io.oryxos.core.profile.ProfileChangeListener;
+import io.oryxos.core.profile.ProfileValidator;
+import io.oryxos.core.schedule.ProfileScheduleSync;
+import io.oryxos.core.tool.ToolRegistry;
+import io.oryxos.provider.agent.AgentDirectoryScanner;
+import io.oryxos.provider.agent.AgentLifecycleService;
+import io.oryxos.provider.agent.AgentLoader;
+import io.oryxos.provider.agent.AgentStartup;
 import java.net.http.HttpClient;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.retry.TransientAiException;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -90,11 +102,81 @@ public class ProviderConfiguration {
   }
 
   @Bean
-  public ProfileRegistry profileRegistry(
+  public AgentLoader agentLoader(
       OryxOsProviderProperties props,
-      @org.springframework.beans.factory.annotation.Qualifier("oryxosModels")
-          Map<String, ChatModel> models) {
-    ProfileLoader loader = new ProfileLoader(Path.of(props.getProfileDirectory()), models.keySet());
-    return new ProfileRegistry(loader.loadAll());
+      @Qualifier("oryxosModels") Map<String, ChatModel> models,
+      ObjectProvider<ToolRegistry> tools,
+      ObjectProvider<ProfileValidator> validators) {
+    ProfileLoader profiles =
+        new ProfileLoader(Path.of(props.getProfileDirectory()), models.keySet());
+    return new AgentLoader(
+        profiles,
+        () -> {
+          ToolRegistry registry = tools.getIfAvailable();
+          return registry == null ? null : Set.copyOf(registry.names());
+        },
+        validators.orderedStream().toList());
+  }
+
+  @Bean
+  public AgentDirectoryScanner agentDirectoryScanner(
+      OryxOsProviderProperties props, AgentLoader loader) {
+    return new AgentDirectoryScanner(Path.of(props.getAgentsDirectory()), loader);
+  }
+
+  /**
+   * Legacy YAML profiles plus the AGENT.md directories, loaded once and merged without overrides.
+   */
+  @Bean
+  public AgentStartup.Report agentStartupReport(
+      OryxOsProviderProperties props,
+      @Qualifier("oryxosModels") Map<String, ChatModel> models,
+      AgentDirectoryScanner scanner) {
+    ProfileLoader legacy = new ProfileLoader(Path.of(props.getProfileDirectory()), models.keySet());
+    return AgentStartup.load(legacy, scanner);
+  }
+
+  @Bean
+  public ProfileRegistry profileRegistry(
+      AgentStartup.Report startup, ObjectProvider<ProfileChangeListener> listeners) {
+    ProfileRegistry registry = new ProfileRegistry(startup.profiles());
+    listeners.orderedStream().forEach(registry::addListener);
+    return registry;
+  }
+
+  @Bean
+  public AgentLifecycleService agentLifecycleService(
+      ProfileRegistry registry,
+      AgentDirectoryScanner scanner,
+      AgentLoader loader,
+      ObjectProvider<ProfileScheduleSync> scheduler,
+      AgentStartup.Report startup) {
+    return new AgentLifecycleService(
+        registry, scanner, loader, new LazyScheduleSync(scheduler), startup);
+  }
+
+  /** The scheduler bean is resolved on first use, so the registry never waits for it. */
+  private static final class LazyScheduleSync implements ProfileScheduleSync {
+    private final ObjectProvider<ProfileScheduleSync> target;
+
+    LazyScheduleSync(ObjectProvider<ProfileScheduleSync> target) {
+      this.target = target;
+    }
+
+    @Override
+    public void registerProfile(AgentProfile profile) {
+      ProfileScheduleSync sync = target.getIfAvailable();
+      if (sync != null) {
+        sync.registerProfile(profile);
+      }
+    }
+
+    @Override
+    public void unregisterProfile(String profileName) {
+      ProfileScheduleSync sync = target.getIfAvailable();
+      if (sync != null) {
+        sync.unregisterProfile(profileName);
+      }
+    }
   }
 }

@@ -56,6 +56,24 @@
 | 28.8 | **长期 Memory 隔离**（不得用 Session 隔离冒充） | — | `MultiAgentIsolationE2ETest.longTermMemoryIsStillGlobal…_notIsolated`：**特征化测试**，断言 `agent-web` 能读到 `agent-files` 保存的记忆 | **尚未实现**：记忆仍是全局共享，没有 per-agent memory isolation，留给第 30 节。该测试故意固定"现状"，将来实现隔离时它必须被有意修改 | 同上 |
 | 28.9 | 失败语义：技术成功 ≠ 业务成功（例：ReAct 返回了文字，但关键工具被 Sandbox 拒绝） | **新增** `ScheduleOutcomeApiController`（web，只读） | web `ScheduleOutcomeApiControllerTest`（8）；boot `SchedulerStabilityE2ETest.aRunWhoseKeyToolWasRefusedIsTechnicallyASuccess…`：被拒的定时运行 `task_executions.success=1`、`lastStatus=SUCCESS`（**既有 API 与存储不变**），但 `GET /schedules/{id}/executions/{executionId}/outcome` 返回 `technicalStatus=SUCCESS`、`toolDenied=1`、**`outcome=COMPLETED_WITH_TOOL_ISSUES`**，说明"不是已确认的业务成功"；正常运行为 `COMPLETED`，抛异常为 `FAILED`；模型不可达的定时运行记 `Agent run failed (ModelUnavailableException)` 且不含密钥 | **Mock 验证通过**（只读新端点；管理台页面仍用前端自己的等价判断，尚未改用该端点） | `evidence/live-check.txt`（真实 JAR：`COMPLETED_WITH_TOOL_ISSUES`） |
 
+## C3 — 第 29 节：插件化 Agent（`AGENT.md`）
+
+Agent Runtime（底座）不变：`AgentService`、`ReActLoop`、Provider、Tool、Sandbox、Memory、Scheduler、SQLite。业务 Agent 由 `.oryxos/agents/<name>/AGENT.md` 声明；新增 Agent **不改 Java、不重新打包、不新增 Spring Bean**，且复用同一个 `AgentProfile` 与 `AgentService`，没有第二套执行引擎。
+
+| # | Requirement | Source | Test | Result | Evidence |
+|---|---|---|---|---|---|
+| 29.1 | 一个 `AGENT.md` 目录即可定义 Agent：YAML frontmatter + Markdown 正文；字段与现有 Profile 对应（name、description、provider、model、tools、notify_channels、schedules，以及 identity/skills/mcp_servers/channels/bootstrap/settings） | `AgentLoader`、`AgentMd`、`AgentDefinition`（provider，包 `io.oryxos.provider.agent`） | provider `AgentLoaderTest`（23，其中 1 个符号链接用例在无权限的 Windows 账号上跳过）、`DeriveProfileTest`（3：同样字段的 YAML 与 AGENT.md 派生出**相等**的 Profile） | **Mock 验证通过** | `evidence/mvn-clean-verify-c3.txt` |
+| 29.2 | 只有一套 Profile Schema：校验复用 `ProfileLoader`，不创建第二套配置 | `ProfileLoader.parse(Map)`（从 `loadOne` 抽出，两处共用） | `DeriveProfileTest.anAgentMdAndALegacyYamlWithTheSameFieldsDeriveTheSameProfile`；既有 `ProfileLoaderTest` 不变 | **Mock 验证通过** | 同上 |
+| 29.3 | 非法输入给出明确错误，不悄悄跳过：缺文件/缺 frontmatter/YAML 错误/重复键/缺必填/未知字段/名称与目录不符/未知 Provider/**未注册工具**/**错误 Cron**/类型错误/超大/非 UTF-8/identity.prompt 与正文冲突 | `AgentLoader`（消息带 `agents/<dir>/AGENT.md` 与字段名；未注册工具会列出已注册工具）、`ScheduleProfileValidator`（scheduler） | `AgentLoaderTest`；boot `AgentPluginIntegrationTest.aBadScheduleOrToolIsRefused…`（真实 `ToolRegistry` 与 `ScheduleConfigParser`：`cron is not a valid six-field cron expression`、`tool 'teleport' is not registered`、`unknown provider: gpt-nowhere`） | **Mock 验证通过** | 同上 |
+| 29.4 | 启动扫描：一个坏目录不影响其他 Agent；旧 `profiles/*.yaml` 保持只读兼容 | `AgentDirectoryScanner`、`AgentStartup` | provider `AgentScanRegisterTest`（13）；boot `AgentPluginIntegrationTest`（9） | **Mock 验证通过** | 同上 |
+| 29.5 | YAML 与 AGENT.md 同名：不静默覆盖、不随机选择，确定性冲突错误 | `AgentStartup.conflictMessage`：旧 YAML 保持生效，AGENT.md 目录不注册并报告；运行时 `AgentConflictException` | `AgentScanRegisterTest.theSameNameInYamlAndAgentMdIsADeterministicConflict…`（连续 3 次加载结果相同）、`aDirectoryWhoseNameBelongsToALegacyProfileIsRefusedAtRuntimeToo`；boot 同名用例 | **Mock 验证通过** | 同上 |
+| 29.6 | 动态 Registry：线程安全；`register/remove/exists/get/list`；注册与热更新复用启动时的同一校验 | `ProfileRegistry`（不可变快照整体替换 + 写入串行化 + `ProfileChangeListener`）；`AgentLifecycleService.register` 对三种入口走同一路径 | provider `ProfileRegistryRuntimeTest`（7，含 4 个读线程 × 2000 次替换时读者永不见到半更新状态、8 线程同名并发注册只有 1 个成功） | **Mock 验证通过** | 同上 |
+| 29.7 | 权限变更使 Sandbox 缓存失效；**取消目录权限后下一次工具调用立即被拒** | `Sandbox.invalidate`、`ProfileSandbox.invalidate`、`ProfileChangeListener`（boot 注册）、`RegistryToolExecutor` 每次调用按**最新**定义判断（进行中的回合也不能用旧快照） | tool `SandboxPolicyInvalidationTest`（7：允许→取消→立即拒绝；旧快照仍被拒；工具被移除→`SecurityException`；Agent 被移除→`ProfileNotFoundException`）；boot `AgentPluginIntegrationTest.tighteningAnAgentsDirectoryPermission…`（真实上下文：读 `private/` 成功→改 AGENT.md→reload→`SANDBOX_DENIED`，审计行 `SandboxDenied`） | **Mock 验证通过** | 同上 |
+| 29.8 | Scheduler 动态注册/注销，句柄管理，重复注册幂等，稳定身份，不清空历史、不偷偷重新启用 | `AgentScheduler.registerProfile/unregisterProfile`（`ProfileScheduleSync`）；变更的计划先 `cancel` 旧句柄再注册；不再声明的计划被停止（行与历史保留）；已停用任务保持停用、`run_count` 不重置 | scheduler `AgentSchedulerRegisterTest`（10）；boot `AgentPluginIntegrationTest`（运行时复制进来的目录，Asia/Shanghai 计划立即出现在 `/schedules`） | **Mock 验证通过** | 同上 |
+| 29.9 | 渐进式上下文：正文进 System Prompt；frontmatter 不重复；REFERENCE/skills/scripts **不预加载**；改正文后下次读最新、无旧指令残留 | `AgentLoader.prompt`（正文 + 文件**名**列表，从不读内容） | provider `ProgressiveDisclosureTest`（6） | **Mock 验证通过** | 同上 |
+| 29.10 | 脚本安全：复用现有 Sandbox，Agent 不能扩大系统级范围；加载从不执行脚本；不把第三方脚本宣称为隔离执行 | 既有 `ProfileSandbox`（Profile ∩ 运维上限）；加载只列名字 | `ProgressiveDisclosureTest.loadingNeverRunsAScript`；既有 `ShellSecurityTest`、`ProfileSandboxTest` | **Mock 验证通过**（应用层白名单**不是**操作系统隔离，见 `known-limitations.md`） | 同上 |
+| 29.11 | 真实 JAR：Agent 目录放入临时工作区，REST 与 CLI 都能看到，并用 Mock Provider 运行 | `BootCliRuntime.listProfiles`（现在合并 `agents/`） | `scripts/week05_agents_live_check.py --stage c3` | 见 `evidence/live-check-c3.txt` | `evidence/live-check-c3.txt` |
+
 ## 回归（第 4 周功能没有被破坏）
 
 | 项 | 结果 |

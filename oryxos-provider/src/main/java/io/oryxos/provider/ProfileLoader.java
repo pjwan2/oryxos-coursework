@@ -75,15 +75,26 @@ public class ProfileLoader {
   }
 
   public AgentProfile loadOne(Path file) throws IOException {
+    Object raw;
+    try (InputStream input = Files.newInputStream(file)) {
+      raw = safeYaml().load(input);
+    }
+    return parse(asMap(raw));
+  }
+
+  /** The YAML reader every agent definition goes through: plain data only, bounded size. */
+  static Yaml safeYaml() {
     LoaderOptions options = new LoaderOptions();
     options.setMaxAliasesForCollections(20);
     options.setCodePointLimit(500_000);
-    Yaml yaml = new Yaml(new SafeConstructor(options));
-    Object raw;
-    try (InputStream input = Files.newInputStream(file)) {
-      raw = yaml.load(input);
-    }
-    Map<String, Object> src = asMap(raw);
+    return new Yaml(new SafeConstructor(options));
+  }
+
+  /**
+   * Builds and validates a Profile from its parsed mapping. The single place where the Profile
+   * schema is enforced: profiles/*.yaml and AGENT.md frontmatter both end up here.
+   */
+  public AgentProfile parse(Map<String, Object> src) {
     String name = required(src, "name");
     Map<String, Object> provider = asMap(src.get("provider"));
     String providerName = required(provider, "name");

@@ -11,6 +11,7 @@ import io.oryxos.core.tool.ToolRegistry;
 import io.oryxos.core.tool.ToolSpec;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +22,20 @@ import org.slf4j.LoggerFactory;
 public final class RegistryToolExecutor implements AgentToolExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(RegistryToolExecutor.class);
   private final ToolRegistry registry;
+  private final Function<String, AgentProfile> latest;
 
   public RegistryToolExecutor(ToolRegistry registry) {
+    this(registry, null);
+  }
+
+  /**
+   * @param latest looks the agent up by name at the moment of each call, so a permission that was
+   *     removed after the turn started is judged by the current definition, not the snapshot the
+   *     turn began with; an agent that no longer exists fails the call. Null keeps the snapshot.
+   */
+  public RegistryToolExecutor(ToolRegistry registry, Function<String, AgentProfile> latest) {
     this.registry = Objects.requireNonNull(registry, "registry");
+    this.latest = latest;
   }
 
   @Override
@@ -37,7 +49,8 @@ public final class RegistryToolExecutor implements AgentToolExecutor {
     Objects.requireNonNull(sessionId, "sessionId");
     Objects.requireNonNull(profile, "profile");
     Objects.requireNonNull(action, "action");
-    if (!profile.tools().contains(action.name())) {
+    AgentProfile current = latest == null ? profile : latest.apply(profile.name());
+    if (!current.tools().contains(action.name())) {
       throw new SecurityException("Tool not permitted: " + action.name());
     }
     OryxTool tool = registry.find(action.name()).orElse(null);
@@ -46,7 +59,7 @@ public final class RegistryToolExecutor implements AgentToolExecutor {
     }
     try {
       return Objects.requireNonNull(
-          tool.execute(action.argumentsJson(), new ToolContext(sessionId, profile)));
+          tool.execute(action.argumentsJson(), new ToolContext(sessionId, current)));
     } catch (SandboxViolation denied) {
       return ToolOutput.denied(denied.getMessage());
     } catch (RuntimeException failure) {

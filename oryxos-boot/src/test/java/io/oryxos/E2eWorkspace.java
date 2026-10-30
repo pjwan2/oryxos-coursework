@@ -22,6 +22,7 @@ final class E2eWorkspace {
 
   final Path root;
   final Path profiles;
+  final Path agents;
   final Path allowed;
   final Path forbidden;
   final Path database;
@@ -31,6 +32,7 @@ final class E2eWorkspace {
     try {
       root = Files.createTempDirectory(prefix);
       profiles = Files.createDirectories(root.resolve("profiles"));
+      agents = root.resolve("agents");
       allowed = Files.createDirectories(root.resolve("ws/allowed"));
       forbidden = Files.createDirectories(root.resolve("ws/forbidden"));
     } catch (IOException e) {
@@ -88,6 +90,7 @@ final class E2eWorkspace {
   Map<String, String> properties(String fakeModelBaseUrl) {
     java.util.LinkedHashMap<String, String> p = new java.util.LinkedHashMap<>();
     p.put("oryxos.profile-directory", slash(profiles));
+    p.put("oryxos.agents-directory", slash(agents));
     p.put("spring.datasource.url", jdbcUrl());
     p.put("oryxos.memory.markdown-path", slash(memoryFile));
     p.put("oryxos.sandbox.read-roots", slash(allowed));

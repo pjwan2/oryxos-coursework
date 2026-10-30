@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "oryxos")
 public class OryxOsProviderProperties {
   private String profileDirectory = ".oryxos/profiles";
+  private String agentsDirectory = ".oryxos/agents";
   private List<ProviderEntry> providers = new ArrayList<>();
 
   public String getProfileDirectory() {
@@ -15,6 +16,15 @@ public class OryxOsProviderProperties {
 
   public void setProfileDirectory(String path) {
     this.profileDirectory = path;
+  }
+
+  /** Where {@code <name>/AGENT.md} directories live; the only writable source of new agents. */
+  public String getAgentsDirectory() {
+    return agentsDirectory;
+  }
+
+  public void setAgentsDirectory(String path) {
+    this.agentsDirectory = path;
   }
 
   public List<ProviderEntry> getProviders() {

@@ -61,7 +61,8 @@
 |---|---|---|---|
 | C1 第 27 节 | `178411b` | 假模型服务器 + 真实 Spring AI 客户端的端到端测试（天气：2 次模型调用/1 次工具调用；记忆；三条失败路径）、进程内 Mock 流程测试、CLI/REST 同库对账；**修复** Provider 不可达时请求线程被默认重试挂住数分钟 | 517 |
 | C2 第 28 节 | `49777b7` | 调度全链路、不重叠（6 并发只执行 1 次）、重启恢复逐行对账、多 Agent 隔离、新增只读 `outcome` 端点（技术成功 ≠ 业务成功）、真实 JAR 实机检查 31 项 | 538 |
-| 文档 | （本记录所在提交） | 第 5 周需求矩阵、验收报告、限制、证据 | 538 |
+| 文档 | `a111ee8` | 第 5 周需求矩阵、验收报告、限制、证据 | 538 |
+| C3 第 29 节 | （见提交 `feat(week05): support declarative AGENT.md plugins`） | `AGENT.md` 目录即 Agent：`AgentLoader`/`AgentDirectoryScanner`/`AgentStartup`；可变线程安全 `ProfileRegistry`；调度器动态注册；沙箱缓存失效且每次工具调用按最新定义判断；渐进式上下文；真实 JAR 22/22 | 616（611/5/0） |
 
 - **验收**：538 个测试、534 通过、4 跳过（符号链接）、0 失败；真实 JAR 31/31；第 4 周回归 77/77；管理台自动化检查 27/27。见 [week-05/acceptance-report.md](week-05/acceptance-report.md)。
 - **没验证 / 没实现**：真实 LLM、MCP、Webhook、Mem0、真实天气 API 全部未验证；`HumanTriggerFlowIT` 未实现；**per-agent memory 隔离尚未实现**（特征化测试固定了"全局共享"的现状）。

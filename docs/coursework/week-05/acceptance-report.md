@@ -87,3 +87,16 @@ weather fixture requests: ['/weather']
 ## 10. 状态
 
 第 27 节（C1）：**Mock 验证通过**，一项（真实模型测试）未实现/未验证。第 28 节（C2）：**Mock 验证通过**，per-agent memory 隔离**尚未实现**。不推送、不发布第 5 周标签。
+
+---
+
+# C3 补充验收（第 29 节：`AGENT.md` 插件化）
+
+| 项 | 结果 |
+|---|---|
+| `mvn -B -ntp clean verify`（C3 代码） | **BUILD SUCCESS**，九模块全部 SUCCESS；Checkstyle 0 违规、SpotBugs 0 BugInstance、PMD、Spotless 通过；`evidence/mvn-clean-verify-c3.txt` |
+| 测试 | **616 个**（C2 为 538，新增 78），**611 通过、5 跳过、0 失败**。5 个跳过 = 既有 4 个符号链接测试 + 新增的 1 个符号链接用例（`AgentLoaderTest`，该 Windows 账号无创建符号链接的权限） |
+| 新增测试 | provider：`AgentLoaderTest` 23、`DeriveProfileTest` 3、`AgentScanRegisterTest` 13、`ProgressiveDisclosureTest` 6、`ProfileRegistryRuntimeTest` 7；scheduler：`AgentSchedulerRegisterTest` 10；tool：`SandboxPolicyInvalidationTest` 7；boot：`AgentPluginIntegrationTest` 9 |
+| 真实 JAR | `scripts/week05_agents_live_check.py --stage c3`：**22/22**（`evidence/live-check-c3.txt`）：AGENT.md 目录启动即注册、REST 与 CLI 都能看到、同名冲突保留旧 YAML、坏目录不注册但有日志、计划入库、Mock 运行并审计、沙箱放行/拒绝、脚本未被执行、Health/Swagger/Admin 200、重启后 `scheduled_tasks`/`llm_calls`/`tool_invocations` 逐行相同 |
+| 回归中发现并修正的问题 | 把调度器的定义表改成并发映射后，既有 `AgentSchedulerTest`、`MultiAgentSchedulerIsolationTest` 因注册顺序变化失败；改为"写时复制的有序快照"（读无锁、写在 monitor 下、保持 Profile 顺序），既有测试未改动即通过 |
+| 未做 | 运行中新增目录的 JAR 级验证（文件监听与 REST 是第 30 节）；真实 LLM / MCP / Webhook / Mem0 仍未验证 |

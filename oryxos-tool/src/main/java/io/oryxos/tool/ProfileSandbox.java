@@ -58,6 +58,16 @@ public final class ProfileSandbox implements Sandbox {
     return scoped.computeIfAbsent(profile, this::build);
   }
 
+  /**
+   * Forgets every cached policy of the named agent. The cache key is the whole Profile value, so a
+   * changed Profile is never judged by an old entry; this keeps the cache from filling up with the
+   * superseded ones and makes the invalidation explicit and testable.
+   */
+  @Override
+  public void invalidate(String profileName) {
+    scoped.keySet().removeIf(profile -> profile.name().equals(profileName));
+  }
+
   private Sandbox build(AgentProfile profile) {
     SandboxPolicy requested;
     try {

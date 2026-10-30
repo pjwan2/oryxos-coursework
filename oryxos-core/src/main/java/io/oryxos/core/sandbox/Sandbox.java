@@ -46,4 +46,12 @@ public interface Sandbox {
   default Sandbox forProfile(AgentProfile profile) {
     return this;
   }
+
+  /**
+   * Drops anything cached for the named agent. Called when its definition changed or it was
+   * removed, so the next call is judged against the new definition only.
+   */
+  default void invalidate(String profileName) {
+    // Implementations without per-Profile state have nothing to drop.
+  }
 }

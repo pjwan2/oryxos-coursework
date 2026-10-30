@@ -12,6 +12,10 @@
 
 > 关于 GitHub：**GitHub 没有公开的 Trending 接口。** 脚本用的是“创建日期窗口 + 按总 star 数降序”的近似（今日 = 前一个 UTC 日期起创建；本月 = 最近 30 天创建；AI = 最近 30 天创建且带 `ai`/`llm`/`machine-learning`/`deep-learning`/`artificial-intelligence` 任一主题）。它不衡量 star 增长，**不等于官方 Trending**，输出里和日报里都写明了。
 
+## 0. 已验证的最短路径
+
+在**空工作区**里，用真实 JAR 和离线 `mock` 模型，逐个安装三个 Agent、运行、重启的完整过程由 `python scripts/week05_c6_quickstart_check.py --jar <jar>` 自动执行并记录（`evidence/c6/quickstart-check.txt`）。`mock` 模型只回显，不会调用工具，所以它证明接线，不证明报告内容；要看到工具调用和通知，需要真实模型（`DEEPSEEK_API_KEY` 环境变量），或者参考 `scripts/week05_c5_live_check.py` 里的脚本化模型。
+
 ## 1. 准备
 
 ```bash
@@ -39,7 +43,7 @@ java -jar oryxos-boot/target/oryxos-boot-0.1.0-SNAPSHOT.jar \
   --oryxos.sandbox.commands=python
 ```
 
-> `127.0.0.1` + `allow-private-networks` 只是为了让通知能发到本机接收端；它同时意味着这些 Agent 理论上能访问本机回环地址上的任何端口（`api.open-meteo.com` 等外部主机仍只限列出的）。要发到真实群，请先拿到明确授权，把 `notify_channels[].url` 换成真实 webhook，并**同时去掉** Agent 里的 `127.0.0.1` 和 `allow_private_networks`。Linux/macOS 上把 `python` 换成 `python3`（AGENT.md 里的命令名和上面的 `--oryxos.sandbox.commands` 都要改）。
+> **仅限本机演示，不是生产默认。** `127.0.0.1` + `allow-private-networks` 只是为了让通知能发到本机接收端；它同时意味着这些 Agent 理论上能访问本机回环地址上的任何端口（`api.open-meteo.com` 等外部主机仍只限列出的）。要发到真实群，请先拿到明确授权，把 `notify_channels[].url` 换成真实 webhook，并**同时去掉** Agent 里的 `127.0.0.1` 和 `allow_private_networks`。Linux/macOS 上把 `python` 换成 `python3`（AGENT.md 里的命令名和上面的 `--oryxos.sandbox.commands` 都要改）。
 
 启动后打开 <http://127.0.0.1:8080/admin/agents>。
 

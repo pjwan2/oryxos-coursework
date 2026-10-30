@@ -1,9 +1,9 @@
-# 第 5 周需求对照矩阵（C1：第 27 节，C2：第 28 节，C3：第 29 节，C4：第 30 节，C5：第 31 节）
+# 第 5 周需求对照矩阵（C1：第 27 节，C2：第 28 节，C3：第 29 节，C4：第 30 节，C5：第 31 节，C6：第 32 节）
 
 每一项：**Requirement → Source → Test → Result → Evidence**。状态只用四种：
 
 - **Mock 验证通过**：用本地确定性模型/假服务器和真实的工具、沙箱、记忆、SQLite、REST 验证；
-- **真实外部服务验证通过**：（本周没有任何一项）；
+- **真实外部服务验证通过**：只有第 31 节的三个公开**只读**接口（Open-Meteo、Hacker News Search、GitHub Search，见 31.12）；真实 LLM、真实 Webhook 仍**未验证**；
 - **未验证**：写了测试条件但缺少外部依赖，没有运行；
 - **尚未实现**：代码里没有。
 
@@ -111,6 +111,26 @@ C4 在 C3 的 `register(agentDir)` 之上加了统一生命周期（`AgentLifecy
 | 31.10 | 真实 fat JAR 端到端：加载、API 和管理台可见、手动触发、真实 Cron、工具与记忆、通知接收、精确执行 ID 对账、重启 | `scripts/week05_c5_live_check.py` | 64 项（见证据）：含 Playwright 无头 Chromium 打开 Agents 列表、详情、确认后运行、查看工具调用、Files 页看到真实 AGENT.md/脚本/技能文件、会话页发消息、记忆页看到私有记忆、Scheduler 页 | **Mock 验证通过**（自动化浏览器；无人工验收） | `evidence/c5/live-check-c5.txt` |
 | 31.11 | 管理台：在列表里找到、看配置和文件、手动触发、看会话、看专属记忆、看 Scheduler 记录、看 notify 与工具结果 | 复用第 30 节五标签页；**最小新增** `RunsPanel`（Overview 里的“Scheduled runs”）+ outcome 接口新增 `calls` 明细 | 前端 vitest 42（新增 4：列出最近运行并按需展开每个工具调用，拒绝显示为 ✗ + `SandboxDenied`；运行需确认、技术状态与工具审计分开；无 schedule 时说明；拒绝时显示服务器消息）；web `ScheduleOutcomeApiControllerTest`（12，+`calls` 顺序） | **Mock 验证通过** | 同上 |
 | 31.12 | Tier B 真实外部服务（各自记录成功/未验证） | `scripts/week05_c5_external_check.py` | 见 `evidence/c5/external-tier-b.txt` | **真实外部服务验证通过**：Open-Meteo（直接 GET 与经 JAR 的真实 `http_get`）、HN Search（Algolia）、GitHub Search API（经真实脚本，未认证）。**未验证**：真实 LLM（没有 Key）、真实 Webhook（没有授权目标） | `evidence/c5/` |
+
+## C6 — 第 32 节：总结、最终验收与发布
+
+不增加业务功能。证据在 `evidence/c6/`；总体结论在 [acceptance-report.md](acceptance-report.md) 的 C6 节。
+
+| # | Requirement | Source | Test | Result | Evidence |
+|---|---|---|---|---|---|
+| 32.1 | 第一阶段总结：架构（Provider/ReAct/Tool/Sandbox/Memory/Scheduler）、Runtime 与业务 Agent 分界、`AGENT.md` 机制、REST/CLI 同一引擎、三个 Demo 及验收、取舍/安全边界/改进 | [phase1-summary.md](phase1-summary.md) | `scripts/check_doc_links.py`（无断链）；人工对照代码 | **文档完成** | — |
+| 32.2 | Mock 验收、真实只读外部 API 验收、未验证项分开写 | 各文档顶部的口径表 | 人工核对：没有把未验证项写成完成 | **文档完成** | phase1-summary、README、known-limitations I 节 |
+| 32.3 | 在干净克隆里重新确认所有数字 | 本节 | 干净克隆：`npm ci/test/build`、`spotless`、`mvn clean verify`、`git diff --check` | **Mock 验证通过**（789 个测试 / 783 通过 / 6 跳过 / 0 失败；前端 42） | `evidence/c6/mvn-clean-verify-c6.txt`、`evidence/c6/test-summary.md` |
+| 32.4 | 三个 Agent 示例可独立安装；Quick Start 在全新工作区可复现 | `scripts/c5_install_agents.py`、`scripts/week05_c6_quickstart_check.py` | Quick Start 检查（空工作区，真实 JAR，逐个安装，不重启就注册） | **Mock 验证通过**（56/56；离线 `mock` 模型只回显） | `evidence/c6/quickstart-check.txt` |
+| 32.5 | Fat JAR 含全部依赖和前端资源 | `oryxos-boot` 的 Spring Boot repackage | Quick Start 检查第 1 节（内嵌库、八个模块、SQLite、内嵌 `static/admin`、无外部 URL、无数据库/日志/密钥） | **Mock 验证通过** | 同上 |
+| 32.6 | API、Swagger、Health、Admin、Prometheus 正常 | — | Quick Start 检查第 3 节；`WebSmokeIT`（真实 JAR） | **Mock 验证通过** | 同上 |
+| 32.7 | 迁移与重启恢复 | `SqliteMigrator` | 重启后版本 1..4、`llm_calls` 与执行历史不变；既有迁移测试；真实 JAR 重启五张表比较 | **Mock 验证通过**；真实第 4 周数据库升级演练**未做** | 同上、`evidence/c6/live-check-c5.txt` |
+| 32.8 | 示例的私有网络放行只是本机演示 | 三个 `AGENT.md` 的 `LOCAL DEMO ONLY` 注释；`ToolConfiguration.SandboxProperties` 默认值 | boot `ExampleAgentsSafetyDefaultsTest`（3；变异检查通过） | **Mock 验证通过** | `evidence/c6/mvn-clean-verify-c6.txt` |
+| 32.9 | 无认证管理 API 仍只限本机 | `LocalAccess`；`server.address: 127.0.0.1` | Quick Start 检查第 6 节（外来 Origin、转发头 → 403） | **Mock 验证通过**；**仍然没有认证** | `evidence/c6/quickstart-check.txt` |
+| 32.10 | 无凭证、私人数据、付费资料进入 Git | `scripts/security_audit.py` | 扫描 590 个文件和全部历史；`git ls-files` 无 PDF/Office/ZIP/DB/日志/`MEMORY.md` | **通过**（命中均为已审阅误报） | `evidence/c6/security-audit.txt` |
+| 32.11 | 真实 LLM 一次有限调用（仅当环境里已有合法密钥） | — | 检查环境变量名：没有模型服务商密钥 | **未验证**（未执行，无成本） | acceptance-report C6.5 |
+| 32.12 | GitHub 发布：`submission/week-05` + 注释型 `week-05` 标签；CI 全绿后才打标签；不 force push；不动 `week-04` | — | 发布时的 `git ls-remote` 与 GitHub Actions | 见最终报告 | acceptance-report C6.7 |
+| 32.13 | 课程平台提交 | — | — | **Pending** | acceptance-report C6.8 |
 
 ## 回归（第 4 周功能没有被破坏）
 

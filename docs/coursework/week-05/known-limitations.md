@@ -1,15 +1,17 @@
-# 第 5 周（C1～C5）已知限制与未验证项
+# 第 5 周（C1～C6）已知限制与未验证项
 
 只写**没有验证、没有实现、或有明确缺口**的事。第 4 周的限制（[../week-04/known-limitations.md](../week-04/known-limitations.md)）依然成立，这里不重复，只写本阶段新增或需要强调的。
 
-## A. 真实外部服务：全部未验证
+## A. 真实外部服务：只读公开接口已验证，其余未验证
+
+**C5 之后的更正**：Open-Meteo、Hacker News Search（Algolia）、GitHub Search API 已在第 31 节被真实只读访问并留下证据（`evidence/c5/`）。下表保留 C2 时的原文；其中"真实天气 API 未验证"一行**已过时**（见最后一行的更正），其余各行至今成立。真实 LLM、真实 Webhook、真实 MCP、Mem0 仍**未验证**。
 
 | 项 | 状态 |
 |---|---|
 | 真实 LLM（DeepSeek 等） | **未验证**。"模型"是 127.0.0.1 上的假服务器（讲 OpenAI 聊天协议）和进程内 `MockChatModel`。真实 Spring AI 客户端代码路径被执行了，但真实服务商对 tool call 的响应细节、令牌计数、真实超时异常链都没见过；`llm_calls` 里的令牌数是假服务器给的固定值。 |
 | `HumanTriggerFlowIT`（需要真实密钥的外部模型集成测试） | **尚未实现**。没有可用密钥；第 27 节课件是否要求它不得而知（等待核对）。没有写一个"会被跳过的空测试"来冒充。 |
 | 真实 MCP、Webhook、Mem0 | **未验证**（同第 4 周）。 |
-| 真实天气 API | **未验证**。天气来自 127.0.0.1 的 Fixture；为让沙箱放行回环地址，测试里 Profile 和运维上限都开了 `allow_private_networks`。这是测试配置，不是对公网天气服务的验证，也不是推荐的生产配置。 |
+| 真实天气 API | **（C2 时）未验证；C5 起 Open-Meteo 已真实只读验证。** 当时天气来自 127.0.0.1 的 Fixture；为让沙箱放行回环地址，测试里 Profile 和运维上限都开了 `allow_private_networks`。这是测试配置，不是对公网天气服务的验证，也不是推荐的生产配置。 |
 
 ## B. 本阶段新增的行为与限制
 
@@ -89,4 +91,23 @@
 10. **跳过的测试**：Maven 报告 6 个跳过，与第 30 节相同；`GitHubTrendingScriptTest`、`GitHubDailyAgentTest`、`AgentDemoRestartIT` 等在找不到 Python 解释器时会被跳过（本机有 Python，所以在这里实际运行了）。CI 若没有 `python`/`python3` 会多出这些跳过。
 11. **Linux/macOS**：AGENT.md 里的命令名是 `python`；那些系统通常只有 `python3`，需要同时改 AGENT.md 里的命令名（两处）和 `--oryxos.sandbox.commands`。本阶段只在 Windows 上运行过。
 12. **管理台验证是自动化的**（vitest + Playwright 无头 Chromium），没有人工浏览器验收。
-13. **发布**：本阶段不推送、不打 `week-05` 标签、不创建 `v0.1.0`，留给 C6。
+13. **发布**：C5 当时不推送；C6 已处理，见下面的 I 节。
+
+## I. 第 32 节（C6：最终验收与发布）之后仍然存在的限制
+
+C6 没有增加业务功能。下面是发布时**仍然未完成**的事项，一项也没有被改成"已完成"：
+
+| 项 | 状态 |
+|---|---|
+| 真实 LLM | **未验证**。环境里没有合法配置的密钥（检查的是环境变量名，没有读取任何值），所以没有做任何真实模型调用，也没有成本记录。发布的是明确标注 Mock 验证的课程快照。 |
+| 真实 Webhook | **未验证**。没有被明确授权的目标；示例只通知 `http://127.0.0.1:18080/notify`。 |
+| 真实连续 48 小时运行 | **待验证**。"连续两天"只用可控时钟验证（`ScheduleCrossDayTest`）。 |
+| 新闻 MCP | **没有实现，没有运行。** |
+| Linux/macOS 实际运行 | 本机只有 Windows。GitHub Actions 在 Ubuntu 上跑全部 Maven 与前端检查（结果见最终报告）；依赖 Python 的测试会自己找 `python` 或 `python3`，找不到就跳过并如实计入跳过数。三个示例里写的命令名是 `python`；Linux/macOS 要改成 `python3`（AGENT.md 里两处和 `--oryxos.sandbox.commands`），本阶段没有在这些系统上实际运行示例。 |
+| 人工浏览器验收 | **没有**。只有 vitest 和 Playwright 无头浏览器。 |
+| 课程平台提交 | **Pending**（GitHub 发布不等于平台提交）。 |
+| 认证 | **没有**。管理 API 只适合本机，限制本机访问的检查（回环、无转发头、本地 `Origin`/`Host`）在 Quick Start 检查中再次确认。 |
+| 示例里的私有网络放行 | 三个示例为了通知本机接收端声明了 `127.0.0.1` 和 `allow_private_networks: true`。已在每处加 `LOCAL DEMO ONLY` 标记并用 `ExampleAgentsSafetyDefaultsTest` 守护；应用默认的运维上限仍然拒绝私有网络。运维如果照 Quick Start 的命令行传了 `--oryxos.sandbox.allow-private-networks=true`，就是**自己选择**放行了本机回环，不要把它当生产配置。 |
+| Python 脚本越过应用层网络白名单 | 同 H.3，没有变化。 |
+| 迁移 | V4 迁移不可回退；升级前会 `VACUUM INTO` 备份。V3→V4 升级路径有单元测试；没有用"真实的第 4 周数据库文件"做过升级演练。 |
+| 是否建议 v0.1.0 | 见验收报告 C6 节：**不建议**现在创建正式 Release。 |

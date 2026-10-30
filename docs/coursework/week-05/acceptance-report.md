@@ -1,12 +1,12 @@
-# 第 5 周验收报告（C1 + C2：第 27、28 节）
+# 第 5 周验收报告（第 27～32 节）
 
-Written for: 项目所有者与作业评阅者。**第 5 周尚未完成**（第 31、32 节还没做）；本报告覆盖第 27～30 节：第 1～10 节是 C1/C2，文末"C3 补充验收""C4 补充验收"是第 29、30 节。数字全部来自本机实际执行；Mock 验证与真实外部服务验证分开写。
+Written for: 项目所有者与作业评阅者。**最终结论在文末"C6 最终验收与发布"一节**；第 1～10 节是 C1/C2 当时的记录（数字是当时的，已被后面的阶段取代），"C3/C4/C5 补充验收"是第 29～31 节。数字全部来自本机实际执行；Mock 验证与真实外部服务验证分开写。
 
 ## 1. 版本与分支
 
 | 项 | 值 |
 |---|---|
-| 分支 | `feature/week-05-agent-lifecycle`（从标签 `week-04` 创建，基线 `4dc96af`；**未推送、未打标签**） |
+| 分支 | `feature/week-05-agent-lifecycle`（从标签 `week-04` 创建，基线 `4dc96af`）；C2 当时**未推送、未打标签**，发布见文末 C6 |
 | **C1** | `178411be6b29e9958369f9dd8dc187f6f8c68500` `feat(week05): verify agent execution end-to-end` |
 | **C2** | `49777b7458fab89b7a56d5cbf95422b97afa0329` `test(week05): verify scheduler recovery and agent isolation` |
 | 之后的提交 | 只有文档与证据（本报告、需求矩阵、限制、迭代记录、`evidence/`）和 `scripts/week05_live_check.py` 里多打印三行审计表行的改动；不改任何模块代码 |
@@ -162,3 +162,123 @@ weather fixture requests: ['/weather']
 2. 第 5 周提交分支 `submission/week-05`、标签 `week-05` 尚未创建；课程平台提交未做。
 3. 管理台只有自动化验证；管理 API 无认证，只适合本机。
 4. 文档中的"待核对"项：老师的评分细则、提交页面的具体要求。
+
+（C6 已处理第 2 项中的发布部分；其余仍然开放，见下一节。）
+
+---
+
+# C6 最终验收与发布（第 32 节）
+
+不再增加业务功能。C6 只做：第一阶段总结文档、发布前检查、在**干净克隆**里重新确认所有数字、GitHub 发布。
+
+## C6.1 验收对象与方法
+
+| 项 | 值 |
+|---|---|
+| 验收提交 | `@X@`（`feature/week-05-agent-lifecycle`；比 C5 的 `32372ac` 多一个守护提交 `d7a5f5b`、第一阶段总结与本报告等文档、`scripts/week05_c6_quickstart_check.py`） |
+| 发布提交 | `submission/week-05` 和标签 `week-05` 指向的提交 = 验收提交 + 证据文件。两者之间**只有** `docs/` 和 `README.md` 里的文件不同（把验收数字和证据写进文档；发布前用 `git diff --name-only <验收提交> HEAD` 核对没有任何源码、脚本、示例或配置文件的差别），所以验收结果适用于发布提交。精确 SHA 在最终报告和标签本身 |
+| 方法 | `git clone --single-branch` 到临时目录，工作区干净；从空的 `node_modules`、空的 `target/` 开始；没有 `-DskipTests`，没有关闭任何检查 |
+| 环境 | Windows 10，JDK 21.0.2，Maven 3.9.16，Node v20.20.2，Python 3.14（本机没有 `python3` 命令，所以 Linux 的命令名只能由 GitHub Actions 间接检验） |
+| 时间 | 2026-10-30 |
+
+## C6.2 命令与结果（干净克隆）
+
+| 命令 | 结果 | 证据 |
+|---|---|---|
+| `npm ci`、`npm test`、`npm run build` | 通过；**42** 个前端测试；`check-build: ok` | `evidence/c6/mvn-clean-verify-c6.txt` 开头 |
+| `mvn -B -ntp spotless:apply`（验收前）/ `spotless:check`（干净克隆） | 通过，无改动 | 同上 |
+| `mvn -B -ntp clean verify` | **BUILD SUCCESS**，九模块 + 父工程全部 SUCCESS；Checkstyle、SpotBugs、PMD、Spotless 通过 | 同上 |
+| 测试数量 | **789 个：783 通过、6 跳过、0 失败**（C5 基线 786；增加的是 `ExampleAgentsSafetyDefaultsTest` 的 3 个）。6 个跳过与 C4、C5 相同：`oryxos-tool` 4 个既有符号链接测试 + `oryxos-provider` 2 个文件符号链接用例（Windows 账号没有创建符号链接的权限），如实记录，没有算作通过。分模块见 `evidence/c6/test-summary.md` | `evidence/c6/test-summary.md` |
+| 第 4 周的 502 个测试 | 一个没少、没改（本分支自 `week-04` 起没有删除测试文件，也没有放宽断言） | — |
+| `git diff --check` | 通过 | — |
+| `python scripts/check_doc_links.py` | 0 个断链 | — |
+| 真实 JAR：三个 Demo（`week05_c5_live_check.py`） | **64/64** | `evidence/c6/live-check-c5.txt` |
+| 真实 JAR：第 29/30 节（`week05_agents_live_check.py --stage all`） | **96/96** | `evidence/c6/live-check-c3-c4.txt` |
+| 真实 JAR：第 27/28 节（`week05_live_check.py`） | **31/31** | `evidence/c6/live-check.txt` |
+| 真实 JAR：第 4 周回归（`week04_live_check.py`） | **77/77** | `evidence/c6/week04-live-check-regression.txt` |
+| 真实 JAR：Quick Start（`week05_c6_quickstart_check.py`，新增） | **56/56** | `evidence/c6/quickstart-check.txt` |
+| `python scripts/security_audit.py`（跟踪文件 + 全部历史） | 没有密钥形态的命中；剩余命中全是已审阅的误报（见 C6.4） | `evidence/c6/security-audit.txt` |
+
+## C6.3 发布前检查清单
+
+| 检查 | 结果 |
+|---|---|
+| 三个 Agent 示例可以独立安装 | **通过**。Quick Start 检查在空工作区里逐个运行 `c5_install_agents.py --only <name>`，每装一个，运行中的服务不重启就注册了它（调度也随之注册）；天气目录里**只有** `AGENT.md`；`__pycache__` 不会被复制 |
+| Quick Start 在全新工作区可复现 | **通过**（Quick Start 检查，空目录，真实 JAR，离线 `mock` 模型）。注意：`mock` 模型只回显，所以这证明安装、注册、调度、运行、审计、重启，**不证明**工具调用或真实模型行为 |
+| Fat JAR 含全部依赖和前端资源 | **通过**。JAR 85 MB，约 112 个内嵌库，含九个模块里除 `oryxos-boot` 本身以外的八个、SQLite 驱动、Spring AI、Picocli、springdoc；`oryxos-web` 内嵌 JAR 里有 `static/admin/index.html` 和脚本/样式资源，没有外部 URL；没有数据库、`.env`、日志或 `MEMORY.md` 被打进去 |
+| API、Swagger、Health、Admin | **通过**：`/api/v1/health`、`/api/v1/info`、`/swagger-ui.html`、`/v3/api-docs`（含 `/api/v1/agents`）、`/admin/`、`/admin/agents`（history 模式深链接）、`/actuator/prometheus` 全部 200 |
+| Maven 九模块质量门禁 | **通过**（C6.2） |
+| npm 测试与构建 | **通过**（C6.2） |
+| SQLite 迁移与重启恢复 | **通过**：Quick Start 在重启后确认 `schema_migrations` 是 1..4、`llm_calls` 行数和执行历史不变、三个 Agent 仍在；真实 JAR 的重启检查比较五张表；V3→V4 升级路径有单元测试（`SqliteMigrationTest`、`MigrationStartupTest`）。**没有**用真实的第 4 周数据库文件做过升级演练 |
+| 真实 Cron 自动触发及审计关联 | **通过（隔离环境）**：`AgentDemoSchedulerIT` 和三个 Demo 的真实 JAR 检查把 Cron 改到几秒后，调度器自己的触发器各运行一次，工具调用按 `execution_id` 精确对账。**不是**等到次日 08:00 |
+| 无凭证、私人数据或付费课程资料进入 Git | **通过**：安全扫描无密钥形态命中；`git ls-files` 里没有 PDF/Office/ZIP/数据库/日志/`MEMORY.md`；环境里没有 `DEEPSEEK_API_KEY`，所以没有任何密钥进过本机文件；作者邮箱出现在已发布的第 4 周文档里（所有者在第 4 周发布时确认过） |
+| 示例配置不能把本地私有网络放行误当生产默认 | **通过，并加了守护**：每个声明 `allow_private_networks: true` 的示例都在该行上方有 `LOCAL DEMO ONLY` 注释；`ExampleAgentsSafetyDefaultsTest`（3 个）断言运维默认拒绝私有网络、不放行主机和命令，`application.yaml` 与 `config/env.example` 不提私有网络，三个示例都带标记（变异检查：去掉标记，测试失败）。Agent 与运维上限取交集，所以示例单独不会生效，必须由运维传 `--oryxos.sandbox.allow-private-networks=true` |
+| 无认证管理 API 继续限制本机访问 | **通过**：服务绑定 `127.0.0.1`；Quick Start 检查确认外来 `Origin` 的写请求、带转发头的写请求、外来 `Origin` 的建 Agent 请求都是 403 |
+
+## C6.4 安全扫描的命中说明
+
+扫描了 590 个跟踪文件和全部提交历史。没有任何 `sk-`、`gh*_`、AWS、Google、Slack 密钥形态。剩下的命中逐条看过：
+
+| 命中 | 原因 |
+|---|---|
+| `Path secret = WS.allowed.resolve(...)`（`AgentPluginIntegrationTest`、`TechDigestAgentTest`） | 变量名叫 `secret` 的测试变量，指向测试里用来证明"不会泄露"的假文件 |
+| `http://user:pass@127.0.0.1:1`（`GitHubTrendingScriptTest`） | 反向测试：脚本必须拒绝带用户信息的 `--api-base` |
+| `--oryxos.providers[1].api-key=dummy-key-not-a-secret`（三个实机检查脚本） | 明确标注的占位值，指向本机假模型 |
+| 第 4 周文档里的作者邮箱和 `C:/Users/USER/...` | 第 4 周已发布内容，发布时已审阅；本地目录已被统一成 `USER` |
+| 历史提交里的旧路径（`/c/Users/`、`C:\Users\USER\...`） | 历史不改写（既定约束） |
+
+## C6.5 真实集成状态
+
+| 项 | 状态 |
+|---|---|
+| Open-Meteo（只读） | **已真实验证**（C5：直接 GET，以及经 JAR 真实 `http_get` 的天气 Agent；`evidence/c5/`） |
+| Hacker News Search（Algolia，只读） | **已真实验证**（30 条） |
+| GitHub Search API（只读，未认证，经真实脚本） | **已真实验证** |
+| 真实 LLM | **未验证**。C6 检查了环境变量**名称**（没有读取值）：没有 `DEEPSEEK_API_KEY` 或其它模型服务商密钥，所以没有做真实模型调用，也没有成本。**没有要求你在聊天里粘贴密钥。** |
+| 真实 Webhook | **未验证**（没有授权目标，一次都没有发送） |
+| 真实 48 小时连续运行 | **待验证** |
+| 新闻 MCP | **没有实现，没有运行** |
+| Linux/macOS 实际运行 | **未验证**（本机 Windows；GitHub Actions 的 Ubuntu 结果见 C6.7） |
+| 人工浏览器验收 | **未做** |
+
+## C6.6 第 27～32 节完成矩阵
+
+见 [README.md](README.md) 的矩阵；每一行的"要求 → 源码 → 测试 → 证据"在 [requirements-matrix.md](requirements-matrix.md)（含新增的 32.x）。
+
+## C6.7 GitHub 发布状态
+
+| 项 | 状态 |
+|---|---|
+| 分支 | `submission/week-05` |
+| 标签 | `week-05`（注释型；只在 GitHub Actions 全部成功之后创建） |
+| 标签与分支指向同一提交 | 发布时核实（`git ls-remote` 的结果在最终报告里） |
+| GitHub Actions | 推送后等待；结果在最终报告里（文档不能记录自己所在提交的 CI 结果） |
+| 没有做的事 | 没有 force push，没有改写历史，没有移动或修改 `week-04` 标签和 `submission/week-04`，没有创建 `v0.1.0` |
+| 提交链接 | <https://github.com/pjwan2/oryxos-coursework/tree/submission/week-05>（以推送成功为准） |
+
+## C6.8 课程平台提交状态
+
+**Pending。** GitHub 发布不等于极客时间平台提交；无法操作课程平台，所以保留为 Pending。提交后在 `docs/coursework/iteration-log.md` 里更新日期。老师的评分细则和提交页面的具体要求仍**等待核对**；第 31 节是两个 Demo 还是三个仍未确认（交付了三个）。
+
+## C6.9 是否建议发布 v0.1.0
+
+**不建议现在创建 `v0.1.0` 正式 Release。** `week-05` 是明确标注 Mock 验证的课程快照；`v0.1.0` 会被读成"可用版本"。
+
+| 第 31 节 / 发布条件 | 是否满足 |
+|---|---|
+| 三个 Demo 可独立安装、可手动触发（REST、CLI） | **满足**（Mock） |
+| 真实 Cron 自动触发被观察到、审计按执行 ID 精确对账 | **满足**（隔离环境，不是真实次日 08:00） |
+| 三个 Agent 的工具、记忆、会话、权限互相隔离 | **满足**（Mock） |
+| 重启后配置、记忆、调度、历史保留 | **满足** |
+| 公开只读数据源真实访问 | **满足**（Open-Meteo、HN Search、GitHub Search） |
+| Mock 验收与真实验收分开记录 | **满足** |
+| 不提交密钥和付费资料 | **满足** |
+| 真实 LLM 端到端（真实模型选择工具、遵守"不编造"和注入规则） | **不满足** |
+| 真实 Webhook 接收证据 | **不满足**（没有授权目标） |
+| 连续两天的真实定时推送（真实 48 小时） | **不满足**（只有可控时钟验证） |
+| 认证与访问控制 | **不满足**（只能本机使用） |
+| 脚本的 OS 级隔离 | **不满足**（可信脚本假设） |
+| 管理台人工验收、Linux/macOS 实际运行 | **不满足** |
+| 课程平台提交 | **Pending** |
+
+建议在补齐"真实 LLM 一次有限运行（环境变量里的密钥，记录成本）"、"一个被授权的真实 Webhook 目标"、"真实 48 小时观察"、"认证"之后，再考虑 `v0.1.0`。

@@ -20,7 +20,7 @@
 |---|---|---|---|---|---|
 | 3 | 15～20：骨架、Provider、ReAct、CLI、Notify、Tool | 完成（阶段 A） | 106 个，0 失败 | （无独立提交分支，见 `master` 之后的线性历史） | `week-03` → `9c07dc0` |
 | 4 | 21～26：Memory、Sandbox、定时任务、Web Service 与管理台 | 完成并已发布到 GitHub；**课程平台尚未提交** | 502 个：498 / 4 / 0 | `submission/week-04` | `week-04` → 该分支发布时的最终提交（见标签本身） |
-| 5 | 27～32：主流程、稳定性、插件化、动态管理、Demo、复盘 | **进行中**：C1～C5（第 27～31 节）完成；C6 未开始；**未推送、未打标签** | 786 个：780 / 6 / 0（截至 C5） | （第 5 周完成后建立 `submission/week-05`） | （完成后打 `week-05`） |
+| 5 | 27～32：主流程、稳定性、插件化、动态管理、Demo、复盘 | 完成并已发布到 GitHub（Mock 验证的课程快照）；**课程平台尚未提交（Pending）**；真实 LLM / Webhook / 48 小时未验证 | 789 个：783 / 6 / 0 | `submission/week-05` | `week-05` → 该分支发布时的最终提交（见标签本身） |
 
 ## 第 3 周（课 15～20）
 
@@ -51,10 +51,10 @@
 - **发布状态**：GitHub 已发布 <https://github.com/pjwan2/oryxos-coursework/tree/submission/week-04>；课程平台提交框**尚未提交**（提交后在此处更新日期）。
 - **文档**：[week-04/README.md](week-04/README.md)。
 
-## 第 5 周（课 27～32）——进行中
+## 第 5 周（课 27～32）
 
-- **分支**：`feature/week-05-agent-lifecycle`，从标签 `week-04` 创建（基线 `4dc96af`）。**未推送、未打标签**（第 5 周没做完）。
-- **目标（本阶段）**：第 27 节主流程集成（C1）、第 28 节稳定性与多 Agent（C2）；不提前做第 29、30 节。
+- **分支**：开发在 `feature/week-05-agent-lifecycle`（从标签 `week-04` 创建，基线 `4dc96af`）；提交分支 `submission/week-05`，标签 `week-05`（CI 全绿后创建）。
+- **目标**：第 27 节主流程集成、第 28 节稳定性与多 Agent、第 29 节 `AGENT.md` 插件化、第 30 节动态管理、第 31 节三个业务 Demo、第 32 节总结与发布。
 - **迭代过程**：
 
 | 阶段 | 提交 | 内容 | 测试 |
@@ -65,11 +65,13 @@
 | C3 第 29 节 | （见提交 `feat(week05): support declarative AGENT.md plugins`） | `AGENT.md` 目录即 Agent：`AgentLoader`/`AgentDirectoryScanner`/`AgentStartup`；可变线程安全 `ProfileRegistry`；调度器动态注册；沙箱缓存失效且每次工具调用按最新定义判断；渐进式上下文；真实 JAR 22/22 | 616（611/5/0） |
 | C4 第 30 节 | （见提交 `feat(week05): add dynamic agent lifecycle and admin management`） | 统一生命周期 CRUD + 归档、`WorkspaceWatcher`、每 Agent 私有记忆（V4 迁移）、调度 `execution_id` 精确对账、会话串行、AI 草稿→确认保存、受限工作区 API、管理台 Agent 页（五个标签）、Scheduler 页改读 outcome；真实 JAR 96/96 | 728（722/6/0） |
 | C5 第 31 节 | （见 `feat(week05)` 的天气 / 科技日报 / GitHub 三个提交与 `test(week05): validate three agent demos end-to-end`） | 三个业务 Agent 示例（`examples/agents/`）、受信 Python 脚本、真实 Cron 触发观察、可控时钟的跨天验证、管理台“Scheduled runs”、outcome `calls` 明细、运行手册；Tier A 真实 JAR 64/64；Tier B：Open-Meteo / HN Search / GitHub Search 真实只读访问成功，真实 LLM 与 Webhook 未验证 | 786（780/6/0） |
+| C6 第 32 节 | （见 `docs(week05)` 和 `chore(release)` 提交） | 第一阶段总结、发布前检查（Quick Start 检查脚本、示例私有网络放行的 `LOCAL DEMO ONLY` 标记与守护测试、安全扫描）、干净克隆全量验收、GitHub 发布 | 789（783/6/0） |
 
-- **验收**（截至 C5）：786 个测试、780 通过、6 跳过（符号链接）、0 失败；前端 42 个；真实 JAR：三个 Demo 64/64、第 29/30 节 96/96、第 27/28 节 31/31、第 4 周回归 77/77；Tier B：Open-Meteo / HN Search / GitHub Search 真实只读访问成功。见 [week-05/acceptance-report.md](week-05/acceptance-report.md)。
-- **没验证 / 没实现**：真实 LLM（含 AI 生成）、MCP、Webhook、Mem0、真实天气 API 全部未验证；`HumanTriggerFlowIT` 未实现；旧 `profiles/*.yaml` Agent 仍共享全局记忆（`AGENT.md` Agent 已有私有记忆，C4）；管理 API 仍无认证；管理台无人工浏览器验收。
+- **最终验收**（干净克隆）：789 个测试、783 通过、6 跳过（符号链接）、0 失败；前端 42 个；真实 JAR：三个 Demo 64/64、第 29/30 节 96/96、第 27/28 节 31/31、第 4 周回归 77/77、Quick Start 56/56；Tier B：Open-Meteo / HN Search / GitHub Search 真实只读访问成功。见 [week-05/acceptance-report.md](week-05/acceptance-report.md)。
+- **没验证 / 没实现**：真实 LLM（含 AI 生成）、真实 Webhook、MCP、Mem0、真实 48 小时连续运行、Linux/macOS 实际运行未验证（Open-Meteo / HN Search / GitHub Search 的只读访问已验证）；`HumanTriggerFlowIT` 未实现；旧 `profiles/*.yaml` Agent 仍共享全局记忆（`AGENT.md` Agent 已有私有记忆，C4）；管理 API 仍无认证；管理台无人工浏览器验收。
 - **第 29/30 节前的问题**：Agent 定义的单一来源、可变 Profile 目录、沙箱缓存驱逐、per-agent memory、工具审计执行 ID、会话并发、管理 API 边界——已在 C3/C4 解决（见 [week-05/known-limitations.md](week-05/known-limitations.md) F、G 节）。
-- **发布状态**：GitHub 与课程平台均**未发布/未提交**（第 5 周未完成）。
+- **发布状态**：GitHub 已发布 <https://github.com/pjwan2/oryxos-coursework/tree/submission/week-05>（标签 `week-05`，推送与 CI 通过后）；课程平台提交框**尚未提交（Pending）**，提交后在此处更新日期。未创建 `v0.1.0`。
+- **下周前置事项**：Week 06 进入 When 分布式延迟消息系统；OryxOS 暂停新功能。若要继续 OryxOS：真实 LLM 一次有限验证、认证、脚本隔离、真实 Webhook 与 48 小时观察。
 - **文档**：[week-05/README.md](week-05/README.md)。
 
 ## 每周追加的模板

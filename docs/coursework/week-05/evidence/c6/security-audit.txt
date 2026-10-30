@@ -1,0 +1,74 @@
+scanned 590 tracked files and 30 commits
+commit identities that will be public: ['PENGJU WANG <wangpengju2008@gmail.com>', 'pengju wang <wangpengju2008@gmail.com>']
+
+harmless test fixtures (fake secrets the tests prove are not leaked): 57
+  ok   [url with credentials] deliverables/week-04/acceptance-report.md: https://user:pw@host`、`api.example.com@evil.com`），它们正是测试用来证明"不会泄漏"的输入，已逐条人工复核。
+  ok   [e-mail address] deliverables/week-04/acceptance-report.md: api.example.com@evil.com
+  ok   [github token] deliverables/week-04/evidence/final-release/10-security-audit.txt: ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345
+  ok   [assigned secret] deliverables/week-04/evidence/final-release/10-security-audit.txt: api_key=sk-live-1234567890
+  ok   [assigned secret] deliverables/week-04/evidence/final-release/10-security-audit.txt: token = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345
+  ok   [assigned secret] deliverables/week-04/evidence/final-release/10-security-audit.txt: secret = Files.createDirectories
+  ok   [url with credentials] deliverables/week-04/evidence/final-release/10-security-audit.txt: https://user:pa55@hooks.example.org
+  ok   [url with credentials] deliverables/week-04/evidence/final-release/10-security-audit.txt: https://api.example.com:password@evil.com
+  ok   [e-mail address] deliverables/week-04/evidence/final-release/10-security-audit.txt: pa55@hooks.example.org
+  ok   [e-mail address] deliverables/week-04/evidence/final-release/10-security-audit.txt: user@x.org
+
+FINDINGS needing review: 29
+  HIT  [e-mail address] deliverables/week-04/acceptance-report.md: wangpengju2008@gmail.com
+         - **个人信息**：提交者为 `pengju wang <wangpengju2008@gmail.com>`（15 个提交）。项目所有者已确认接受随历史公开。
+  HIT  [absolute local path] deliverables/week-04/acceptance-report.md: C:/Users/USER/...
+         - **本机路径**：当前文件树 0 处。历史里的若干旧文档提交（`3c9bb86`、`dfd6d68`、`a93f25a`、`f31fd9f`）曾写入过 `C:/Users/USER/...` 形式的本机目录路径（用户名为通用的 `USER`，不含密码或凭证）。**没有改写历史**，因为那会改变所有阶段提交 SHA 
+  HIT  [e-mail address] deliverables/week-04/evidence/final-release/10-security-audit.txt: wangpengju2008@gmail.com
+         commit identities that will be public: ['PENGJU WANG <wangpengju2008@gmail.com>', 'pengju wang <wangpengju2008@gmail.com>']
+  HIT  [absolute local path] deliverables/week-04/evidence/final-release/10-security-audit.txt: /c/Users/
+         HIT  [absolute local path] history:f11f6f0: /c/Users/
+  HIT  [absolute local path] deliverables/week-04/evidence/final-release/10-security-audit.txt: /c/Users/...
+         HIT  [absolute local path] history:3c9bb86: /c/Users/...
+  HIT  [e-mail address] docs/coursework/week-04/acceptance-report.md: wangpengju2008@gmail.com
+         - **个人信息**：提交者为 `pengju wang <wangpengju2008@gmail.com>`（15 个提交）。项目所有者已确认接受随历史公开。
+  HIT  [absolute local path] docs/coursework/week-04/acceptance-report.md: C:/Users/USER/...
+         - **本机路径**：当前文件树 0 处。历史里的若干旧文档提交（`3c9bb86`、`dfd6d68`、`a93f25a`、`f31fd9f`）曾写入过 `C:/Users/USER/...` 形式的本机目录路径（用户名为通用的 `USER`，不含密码或凭证）。**没有改写历史**，因为那会改变所有阶段提交 SHA 
+  HIT  [e-mail address] docs/coursework/week-04/evidence/final-release/10-security-audit.txt: wangpengju2008@gmail.com
+         commit identities that will be public: ['PENGJU WANG <wangpengju2008@gmail.com>', 'pengju wang <wangpengju2008@gmail.com>']
+  HIT  [absolute local path] docs/coursework/week-04/evidence/final-release/10-security-audit.txt: /c/Users/
+         HIT  [absolute local path] history:f11f6f0: /c/Users/
+  HIT  [absolute local path] docs/coursework/week-04/evidence/final-release/10-security-audit.txt: /c/Users/...
+         HIT  [absolute local path] history:3c9bb86: /c/Users/...
+  HIT  [assigned secret] oryxos-boot/src/test/java/io/oryxos/AgentPluginIntegrationTest.java: secret = WS.allowed.resolve
+         Path secret = WS.allowed.resolve("private/secret.txt");
+  HIT  [url with credentials] oryxos-boot/src/test/java/io/oryxos/GitHubTrendingScriptTest.java: http://user:pass@127.0.0.1:1",
+         "ftp://example.org", "http://user:pass@127.0.0.1:1", "file:///etc/passwd", "not a url"
+  HIT  [assigned secret] oryxos-boot/src/test/java/io/oryxos/TechDigestAgentTest.java: secret = WS.allowed.resolve
+         Path secret = WS.allowed.resolve("digest-format.md");
+  HIT  [assigned secret] scripts/week05_c4_live_check.py: api-key=dummy-key-not-a-secret
+         "--oryxos.providers[1].api-key=dummy-key-not-a-secret",
+  HIT  [assigned secret] scripts/week05_c5_external_check.py: api-key=dummy-key-not-a-secret
+         "--oryxos.providers[1].api-key=dummy-key-not-a-secret",
+  HIT  [assigned secret] scripts/week05_c5_live_check.py: api-key=dummy-key-not-a-secret
+         "--oryxos.providers[1].api-key=dummy-key-not-a-secret",
+  HIT  [assigned secret] history:26db43f: api-key=dummy-key-not-a-secret
+         "--oryxos.providers[1].api-key=dummy-key-not-a-secret",
+  HIT  [url with credentials] history:58988ae: http://user:pass@127.0.0.1:1",
+         "ftp://example.org", "http://user:pass@127.0.0.1:1", "file:///etc/passwd", "not a url"
+  HIT  [assigned secret] history:2afd1f8: secret = WS.allowed.resolve
+         Path secret = WS.allowed.resolve("digest-format.md");
+  HIT  [e-mail address] history:b20da24: wangpengju2008@gmail.com
+         - **个人信息**：提交者为 `pengju wang <wangpengju2008@gmail.com>`（15 个提交）。项目所有者已确认接受随历史公开。
+  HIT  [absolute local path] history:b20da24: C:/Users/USER/...
+         - **本机路径**：当前文件树 0 处。历史里的若干旧文档提交（`3c9bb86`、`dfd6d68`、`a93f25a`、`f31fd9f`）曾写入过 `C:/Users/USER/...` 形式的本机目录路径（用户名为通用的 `USER`，不含密码或凭证）。**没有改写历史**，因为那会改变所有阶段提交 SHA 
+  HIT  [absolute local path] history:b20da24: /c/Users/
+         HIT  [absolute local path] history:f11f6f0: /c/Users/
+  HIT  [absolute local path] history:b20da24: /c/Users/...
+         HIT  [absolute local path] history:3c9bb86: /c/Users/...
+  HIT  [absolute local path] history:3c9bb86: C:\Users\USER\Downloads\OryxOS_V1
+         cd C:\Users\USER\Downloads\OryxOS_V1
+  HIT  [absolute local path] history:dfd6d68: C:/Users/USER/AppData/Local/Temp/claude/c--Users-USER-Downloads-OryxOS-V1/aebf54
+         const WS = 'C:/Users/USER/AppData/Local/Temp/claude/c--Users-USER-Downloads-OryxOS-V1/aebf54e6-a98f-4495-b94c-b23641648078/scratchpad/b4run/ws'
+  HIT  [absolute local path] history:a93f25a: C:/Users/USER/Downloads/OryxOS_V1/OryxOS_Gate2C_Session_Audit_v1_5
+         | 仓库（本地） | `C:/Users/USER/Downloads/OryxOS_V1/OryxOS_Gate2C_Session_Audit_v1_5`（唯一主工程；未推送任何远程） |
+  HIT  [absolute local path] history:f31fd9f: C:/Users/USER/Downloads/OryxOS_V1/OryxOS_Gate2C_Session_Audit_v1_5/
+         `C:/Users/USER/Downloads/OryxOS_V1/OryxOS_Gate2C_Session_Audit_v1_5/` is the only folder that is a Git repository (branch `feature/spring-ai-react-integration`;
+  HIT  [absolute local path] history:f31fd9f: C:/Users/USER/Downloads/OryxOS_V1/OryxOS.code-workspace
+         - `C:/Users/USER/Downloads/OryxOS_V1/OryxOS.code-workspace` (a VS Code workspace with only this folder; open it with *File > Open Workspace from File*), and
+  HIT  [absolute local path] history:f31fd9f: C:/Users/USER/Downloads/OryxOS_V1/README.md
+         - `C:/Users/USER/Downloads/OryxOS_V1/README.md` (a table saying what every sibling folder is).

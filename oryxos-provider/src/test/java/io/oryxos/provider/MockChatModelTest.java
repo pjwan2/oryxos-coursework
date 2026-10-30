@@ -81,4 +81,29 @@ class MockChatModelTest {
     assertEquals(
         "Tool result: P1001 PENDING", model.call(prompt).getResult().getOutput().getText());
   }
+
+  @Test
+  void theSamePromptAlwaysGivesTheSameAnswer() {
+    Prompt prompt = withTools("tool:get_payment {\"payment_id\":\"P1\"}", "get_payment");
+    var first = model.call(prompt).getResult().getOutput();
+    var second = model.call(prompt).getResult().getOutput();
+    assertEquals(first.getToolCalls().getFirst().id(), second.getToolCalls().getFirst().id());
+    assertEquals(
+        first.getToolCalls().getFirst().arguments(), second.getToolCalls().getFirst().arguments());
+  }
+
+  @Test
+  void afterAToolResultTheMockAnswersWithTextAndNeverAsksForAnotherToolCall() {
+    // Two model calls per tool round trip: the loop in the week-5 end-to-end tests relies on this.
+    var response =
+        new ToolResponseMessage.ToolResponse("mock-call-get_payment", "get_payment", "PENDING");
+    Prompt prompt =
+        new Prompt(
+            List.of(
+                new UserMessage("tool:get_payment {\"payment_id\":\"P1\"}"),
+                ToolResponseMessage.builder().responses(List.of(response)).build()));
+    AssistantMessage out = model.call(prompt).getResult().getOutput();
+    assertTrue(out.getToolCalls().isEmpty());
+    assertEquals("Tool result: PENDING", out.getText());
+  }
 }

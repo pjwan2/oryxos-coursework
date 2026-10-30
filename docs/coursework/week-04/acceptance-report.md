@@ -86,7 +86,7 @@ Written for: 作业评阅者与项目所有者。本报告对**发布用的提�
 
 ## 6. 没有验证的东西
 
-与 [known-limitations.md](known-limitations.md) 相同，最重要的：真实 LLM、MCP、Webhook、Mem0 从未运行；4 个符号链接测试跳过；无认证、非 OS 沙箱；管理台没有人工浏览器验收；503/504 只用合成异常验证；GitHub Actions 工作流没有在远程运行过（本报告成文时尚未推送）；老师的评分标准和「本周作业」页面的具体题目**未核实**。
+与 [known-limitations.md](known-limitations.md) 相同，最重要的：真实 LLM、MCP、Webhook、Mem0 从未运行；4 个符号链接测试跳过；无认证、非 OS 沙箱；管理台没有人工浏览器验收；503/504 只用合成异常验证；GitHub Actions 工作流在本报告成文时尚未在远程运行（推送后 Actions 已在 Ubuntu 上通过，见第 3 节）；老师的评分标准和「本周作业」页面的具体题目**未核实**。
 
 ## 7. 范围说明
 

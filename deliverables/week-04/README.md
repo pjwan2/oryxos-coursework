@@ -34,7 +34,7 @@ Written for: 极客时间 AI 编程实战营第 4 周作业的评阅者。本包
 
 ## 提交方式
 
-课程规则（来自课程平台说明，未核实具体页面）：作业代码推送到个人 GitHub 或 Gitee，把仓库链接填到「本周作业」下方的提交框。本包是备份和本地留档：
+课程规则（由项目所有者提供，未对照平台页面核实）：作业代码推送到个人 GitHub 或 Gitee，把仓库链接填到第 4 周「本周作业」下方的提交框。GitHub 已发布：<https://github.com/pjwan2/oryxos-coursework/tree/submission/week-04>；**课程平台提交框尚未提交**。本包是备份和本地留档：
 
 - `oryxos-week-04-coursework.zip`：本文件夹的全部内容（说明、矩阵、报告、设计、证据）；
 - `oryxos-week-04-source.zip`：`git archive` 生成的源码，只含 Git 跟踪的文件。
@@ -44,6 +44,7 @@ Written for: 极客时间 AI 编程实战营第 4 周作业的评阅者。本包
 ## 如何复现
 
 ```bash
+git clone --branch submission/week-04 https://github.com/pjwan2/oryxos-coursework.git oryxos-coursework && cd oryxos-coursework
 cd oryxos-web/src/main/frontend && npm ci && npm test && npm run build && cd ../../../..
 mvn -B -ntp spotless:apply && mvn -B -ntp clean verify
 java -jar oryxos-boot/target/oryxos-boot-0.1.0-SNAPSHOT.jar        # http://127.0.0.1:8080/admin/

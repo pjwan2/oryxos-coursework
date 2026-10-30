@@ -14,7 +14,7 @@
 
 状态含义：**完成** = 代码、测试、运行证据齐全；**完成（有限制）** = 已实现并验证，但有明确未验证项，见同行说明；**部分**；**等待核对** = 取决于老师的正式要求。
 
-测试数字来自 `docs/coursework/week04/evidence/test-summary.md`（本次干净克隆上 `mvn clean verify` 的报告）。`evidence/live-check.txt` 是对**真实可执行 JAR**的 77 项运行检查（`scripts/week04_live_check.py`）。
+测试数字来自 `docs/coursework/week-04/evidence/test-summary.md`（本次干净克隆上 `mvn clean verify` 的报告）。`evidence/live-check.txt` 是对**真实可执行 JAR**的 77 项运行检查（`scripts/week04_live_check.py`）。
 
 ## 总表
 
@@ -103,6 +103,7 @@
 
 | 项 | 状态 |
 |---|---|
-| 提交方式（上传源码包还是仓库地址）、截止日期 | **等待核对**（仓库内无课程平台说明） |
+| 提交渠道 | **已知规则**（由项目所有者提供）：把作业代码推送到个人 GitHub 或 Gitee，并把仓库链接提交到课程第 4 周「本周作业」的提交框。GitHub 已发布：<https://github.com/pjwan2/oryxos-coursework/tree/submission/week-04>；**课程平台提交框尚未提交** |
+| 截止日期、助教批改时间 | **等待核对**（仓库内无课程平台页面；一般说明是提交后约一周内批改，未核实） |
 | 老师的评分标准、是否要求 60～90 秒讲解 / 截图 | **等待核对**（讲义整理包的证据模板提到"自述 60–90 秒"，但那是整理包的建议，不是老师的规定） |
 | 是否要求真实 LLM 的手动运行证据 | **等待核对**；目前没有任何真实 LLM 运行 |

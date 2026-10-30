@@ -25,7 +25,8 @@ OryxOS 是课程项目：一个 Java 21 / Spring Boot 3.5 / Spring AI 的 Agent 
 需要：JDK 21、Maven 3.9+、Node ≥ 20.19 与 npm（前端）、Python 3.9+（只用于可选的实机检查脚本）。**不需要任何 API Key、数据库或网络服务**（默认使用本地 Mock 模型）。
 
 ```bash
-git clone <仓库>  &&  cd oryxos-coursework                # 或解压源码包
+git clone --branch submission/week-04 https://github.com/pjwan2/oryxos-coursework.git oryxos-coursework
+cd oryxos-coursework                # 或解压源码 ZIP（它解压出的目录同样叫 oryxos-coursework）
 cd oryxos-web/src/main/frontend
 npm ci && npm test && npm run build     # 前端构建进 oryxos-web/src/main/resources/static/admin/
 cd ../../../..
@@ -71,4 +72,4 @@ scripts/                      build-all.sh、week04_live_check.py、test_summary
 ## 重要提醒
 
 - 管理台和 API **没有认证**，只能在可信的本机使用；不要暴露到公网。
-- 本地 Git 提交不等于老师能访问源码。是否推送、如何提交由你决定，本次整理**没有推送任何远程，也没有登录课程平台**。
+- **发布状态**（截至本文档所在提交）：源码已发布到 GitHub <https://github.com/pjwan2/oryxos-coursework> 的分支 `submission/week-04`；**课程平台尚未提交**（作业链接由项目所有者填入「本周作业」提交框后，才算提交完成）。GitHub 发布不等于课程作业已提交。

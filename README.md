@@ -65,7 +65,7 @@ JDK 21 · Maven 3.9+ · Node ≥ 20.19 with npm (the web module refuses to build
 ## 7. Quick start
 
 ```bash
-git clone <this repository> oryxos-coursework && cd oryxos-coursework
+git clone --branch submission/week-04 https://github.com/pjwan2/oryxos-coursework.git oryxos-coursework && cd oryxos-coursework
 cd oryxos-web/src/main/frontend && npm ci && npm test && npm run build && cd ../../../..
 mvn -B -ntp spotless:apply
 mvn -B -ntp clean verify                       # all tests + static analysis + real-JAR smoke test
@@ -77,11 +77,12 @@ java -jar oryxos-boot/target/oryxos-boot-0.1.0-SNAPSHOT.jar
 ## 8. CLI usage
 
 ```bash
-java -jar oryxos-boot/target/oryxos-boot-0.1.0-SNAPSHOT.jar status
-java -jar ... profile list
-java -jar ... tool list
-java -jar ... chat memory-demo "hello" --user demo      # one message; omit the message for an interactive chat
-java -jar ... serve --server.port=8081                  # REST server (also the default with no arguments)
+JAR=oryxos-boot/target/oryxos-boot-0.1.0-SNAPSHOT.jar     # built by `mvn clean verify`
+java -jar $JAR status
+java -jar $JAR profile list
+java -jar $JAR tool list
+java -jar $JAR chat memory-demo "hello" --user demo      # one message; omit the message for an interactive chat
+java -jar $JAR serve --server.port=8081                  # REST server (also the default with no arguments)
 ```
 
 With the Mock model, a message `tool:<name> <json>` makes the agent call that tool if its Profile lists it, e.g. `chat memory-demo 'tool:save_memory {"content":"met Sam"}'`.

@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 仓库 | `oryxos-coursework`（GitHub 地址见课程平台提交说明与验收报告） |
+| 仓库 | `oryxos-coursework`：<https://github.com/pjwan2/oryxos-coursework> |
 | 提交分支 | `submission/week-04` |
 | 阶段提交 | A `9c07dc0` → B1 `d57fcd2`（Memory）→ B2 `67e7364`（Sandbox）→ B3 `4c1e3cd`（Scheduler）→ B4 `e6c76c0`（REST + Vue 管理台）→ 周交付 `f31fd9f`…`6c1e643` → 仓库整理 `3c9bb86`、`c8b8513` → 本次发布整理（见验收报告中的精确 SHA） |
 | 验收所用提交 | 见 `acceptance-report.md` 第 1 节（在该提交的干净克隆上重新执行了完整流程） |

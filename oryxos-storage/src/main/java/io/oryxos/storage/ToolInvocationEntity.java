@@ -37,6 +37,9 @@ public class ToolInvocationEntity {
   @Column(name = "occurred_at", nullable = false)
   private Instant occurredAt;
 
+  @Column(name = "execution_id")
+  private String executionId;
+
   protected ToolInvocationEntity() {}
 
   public ToolInvocationEntity(ToolCallEvent event) {
@@ -47,6 +50,7 @@ public class ToolInvocationEntity {
     this.errorMessage = event.errorMessage();
     this.durationMs = event.durationMs();
     this.occurredAt = event.occurredAt();
+    this.executionId = event.executionId();
   }
 
   public Long getId() {
@@ -79,5 +83,9 @@ public class ToolInvocationEntity {
 
   public Instant getOccurredAt() {
     return occurredAt;
+  }
+
+  public String getExecutionId() {
+    return executionId;
   }
 }

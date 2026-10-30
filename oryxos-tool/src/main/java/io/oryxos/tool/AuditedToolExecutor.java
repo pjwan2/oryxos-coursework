@@ -29,12 +29,18 @@ public final class AuditedToolExecutor implements AgentToolExecutor {
 
   @Override
   public ToolOutput execute(String sessionId, AgentProfile profile, ToolAction action) {
+    return execute(sessionId, null, profile, action);
+  }
+
+  @Override
+  public ToolOutput execute(
+      String sessionId, String executionId, AgentProfile profile, ToolAction action) {
     Objects.requireNonNull(sessionId);
     Objects.requireNonNull(action);
     long started = System.nanoTime();
     ToolOutput output;
     try {
-      output = Objects.requireNonNull(delegate.execute(sessionId, profile, action));
+      output = Objects.requireNonNull(delegate.execute(sessionId, executionId, profile, action));
     } catch (RuntimeException error) {
       audit.record(
           new ToolCallEvent(
@@ -44,7 +50,8 @@ public final class AuditedToolExecutor implements AgentToolExecutor {
               error.getClass().getSimpleName(),
               SafeErrorText.ofException("Tool threw", error),
               elapsed(started),
-              Instant.now()));
+              Instant.now(),
+              executionId));
       throw error;
     }
     audit.record(
@@ -55,7 +62,8 @@ public final class AuditedToolExecutor implements AgentToolExecutor {
             categoryOf(output),
             messageOf(output),
             elapsed(started),
-            Instant.now()));
+            Instant.now(),
+            executionId));
     return output;
   }
 

@@ -99,6 +99,11 @@ Every answer uses `{code, message, data, timestamp}` and carries `X-Trace-Id`. I
 | `GET /api/v1/health`, `/info` | probe (503 if the database is down) and status |
 | `GET /api/v1/schedules`, `/{id}/executions`, `POST /{id}/run`, `PUT /{id}` | scheduler operations |
 | `GET /api/v1/schedules/{id}/executions/{executionId}/outcome` | what a finished run achieved: technical status plus tool audit (`COMPLETED`, `COMPLETED_WITH_TOOL_ISSUES`, `FAILED`) |
+| `POST/GET /api/v1/agents`, `GET/PUT/DELETE /api/v1/agents/{name}` | create (fixed template), list, read, replace `AGENT.md` (validated, rolled back on failure), archive (never deletes) |
+| `GET /api/v1/agents/{name}/session`, `POST .../session/messages` | the agent's fixed console conversation (`admin:console:<name>`), same `AgentService` |
+| `GET /api/v1/agents/{name}/memory` | the agent's private long-term memory (or the shared global one for a legacy profile) |
+| `POST /api/v1/agents/{name}/generate-files`, `POST .../files` | model drafts files (nothing saved) / confirmed files are saved and take effect |
+| `GET /api/v1/workspace/tree`, `GET/POST /api/v1/workspace/file` | restricted text files of the registered agents |
 
 Codes: 400 bad input · 403 not local · 404 unknown · 409 scheduler conflict · 500 fixed text only · 503 model/memory unavailable · 504 model timeout. Design: [web service design](docs/coursework/week-04/web-service-design.md).
 

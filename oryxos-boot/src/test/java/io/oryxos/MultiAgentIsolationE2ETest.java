@@ -195,8 +195,10 @@ class MultiAgentIsolationE2ETest {
   }
 
   /**
-   * Characterisation test, not a goal: documents that memory is GLOBAL today. When per-agent memory
-   * is built (lesson 30) this test is expected to change, deliberately.
+   * Characterisation test, not a goal. Since lesson 30 an agent defined by an AGENT.md directory
+   * has a private long-term memory (see PerAgentMemoryIsolationTest and AdminAgentFlowTest); the
+   * legacy profiles/*.yaml agents used here have no directory, so they still share the one global
+   * memory. This test pins that remaining, documented behaviour.
    */
   @Test
   void longTermMemoryIsStillGlobalSoOneAgentCanReadWhatAnotherSaved_notIsolated() throws Exception {
@@ -205,7 +207,7 @@ class MultiAgentIsolationE2ETest {
     String recalled = reply("agent-web", "mem", "tool:recall_memory {\"keyword\":\"alpha\"}");
     assertTrue(
         recalled.contains("alpha-private-fact"),
-        "per-agent memory isolation is NOT implemented: agent-web read agent-files' memory");
+        "legacy profiles/*.yaml agents share the global memory: agent-web read agent-files' memory");
   }
 
   @Test

@@ -6,9 +6,12 @@ import io.oryxos.core.profile.ProfileValidator;
 import io.oryxos.core.schedule.ProfileScheduleSync;
 import io.oryxos.core.tool.ToolRegistry;
 import io.oryxos.provider.agent.AgentDirectoryScanner;
+import io.oryxos.provider.agent.AgentDraftService;
 import io.oryxos.provider.agent.AgentLifecycleService;
 import io.oryxos.provider.agent.AgentLoader;
 import io.oryxos.provider.agent.AgentStartup;
+import io.oryxos.provider.agent.AgentWorkspace;
+import io.oryxos.provider.agent.WorkspaceWatcher;
 import java.net.http.HttpClient;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -22,6 +25,7 @@ import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -146,13 +150,57 @@ public class ProviderConfiguration {
 
   @Bean
   public AgentLifecycleService agentLifecycleService(
+      OryxOsProviderProperties props,
       ProfileRegistry registry,
       AgentDirectoryScanner scanner,
       AgentLoader loader,
       ObjectProvider<ProfileScheduleSync> scheduler,
       AgentStartup.Report startup) {
     return new AgentLifecycleService(
-        registry, scanner, loader, new LazyScheduleSync(scheduler), startup);
+        registry,
+        scanner,
+        loader,
+        new LazyScheduleSync(scheduler),
+        startup,
+        new AgentLifecycleService.Options(
+            Path.of(props.getArchiveDirectory()),
+            props.getNewAgentProvider(),
+            props.getNewAgentModel(),
+            java.time.Clock.systemUTC()));
+  }
+
+  @Bean
+  public AgentWorkspace agentWorkspace(AgentLifecycleService lifecycle) {
+    return new AgentWorkspace(lifecycle);
+  }
+
+  /** The draft call goes through the same audited gateway as every other model call. */
+  @Bean
+  public AgentDraftService agentDraftService(
+      AgentLifecycleService lifecycle,
+      ProfileRegistry registry,
+      SpringAiModelGateway gateway,
+      @Qualifier("oryxosModels") Map<String, ChatModel> models,
+      ObjectProvider<ToolRegistry> tools) {
+    return new AgentDraftService(
+        lifecycle,
+        registry,
+        gateway,
+        models::keySet,
+        () -> {
+          ToolRegistry installed = tools.getIfAvailable();
+          return installed == null ? Set.of() : Set.copyOf(installed.names());
+        });
+  }
+
+  @Bean(initMethod = "start", destroyMethod = "close")
+  @ConditionalOnProperty(name = "oryxos.agents-watch", havingValue = "true", matchIfMissing = true)
+  public WorkspaceWatcher workspaceWatcher(
+      AgentLifecycleService lifecycle, OryxOsProviderProperties props) {
+    return new WorkspaceWatcher(
+        lifecycle,
+        Duration.ofMillis(props.getAgentsWatchDebounceMillis()),
+        Duration.ofSeconds(props.getAgentsReconcileSeconds()));
   }
 
   /** The scheduler bean is resolved on first use, so the registry never waits for it. */

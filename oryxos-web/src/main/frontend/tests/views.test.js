@@ -182,15 +182,21 @@ describe('Scheduler page', () => {
     durationMs: 40,
     ...over
   })
-  const denied = {
-    id: 3,
-    toolName: 'file_write',
-    success: false,
-    errorCategory: 'SandboxDenied',
-    errorMessage: 'Path outside allowed WRITE roots',
-    durationMs: 1,
-    occurredAt: '2026-03-01T10:00:00.010Z'
-  }
+  // What GET /schedules/{id}/executions/{executionId}/outcome returns: matched by execution id.
+  const outcome = (over = {}) => ({
+    executionId: 5,
+    technicalStatus: 'SUCCESS',
+    toolCalls: 0,
+    toolSucceeded: 0,
+    toolDenied: 0,
+    toolFailed: 0,
+    outcome: 'COMPLETED',
+    note: '',
+    executionRef: '0b1e3c64-4c9c-4d52-9d33-1d2f1f4b1a10',
+    matchedBy: 'execution_id',
+    caveat: null,
+    ...over
+  })
 
   it('says a manual run is allowed although the task is disabled', async () => {
     stubApi({ 'GET /schedules': envelope([task()]) })
@@ -203,7 +209,7 @@ describe('Scheduler page', () => {
   it('does not run until confirmed, then separates technical status from tool audit', async () => {
     const calls = stubApi({
       'POST /schedules/ops.check/run': envelope(execution()),
-      'GET /tool-calls': envelope([denied]),
+      'GET /schedules/ops.check/executions/5/outcome': envelope(outcome({ toolCalls: 1, toolDenied: 1 })),
       'GET /schedules/ops.check/executions': envelope([execution()]),
       'GET /schedules': envelope([task()])
     })
@@ -253,8 +259,8 @@ describe('Scheduler page', () => {
 
   it('history rows load the tool audit on demand', async () => {
     stubApi({
+      'GET /schedules/ops.check/executions/5/outcome': envelope(outcome({ technicalStatus: 'FAILED', outcome: 'FAILED' })),
       'GET /schedules/ops.check/executions': envelope([execution({ success: false, errorMessage: 'Agent run failed (IllegalStateException)' })]),
-      'GET /tool-calls': envelope([]),
       'GET /schedules': envelope([task({ enabled: true })])
     })
     const wrapper = await show(SchedulerView)

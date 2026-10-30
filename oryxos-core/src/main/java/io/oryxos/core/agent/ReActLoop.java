@@ -19,6 +19,12 @@ public final class ReActLoop {
   }
 
   public String run(AgentSession session, String message, AgentProfile profile) {
+    return run(session, message, profile, null);
+  }
+
+  /** {@code executionId} (may be null) is attached to every tool audit row of this run. */
+  public String run(
+      AgentSession session, String message, AgentProfile profile, String executionId) {
     Objects.requireNonNull(session, "session");
     Objects.requireNonNull(profile, "profile");
     Objects.requireNonNull(message, "message");
@@ -49,7 +55,7 @@ public final class ReActLoop {
       for (ToolAction action : decision.actions()) {
         ToolOutput output;
         try {
-          output = tools.execute(session.id(), profile, action);
+          output = tools.execute(session.id(), executionId, profile, action);
         } catch (RuntimeException failure) {
           // Preserve partial evidence; never call a model again after an
           // incomplete batch or an authorization exception.

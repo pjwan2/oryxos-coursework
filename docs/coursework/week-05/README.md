@@ -1,4 +1,4 @@
-# Week 5 (lessons 27 to 32): in progress — C1, C2 and C3 done, C4 to C6 not started
+# Week 5 (lessons 27 to 32): in progress — C1 to C4 done, C5 and C6 not started
 
 Branch `feature/week-05-agent-lifecycle` (from the `week-04` tag). **Not pushed and not tagged**: week 5 is not finished.
 
@@ -7,7 +7,7 @@ Branch `feature/week-05-agent-lifecycle` (from the `week-04` tag). **Not pushed 
 | **C1** main-flow integration | 27 | done, verified with a local model and fixtures (commit `178411b`) |
 | **C2** stability and multi-agent | 28 | done, verified with a local model and fixtures (commit `49777b7`); per-agent memory isolation **not implemented** |
 | C3 plugin agents (`AGENT.md`) | 29 | done, verified with the Mock provider (commit: see `git log`, `feat(week05): support declarative AGENT.md plugins`) |
-| C4 dynamic agent management | 30 | not started |
+| C4 dynamic agent management | 30 | done, verified with the Mock provider and a local model stub (commit: see `git log`, `feat(week05): add dynamic agent lifecycle and admin management`) |
 | C5 demos | 31 | not started |
 | C6 review | 32 | not started |
 

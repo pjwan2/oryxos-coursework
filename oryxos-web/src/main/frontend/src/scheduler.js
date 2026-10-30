@@ -30,11 +30,29 @@ export function summarizeToolCalls(calls) {
 }
 
 export function describeOutcome(execution, calls) {
+  return describeCounts(execution, summarizeToolCalls(calls))
+}
+
+/**
+ * The same verdict, from the server's own answer of GET .../executions/{id}/outcome. The server
+ * ties tool calls to the run by its execution id, so this is exact; `matchedBy` tells when an old
+ * run (from before execution ids) had to be matched by time window instead.
+ */
+export function describeServerOutcome(execution, outcome) {
+  const result = describeCounts(execution, {
+    total: outcome.toolCalls,
+    succeeded: outcome.toolSucceeded,
+    denied: outcome.toolDenied,
+    failed: outcome.toolFailed
+  })
+  return { ...result, matchedBy: outcome.matchedBy, caveat: outcome.caveat ?? null }
+}
+
+function describeCounts(execution, counts) {
   const technical = execution.success
     ? { tone: 'ok', label: 'Finished without error', detail: null }
     : { tone: 'danger', label: 'Failed', detail: execution.errorMessage ?? null }
 
-  const counts = summarizeToolCalls(calls)
   let audit
   if (counts.total === 0) {
     audit = { tone: 'neutral', label: 'No tool calls recorded in this run' }

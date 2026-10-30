@@ -24,22 +24,32 @@ import javax.sql.DataSource;
 public final class SqliteMemoryStore implements LongTermMemoryStore {
   private final DataSource dataSource;
   private final Clock clock;
+  private final String agent;
 
+  /** The legacy global memory (rows with an empty agent name). */
   public SqliteMemoryStore(DataSource dataSource, Clock clock) {
+    this(dataSource, clock, "");
+  }
+
+  /** The private memory of one agent: it reads and writes only rows carrying its own name. */
+  public SqliteMemoryStore(DataSource dataSource, Clock clock, String agent) {
     this.dataSource = Objects.requireNonNull(dataSource, "dataSource");
     this.clock = Objects.requireNonNull(clock, "clock");
+    this.agent = Objects.requireNonNull(agent, "agent");
   }
 
   @Override
   public void save(MemoryScope scope, String content) {
     Objects.requireNonNull(scope, "scope");
     String text = MemoryText.normalize(content);
-    String sql = "INSERT INTO memory_entries (scope, content, saved_on) VALUES (?, ?, ?)";
+    String sql =
+        "INSERT INTO memory_entries (scope, content, saved_on, agent_name) VALUES (?, ?, ?, ?)";
     try (Connection c = dataSource.getConnection();
         PreparedStatement st = c.prepareStatement(sql)) {
       st.setString(1, scope.name());
       st.setString(2, text);
       st.setString(3, LocalDate.now(clock).toString());
+      st.setString(4, agent);
       st.executeUpdate();
     } catch (SQLException e) {
       throw new MemoryStoreException("Unable to save memory", e);
@@ -49,7 +59,7 @@ public final class SqliteMemoryStore implements LongTermMemoryStore {
   @Override
   public List<MemoryEntry> readCore() {
     return query(
-        "SELECT content, saved_on FROM memory_entries WHERE scope = 'CORE' ORDER BY id",
+        "SELECT content, saved_on FROM memory_entries WHERE scope = 'CORE' AND agent_name = ? ORDER BY id",
         MemoryScope.CORE,
         null,
         -1);
@@ -60,7 +70,7 @@ public final class SqliteMemoryStore implements LongTermMemoryStore {
     requirePositive(limit);
     return query(
         "SELECT content, saved_on FROM (SELECT id, content, saved_on FROM memory_entries"
-            + " WHERE scope = 'ARCHIVAL' ORDER BY id DESC LIMIT ?) ORDER BY id",
+            + " WHERE scope = 'ARCHIVAL' AND agent_name = ? ORDER BY id DESC LIMIT ?) ORDER BY id",
         MemoryScope.ARCHIVAL,
         null,
         limit);
@@ -75,7 +85,7 @@ public final class SqliteMemoryStore implements LongTermMemoryStore {
         "%" + needle.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
     return query(
         "SELECT content, saved_on FROM (SELECT id, content, saved_on FROM memory_entries"
-            + " WHERE scope = 'ARCHIVAL' AND content LIKE ? ESCAPE '\\'"
+            + " WHERE scope = 'ARCHIVAL' AND agent_name = ? AND content LIKE ? ESCAPE '\\'"
             + " ORDER BY id DESC LIMIT ?) ORDER BY id",
         MemoryScope.ARCHIVAL,
         pattern,
@@ -86,6 +96,7 @@ public final class SqliteMemoryStore implements LongTermMemoryStore {
     try (Connection c = dataSource.getConnection();
         PreparedStatement st = c.prepareStatement(sql)) {
       int index = 1;
+      st.setString(index++, agent);
       if (pattern != null) {
         st.setString(index++, pattern);
       }

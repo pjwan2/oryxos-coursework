@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Supplier;
@@ -289,12 +290,13 @@ public final class AgentScheduler implements ScheduleService, ProfileScheduleSyn
     }
     try {
       String sessionId = SessionIds.of(CHANNEL, USER, task.profileName());
+      String executionId = UUID.randomUUID().toString();
       Instant started = clock.instant();
       long begun = System.nanoTime();
       boolean success = true;
       String error = null;
       try {
-        agent.process(CHANNEL, USER, task.profileName(), task.message());
+        agent.process(CHANNEL, USER, task.profileName(), task.message(), executionId);
       } catch (RuntimeException e) {
         success = false;
         error = SafeErrorText.ofException("Agent run failed", e);
@@ -304,7 +306,8 @@ public final class AgentScheduler implements ScheduleService, ProfileScheduleSyn
       ScheduledTask latest = store.find(taskId).orElse(task);
       Instant next = latest.enabled() ? nextRun(latest.cron(), latest.zone()) : null;
       TaskExecution record =
-          new TaskExecution(0, taskId, sessionId, trigger, started, success, error, millis);
+          new TaskExecution(
+              0, taskId, sessionId, trigger, started, success, error, millis, executionId);
       try {
         return store.recordExecution(record, next);
       } catch (RuntimeException e) {

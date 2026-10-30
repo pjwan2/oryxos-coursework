@@ -274,7 +274,7 @@ def check_scheduler(jar, work, prof, db):
         hist = srv.get("/api/v1/schedules/ops.report/executions")[1]["data"]
         check("execution history survives the restart", len(hist) == 3 and rows(db, "select id, task_id, trigger_type, success from task_executions order by id") == history_before)
         migrations = [r[0] for r in rows(db, "select version from schema_migrations order by version")]
-        check("schema_migrations recorded versions 1..3", migrations == [1, 2, 3], str(migrations))
+        check("schema_migrations recorded versions 1..4 (V4 added in week 5)", migrations == [1, 2, 3, 4], str(migrations))
     finally:
         srv.stop()
 

@@ -151,4 +151,72 @@ class ScheduleOutcomeApiControllerTest {
         .andExpect(status().isForbidden());
     verify(history, never()).find(any(), any(), any(), anyInt());
   }
+
+  // ---- runs that carry an execution id: matched exactly, never by time ----------------------
+
+  private static TaskExecution runWithId(String executionId) {
+    return new TaskExecution(7, "ops.report", SESSION, "manual", T, true, null, 250, executionId);
+  }
+
+  private static ToolCallRecord callOf(String executionId, boolean success, String category) {
+    return new ToolCallRecord(
+        1,
+        SESSION,
+        "file_write",
+        success,
+        category,
+        success ? null : "reason",
+        3,
+        T.plusMillis(10),
+        executionId);
+  }
+
+  @Test
+  void aRunWithAnExecutionIdIsMatchedByThatIdAndNeverByTime() throws Exception {
+    when(schedules.executions("ops.report", 200)).thenReturn(List.of(runWithId("run-A")));
+    when(history.findByExecution("run-A", 200))
+        .thenReturn(List.of(callOf("run-A", false, "SandboxDenied")));
+
+    mvc.perform(get("/api/v1/schedules/ops.report/executions/7/outcome"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.outcome").value("COMPLETED_WITH_TOOL_ISSUES"))
+        .andExpect(jsonPath("$.data.toolDenied").value(1))
+        .andExpect(jsonPath("$.data.matchedBy").value("execution_id"))
+        .andExpect(jsonPath("$.data.executionRef").value("run-A"))
+        .andExpect(jsonPath("$.data.caveat").doesNotExist());
+    verify(history, never()).find(any(), any(), any(), anyInt());
+  }
+
+  @Test
+  void twoOverlappingRunsOfTheSameAgentEachGetOnlyTheirOwnCalls() throws Exception {
+    TaskExecution clean =
+        new TaskExecution(8, "ops.other", SESSION, "cron", T, true, null, 250, "run-B");
+    TaskExecution refused =
+        new TaskExecution(7, "ops.report", SESSION, "cron", T, true, null, 250, "run-A");
+    when(schedules.executions("ops.report", 200)).thenReturn(List.of(refused));
+    when(schedules.executions("ops.other", 200)).thenReturn(List.of(clean));
+    when(history.findByExecution("run-A", 200))
+        .thenReturn(List.of(callOf("run-A", false, "SandboxDenied")));
+    when(history.findByExecution("run-B", 200)).thenReturn(List.of(callOf("run-B", true, null)));
+
+    mvc.perform(get("/api/v1/schedules/ops.report/executions/7/outcome"))
+        .andExpect(jsonPath("$.data.outcome").value("COMPLETED_WITH_TOOL_ISSUES"))
+        .andExpect(jsonPath("$.data.toolCalls").value(1));
+    mvc.perform(get("/api/v1/schedules/ops.other/executions/8/outcome"))
+        .andExpect(jsonPath("$.data.outcome").value("COMPLETED"))
+        .andExpect(jsonPath("$.data.toolSucceeded").value(1))
+        .andExpect(jsonPath("$.data.toolDenied").value(0));
+  }
+
+  @Test
+  void aRunWithoutAnExecutionIdFallsBackToTheTimeWindowAndSaysSo() throws Exception {
+    givenRun(run(true), call(true, null));
+
+    mvc.perform(get("/api/v1/schedules/ops.report/executions/7/outcome"))
+        .andExpect(jsonPath("$.data.matchedBy").value("time_window"))
+        .andExpect(
+            jsonPath("$.data.caveat")
+                .value(org.hamcrest.Matchers.containsString("predates execution ids")));
+    verify(history, never()).findByExecution(any(), anyInt());
+  }
 }

@@ -14,7 +14,8 @@ public record ToolCallEvent(
     String errorCategory,
     String errorMessage,
     long durationMs,
-    Instant occurredAt) {
+    Instant occurredAt,
+    String executionId) {
   public ToolCallEvent {
     Objects.requireNonNull(sessionId);
     Objects.requireNonNull(toolName);
@@ -23,6 +24,18 @@ public record ToolCallEvent(
       throw new IllegalArgumentException("negative duration");
     }
     errorMessage = SafeErrorText.sanitize(errorMessage);
+  }
+
+  /** Event of a run without an execution id (a chat message rather than a scheduler run). */
+  public ToolCallEvent(
+      String sessionId,
+      String toolName,
+      boolean success,
+      String errorCategory,
+      String errorMessage,
+      long durationMs,
+      Instant occurredAt) {
+    this(sessionId, toolName, success, errorCategory, errorMessage, durationMs, occurredAt, null);
   }
 
   /** Event without a readable reason, as recorded before the audit table had a message column. */

@@ -3,11 +3,16 @@ package io.oryxos.web.api;
 import io.oryxos.core.agent.ModelTimeoutException;
 import io.oryxos.core.agent.ModelUnavailableException;
 import io.oryxos.core.agent.ProfileNotFoundException;
+import io.oryxos.core.memory.MemoryIsolationUnsupportedException;
 import io.oryxos.core.memory.MemoryStoreException;
+import io.oryxos.core.profile.AgentConflictException;
+import io.oryxos.core.profile.AgentDefinitionException;
+import io.oryxos.core.profile.DraftUnavailableException;
 import io.oryxos.core.schedule.ScheduleConfigException;
 import io.oryxos.core.schedule.ScheduleNotFoundException;
 import io.oryxos.core.schedule.SchedulerDisabledException;
 import io.oryxos.core.schedule.TaskAlreadyRunningException;
+import io.oryxos.core.workspace.WorkspacePathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -42,6 +47,30 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler({TaskAlreadyRunningException.class, SchedulerDisabledException.class})
   public ResponseEntity<ApiResponse<Void>> scheduleConflict(RuntimeException exception) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(409, exception.getMessage()));
+  }
+
+  /** Our own validation text (which field, what to change); it never carries a stack trace. */
+  @ExceptionHandler(AgentDefinitionException.class)
+  public ResponseEntity<ApiResponse<Void>> invalidAgent(AgentDefinitionException exception) {
+    return ResponseEntity.badRequest().body(ApiResponse.error(400, exception.getMessage()));
+  }
+
+  @ExceptionHandler(WorkspacePathException.class)
+  public ResponseEntity<ApiResponse<Void>> refusedPath(WorkspacePathException exception) {
+    return ResponseEntity.badRequest().body(ApiResponse.error(400, exception.getMessage()));
+  }
+
+  @ExceptionHandler({AgentConflictException.class, DraftUnavailableException.class})
+  public ResponseEntity<ApiResponse<Void>> agentConflict(RuntimeException exception) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(409, exception.getMessage()));
+  }
+
+  @ExceptionHandler(MemoryIsolationUnsupportedException.class)
+  public ResponseEntity<ApiResponse<Void>> memoryNotIsolated(
+      MemoryIsolationUnsupportedException exception) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(ApiResponse.error(409, exception.getMessage()));
   }

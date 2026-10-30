@@ -1,0 +1,127 @@
+JAR: oryxos-boot-0.1.0-SNAPSHOT.jar, scratch dir: <HOME>\AppData\Local\Temp\oryxos-week05-agents-j0e9hmsg
+
+== Lesson 29: AGENT.md directory -> running agent (no Java change, no repackaging)
+PASS  REST /profiles lists the AGENT.md agent  -> ['daily-reconcile', 'legacy', 'twin']
+PASS  REST /profiles lists the legacy profile
+PASS  the invalid directory is not registered
+PASS  name clash: the legacy profile stays active  -> {'name': 'twin', 'description': 'LEGACY-TWIN', 'provider': {'name': 'mock', 'model': 'm', 'temperature': 0.0}, 'tools': [], 'skills': [], 'mcpServers': [], 'scheduleCount': 0, 'sandboxDeclared': False}
+PASS  declared schedule is registered with the scheduler
+PASS  scheduled_tasks row exists
+PASS  agent runs with the Mock provider  -> Mock response: hello plugin
+PASS  one audited model call
+PASS  declared sandbox lets it read its directory  -> Tool result: LEDGER-CONTENT
+PASS  anything else is denied  -> Tool result: ERROR SANDBOX_DENIED: Path outside allowed READ roots
+PASS  denial is audited as SandboxDenied
+PASS  no script was executed by loading or running the agent
+PASS  Health answers 200
+PASS  Swagger answers 200
+PASS  Admin answers 200
+
+== Lesson 29: the CLI sees the same agents
+PASS  `profile list` shows the AGENT.md agent and the legacy one  -> daily-reconcile  mock/m  tools=[file_read] | legacy  mock/m  tools=[] | twin  mock/m  tools=[]
+PASS  the invalid directory is reported (logged), not silently skipped
+
+== Lesson 29: restart keeps the agent, its schedule and the audit
+PASS  agent registered again after restart
+PASS  scheduled_tasks identical across restart
+PASS  llm_calls identical across restart
+PASS  tool_invocations identical across restart
+PASS  agent still answers
+
+== Lesson 30: create, read, update (REST)
+PASS  POST /agents creates an agent from the template  -> {'code': 0, 'message': 'ok', 'data': {'name': 'alpha', 'description': 'First agent', 'origin': 'agent-md', 'editable': T
+PASS  AGENT.md exists on disk
+PASS  GET /agents lists it with the legacy profile  -> ['alpha', 'legacy']
+PASS  legacy profile is marked read-only
+PASS  duplicate name -> 409
+PASS  legacy name -> 409
+PASS  path-like name -> 400
+PASS  unknown agent -> 404
+
+== Lesson 30: dynamic schedule update and execution id
+PASS  PUT /agents/alpha applies the new definition  -> {'code': 0, 'message': 'ok', 'data': {'name': 'alpha', 'description': 'Second version', 'origin': 'agent-md', 'editable': True, 'provider': 'mock', 'model': 'mo
+PASS  schedule registered while running
+PASS  manual run succeeds and carries an execution id  -> {'id': 1, 'taskId': 'alpha.nightly', 'sessionId': 'scheduler:scheduler:alpha', 'trigger': 'manual', 'startedAt': '2026-10-30T06:59:03.887704200Z', 'success': True, 'errorMessage': None, 'durationMs':
+PASS  outcome is matched by execution id  -> {'executionId': 1, 'technicalStatus': 'SUCCESS', 'toolCalls': 1, 'toolSucceeded': 1, 'toolDenied': 0, 'toolFailed': 0, 'outcome': 'COMPLETED', 'note': 'The run finished and every tool call succeeded.'
+PASS  tool_invocations row carries the same id  -> [('file_read', 1, '51e8cbc3-5180-4a63-9118-6756abec96e7')]
+PASS  task_executions row carries the id
+PASS  changed cron replaces the old schedule (one task, new cron, history kept)
+PASS  removing the schedule stops the task
+PASS  its history is still readable
+PASS  unknown tool is refused with a readable message  -> {'code': 400, 'message': "agents/alpha/AGENT.md: tool 'teleport' is not registered (registered tools: [file_read, file_write, get_payment, http_get, notify, rec
+PASS  invalid update left the file untouched
+
+== Lesson 30: sandbox permission tightening takes effect on the next call
+PASS  allowed read works
+PASS  same call is denied right after the change  -> Tool result: ERROR SANDBOX_DENIED: Path outside allowed READ roots
+PASS  denial audited as SandboxDenied
+
+== Lesson 30: per-agent memory
+PASS  each agent writes its own MEMORY.md
+PASS  legacy profile still uses the global file
+PASS  global file has no agent's private fact
+PASS  beta cannot recall alpha's fact
+PASS  GET /agents/alpha/memory is private
+PASS  GET /agents/legacy/memory says it is shared
+
+== Lesson 30: console session, concurrency
+PASS  console message gets a reply
+PASS  six simultaneous messages all succeeded  -> [200, 200, 200, 200, 200, 200]
+PASS  no message or answer was lost (7 user + 7 assistant)  -> 7/7
+PASS  every question is followed by its own answer
+
+== Lesson 30: generate (draft) then confirm
+PASS  draft is valid and has two files  -> {'code': 0, 'message': 'ok', 'data': {'files': [{'path': 'AGENT.md', 'content': '---\nname: beta\ndescription: Drafted by the stub model\nprovider: {name: fake-openai, model: fake-model}\ntools: [save
+PASS  generating saved nothing
+PASS  the draft call is audited in llm_calls
+PASS  the prompt and key are not in the response
+PASS  confirmed draft is saved and live  -> {'code': 0, 'message': 'ok', 'data': {'name': 'beta', 'description': 'Drafted by the stub model', 'origin': 'agent-md', 'editable': True, 'provider': 'fake-open
+
+== Lesson 30: workspace API
+PASS  tree lists agent files
+PASS  read '../live.db' is refused
+PASS  read '/etc/passwd' is refused
+PASS  read 'alpha/../beta/AGENT.md' is refused
+PASS  read 'C:/Windows/win.ini' is refused
+PASS  read 'alpha\\AGENT.md' is refused
+PASS  MEMORY.md is readable
+PASS  MEMORY.md is not writable
+PASS  saving an invalid AGENT.md is refused and keeps the agent
+
+== Lesson 30: file watcher (manual copy, edit, delete, bad directory)
+PASS  copied directory is registered by the watcher
+PASS  edited AGENT.md is reloaded
+PASS  a bad directory is reported
+PASS  the other agents are unaffected
+PASS  an unfinished/invalid edit keeps the previous version
+PASS  deleted directory retires the agent
+
+== Lesson 30: local-only protection
+PASS  cross-site POST is refused
+PASS  rebinding Host header is refused
+PASS  the server is not reachable on the LAN address 172.17.64.1
+
+== Lesson 30: archive, then restart
+PASS  DELETE archives (does not delete)
+PASS  private memory moved with the agent
+PASS  archived agent is gone from the API
+PASS  its audit history is still in SQLite
+PASS  legacy profile cannot be archived
+PASS  after restart: beta and legacy are back, alpha is not  -> ['beta', 'legacy']
+PASS  after restart: all six tables are identical
+PASS  after restart: beta's files are identical
+PASS  after restart: beta's private memory is intact
+PASS  after restart: beta still answers
+
+== Lesson 30: the admin console in a real browser (headless Chromium via Playwright)
+PASS  UI list shows exactly the agents of the API  -> ['beta\nAGENT.md\n\nDrafted by the stub model\n\nModel\nfake-openai / fake-model\nTools\nsave_memoryrecall_memory\nSchedules\n0\nMemory\nprivate', 'legacy\nlegacy, read-only\n\nold style\n\nModel\nmock / m\nTools\nsave_memoryrecall_memory\nSchedules\n0\nMemory\nshared (global)']
+PASS  creating in the UI creates the agent via REST
+PASS  overview shows the real definition
+PASS  session tab sends and shows the answer
+PASS  editing AGENT.md to something invalid shows the server's reason
+PASS  ...and the agent on disk is unchanged
+PASS  archive asks for confirmation first
+PASS  confirming archives the agent
+PASS  no browser console or page errors besides the deliberate 400  -> []
+
+96/96 checks passed in 33s

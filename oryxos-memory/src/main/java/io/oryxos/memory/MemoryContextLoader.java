@@ -15,10 +15,14 @@ import org.slf4j.LoggerFactory;
  */
 public final class MemoryContextLoader implements ContextLoader {
   private static final Logger LOG = LoggerFactory.getLogger(MemoryContextLoader.class);
-  private final MemoryService memory;
+  private final MemoryServices memories;
 
   public MemoryContextLoader(MemoryService memory) {
-    this.memory = Objects.requireNonNull(memory, "memory");
+    this(MemoryServices.single(memory));
+  }
+
+  public MemoryContextLoader(MemoryServices memories) {
+    this.memories = Objects.requireNonNull(memories, "memories");
   }
 
   @Override
@@ -29,7 +33,7 @@ public final class MemoryContextLoader implements ContextLoader {
       return "";
     }
     try {
-      return memory.promptSection();
+      return memories.forAgent(profile.name()).promptSection();
     } catch (MemoryStoreException e) {
       LOG.warn("Long-term memory unavailable for this turn: {}", e.getMessage());
       return "";

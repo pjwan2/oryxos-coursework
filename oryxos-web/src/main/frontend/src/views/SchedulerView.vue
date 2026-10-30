@@ -1,11 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { api, query } from '../api.js'
+import { api } from '../api.js'
 import AsyncState from '../components/AsyncState.vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import { useResource } from '../composables/useResource.js'
 import { formatDuration, formatTime } from '../format.js'
-import { describeOutcome, executionWindow } from '../scheduler.js'
+import { describeServerOutcome } from '../scheduler.js'
 
 const tasks = useResource(() => api('/schedules'))
 
@@ -33,11 +33,10 @@ function askToRun(task) {
 }
 
 async function loadOutcome(execution) {
-  const window = executionWindow(execution)
-  const calls = await api(
-    `/tool-calls${query({ sessionId: execution.sessionId, since: window.since, until: window.until, limit: 100 })}`
+  const outcome = await api(
+    `/schedules/${encodeURIComponent(execution.taskId)}/executions/${execution.id}/outcome`
   )
-  return describeOutcome(execution, calls.slice().reverse())
+  return describeServerOutcome(execution, outcome)
 }
 
 async function runNow(task) {

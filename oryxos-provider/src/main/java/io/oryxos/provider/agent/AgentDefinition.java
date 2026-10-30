@@ -15,12 +15,14 @@ public record AgentDefinition(
     Path directory,
     AgentProfile profile,
     String instructions,
-    List<String> resources) {
+    List<String> resources,
+    String contentHash) {
   public AgentDefinition {
     Objects.requireNonNull(name, "name");
     Objects.requireNonNull(directory, "directory");
     Objects.requireNonNull(profile, "profile");
     Objects.requireNonNull(instructions, "instructions");
+    Objects.requireNonNull(contentHash, "contentHash");
     resources = List.copyOf(resources);
   }
 

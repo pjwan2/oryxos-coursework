@@ -107,9 +107,25 @@ public final class AgentLoader {
       for (ProfileValidator validator : validators) {
         validator.validate(profile);
       }
-      return new AgentDefinition(dirName, directory, profile, parts.body(), resources);
+      return new AgentDefinition(
+          dirName, directory, profile, parts.body(), resources, hash(agentMd, resources));
     } catch (AgentDefinitionException problem) {
       throw failure(dirName, problem.getMessage());
+    }
+  }
+
+  /** Identifies this exact text plus file list, so an unchanged directory is recognised. */
+  static String hash(String agentMd, List<String> resources) {
+    try {
+      java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+      digest.update(agentMd.getBytes(StandardCharsets.UTF_8));
+      for (String resource : resources) {
+        digest.update((byte) 0);
+        digest.update(resource.getBytes(StandardCharsets.UTF_8));
+      }
+      return java.util.HexFormat.of().formatHex(digest.digest());
+    } catch (java.security.NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 is required by the JDK", e);
     }
   }
 
@@ -316,6 +332,7 @@ public final class AgentLoader {
       }
       try (Stream<Path> walk = Files.walk(dir, 3)) {
         walk.filter(p -> Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS))
+            .filter(p -> WorkspacePaths.plain(agentDir, p))
             .map(p -> agentDir.relativize(p).toString().replace('\\', '/'))
             .forEach(names::add);
       } catch (IOException | UncheckedIOException e) {

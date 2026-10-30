@@ -40,17 +40,38 @@ public class JpaToolCallHistory implements ToolCallHistory {
     }
     query.select(row).where(filters.toArray(Predicate[]::new)).orderBy(cb.desc(row.get("id")));
     return entityManager.createQuery(query).setMaxResults(limit).getResultList().stream()
-        .map(
-            e ->
-                new ToolCallRecord(
-                    e.getId(),
-                    e.getSessionId(),
-                    e.getToolName(),
-                    e.isSuccess(),
-                    e.getErrorCategory(),
-                    e.getErrorMessage(),
-                    e.getDurationMs(),
-                    e.getOccurredAt()))
+        .map(JpaToolCallHistory::record)
         .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<ToolCallRecord> findByExecution(String executionId, int limit) {
+    if (limit < 1 || executionId == null || executionId.isBlank()) {
+      return List.of();
+    }
+    CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+    CriteriaQuery<ToolInvocationEntity> query = cb.createQuery(ToolInvocationEntity.class);
+    Root<ToolInvocationEntity> row = query.from(ToolInvocationEntity.class);
+    query
+        .select(row)
+        .where(cb.equal(row.<String>get("executionId"), executionId))
+        .orderBy(cb.desc(row.get("id")));
+    return entityManager.createQuery(query).setMaxResults(limit).getResultList().stream()
+        .map(JpaToolCallHistory::record)
+        .toList();
+  }
+
+  private static ToolCallRecord record(ToolInvocationEntity e) {
+    return new ToolCallRecord(
+        e.getId(),
+        e.getSessionId(),
+        e.getToolName(),
+        e.isSuccess(),
+        e.getErrorCategory(),
+        e.getErrorMessage(),
+        e.getDurationMs(),
+        e.getOccurredAt(),
+        e.getExecutionId());
   }
 }

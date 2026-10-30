@@ -76,7 +76,21 @@ public final class Migrations {
                           + "error_message TEXT, duration_ms INTEGER NOT NULL DEFAULT 0)"),
                   Migration.sql(
                       "CREATE INDEX IF NOT EXISTS idx_task_exec_task "
-                          + "ON task_executions(task_id, id)"))));
+                          + "ON task_executions(task_id, id)"))),
+          new Migration(
+              4,
+              "execution_id on tool_invocations and task_executions; memory_entries.agent_name",
+              List.of(
+                  Migration.addColumnIfMissing("tool_invocations", "execution_id", "TEXT"),
+                  Migration.sql(
+                      "CREATE INDEX IF NOT EXISTS idx_tool_execution "
+                          + "ON tool_invocations(execution_id)"),
+                  Migration.addColumnIfMissing("task_executions", "execution_id", "TEXT"),
+                  Migration.addColumnIfMissing(
+                      "memory_entries", "agent_name", "TEXT NOT NULL DEFAULT ''"),
+                  Migration.sql(
+                      "CREATE INDEX IF NOT EXISTS idx_memory_agent "
+                          + "ON memory_entries(agent_name, scope, id)"))));
 
   private Migrations() {}
 }

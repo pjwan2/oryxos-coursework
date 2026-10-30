@@ -1,4 +1,4 @@
-# 第 5 周（C1 + C2）已知限制与未验证项
+# 第 5 周（C1～C4）已知限制与未验证项
 
 只写**没有验证、没有实现、或有明确缺口**的事。第 4 周的限制（[../week-04/known-limitations.md](../week-04/known-limitations.md)）依然成立，这里不重复，只写本阶段新增或需要强调的。
 
@@ -35,7 +35,7 @@
 - 4 个符号链接测试仍在 Windows 上跳过（第 4 周已记录；在 GitHub Actions 的 Ubuntu 上的情形见 [../week-04/known-limitations.md](../week-04/known-limitations.md)）。
 - 无头 Chrome 检查是自动化的，**没有人工浏览器验收**。
 
-## E. 进入第 29/30 节前需要解决的问题
+## E. 进入第 29/30 节前需要解决的问题（**已在 C3/C4 解决**：1、2、3、4、5、6、7 的大部分，见 F、G 两节与需求矩阵；仍开放的是认证、真实外部服务、`HumanTriggerFlowIT`）
 
 1. **Agent 定义的单一事实来源。** 现在是 `.oryxos/profiles/*.yaml`；第 29 节要改为 `.oryxos/agents/<name>/AGENT.md`。迁移期间不能让两个可写来源同时存在；`ProfileLoader`、`ProfileRegistry`、调度器的任务同步（`definition_hash`）都要一起考虑。
 2. **可变的 Profile 目录。** `ProfileCatalog` 现在是启动时快照；动态增删 Agent 需要线程安全的注册表，并通知调度器（增删任务）、REST（`/profiles`）和沙箱缓存。
@@ -57,3 +57,20 @@
 7. **`oryxos.scheduler.enabled=false` 时动态注册只校验并记录定义，不创建触发器。**
 8. **进行中的回合**：`RegistryToolExecutor` 每次工具调用按 Agent 的**最新**定义判断（权限收紧立即生效，Agent 被移除则调用失败）；但同一回合里已发给模型的工具清单是回合开始时的快照，模型仍可能"请求"已撤销的工具，请求会被拒绝并审计。
 9. **新增的符号链接用例**：`AgentLoaderTest.anAgentMdThatIsALinkIsRefused` 与既有 4 个一样，在没有创建符号链接权限的 Windows 账号上被跳过（如实计入跳过数）。目录联接（junction）逃逸用例 `AgentScanRegisterTest.aDirectoryThatEscapesTheAgentsRootIsRefused` 在 Windows 上用 `mklink /J` 真实运行。
+
+## G. 第 30 节（C4：动态管理）新增的限制与未验证项
+
+1. **私有记忆只覆盖 `AGENT.md` Agent。** 旧 `profiles/*.yaml` Agent 没有自己的目录，仍共享全局记忆（这是有意保留的兼容行为，且有特征化测试固定）；全局 `MEMORY.md` 从不复制给任何 Agent。要隔离一个旧 Agent，需要把它改写成 `agents/<name>/AGENT.md`。
+2. **Mem0 后端不支持私有记忆**：无法证明隔离，所以 `AGENT.md` Agent 在 `mem0` 后端下读写记忆会明确报错（工具返回原因，REST 409），不会悄悄共享。真实 Mem0 本来就未验证。
+3. **同名 Agent 重建**：归档后可以用同一个名字再建，记忆从空开始（旧记忆在归档里）；但会话是按 `channel:user:name` 存的，旧 Agent 的会话历史和审计记录仍在库里，新建同名 Agent 的控制台会话会看到旧历史。
+4. **AI 生成只验证了接口和流程，没有验证真实模型。** 草稿来自 Agent 自己的 Provider；默认的 mock Provider 只会回显，所以得到的是"无效草稿 + 可读原因"（有测试）。本地假的 OpenAI 协议服务器验证了生成→校验→预览→确认的完整流程和审计行。描述文字里的提示注入无法在生成阶段杜绝，靠的是"只产出 Markdown 草稿、必须通过同一校验、人确认才保存、脚本不接受"。
+5. **文件监听依赖操作系统事件**，并有每 30 秒一次的 `reconcile()` 兜底（可配）；防抖默认 500 ms。网络盘/某些容器卷上的事件可能丢失，此时靠兜底。已注册 Agent 的 `AGENT.md` 被**删除**（目录还在）时，旧版本继续运行并记录问题，不会因此注销。
+6. **会话串行是进程内的**：一个会话的消息排队，锁在整个模型调用期间持有（含 Provider 120 秒读取超时 × 迭代次数），一个卡住的 Provider 会让该会话后面的消息一直等；同一 Agent 的不同定时任务共用会话，因此也会排队，而不是并行。多实例共用一个库时不互斥。
+7. **执行 ID 只在 `tool_invocations` 和 `task_executions` 上。** `llm_calls` 没有加（outcome 用不到）；V4 之前的历史执行没有 ID，outcome 回退到时间窗并在响应里带 `caveat`；outcome 仍只查最近 200 次执行。
+8. **仍然没有认证。** 管理 API 只有本机防护（loopback 对端、无转发头、Origin/Host 检查、无 CORS）；同一台机器上的任何进程或用户都能调用，它不是身份验证，也没有 CSRF token。不能暴露到公网。
+9. **工作区 API 能写 `.py`/`.sh` 文本文件**（只是文本，不会被执行；能否运行取决于 `shell` 工具和运维的命令白名单）。文件名过滤是启发式的（含 `token`/`secret`/`password` 等的名字被拒，可能误伤）；没有删除/重命名接口；最多 5 层目录。
+10. **归档不可经 API 还原**：把目录手工移回 `agents/` 即可，监听器会重新注册；归档目录默认 `.oryxos/archive`，不随 `oryxos.agents-directory` 自动改变，需要时一起配置 `oryxos.archive-directory`。被归档 Agent 的调度行与历史留在库里（不再出现在 `/schedules`）。
+11. **`PUT /agents/{name}` 接收完整的 `AGENT.md` 文本**，不做字段级补丁；管理台用文件页编辑。
+12. **管理台验证是自动化的**：vitest + Playwright 无头 Chromium 对真实 JAR；没有人工浏览器验收，也没有截图归档。
+13. **跳过的测试**：共 6 个 = 既有 4 个符号链接测试 + C3 的 `AgentLoaderTest` 文件链接 1 个 + C4 的 `AgentWorkspaceTest` 文件链接 1 个（该 Windows 账号无创建符号链接的权限）。目录 Junction 逃逸用例（`mklink /J`）在本机真实运行。
+14. **真实外部服务仍全部未验证**：真实 LLM、MCP、Webhook、Mem0、真实天气 API。

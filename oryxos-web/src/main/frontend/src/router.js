@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import AgentDetailView from './views/AgentDetailView.vue'
+import AgentsView from './views/AgentsView.vue'
 import MemoryView from './views/MemoryView.vue'
 import ProfilesView from './views/ProfilesView.vue'
 import SchedulerView from './views/SchedulerView.vue'
@@ -12,6 +14,8 @@ import ToolsView from './views/ToolsView.vue'
 export const routes = [
   { path: '/', redirect: '/sessions' },
   { path: '/sessions/:id?', name: 'sessions', component: SessionsView },
+  { path: '/agents', name: 'agents', component: AgentsView },
+  { path: '/agents/:name', name: 'agent', component: AgentDetailView },
   { path: '/profiles', name: 'profiles', component: ProfilesView },
   { path: '/tools', name: 'tools', component: ToolsView },
   { path: '/memory', name: 'memory', component: MemoryView },

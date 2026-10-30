@@ -1,4 +1,4 @@
-# 第 5 周需求对照矩阵（C1：第 27 节，C2：第 28 节）
+# 第 5 周需求对照矩阵（C1：第 27 节，C2：第 28 节，C3：第 29 节，C4：第 30 节）
 
 每一项：**Requirement → Source → Test → Result → Evidence**。状态只用四种：
 
@@ -74,11 +74,30 @@ Agent Runtime（底座）不变：`AgentService`、`ReActLoop`、Provider、Tool
 | 29.10 | 脚本安全：复用现有 Sandbox，Agent 不能扩大系统级范围；加载从不执行脚本；不把第三方脚本宣称为隔离执行 | 既有 `ProfileSandbox`（Profile ∩ 运维上限）；加载只列名字 | `ProgressiveDisclosureTest.loadingNeverRunsAScript`；既有 `ShellSecurityTest`、`ProfileSandboxTest` | **Mock 验证通过**（应用层白名单**不是**操作系统隔离，见 `known-limitations.md`） | 同上 |
 | 29.11 | 真实 JAR：Agent 目录放入临时工作区，REST 与 CLI 都能看到，并用 Mock Provider 运行 | `BootCliRuntime.listProfiles`（现在合并 `agents/`） | `scripts/week05_agents_live_check.py --stage c3` | 见 `evidence/live-check-c3.txt` | `evidence/live-check-c3.txt` |
 
+## C4 — 第 30 节：动态管理 Agent
+
+C4 在 C3 的 `register(agentDir)` 之上加了统一生命周期（`AgentLifecycleService implements AgentManagement`），三种录入方式（启动扫描、手工复制目录 → `WorkspaceWatcher`、REST 创建）都走同一个 `register`，不存在各自的校验逻辑。失败时文件、Registry、Scheduler 一起回滚。
+
+| # | Requirement | Source | Test | Result | Evidence |
+|---|---|---|---|---|---|
+| 30.1 | 统一生命周期入口：create / get / list / update / archive / register / reload / validate | `AgentLifecycleService`（provider）；核心端口 `AgentManagement`、`AgentView` | provider `AgentLifecycleServiceTest`（14）；boot `AdminAgentFlowTest`（11） | **Mock 验证通过** | `evidence/mvn-clean-verify-c4.txt` |
+| 30.2 | REST：`POST/GET /agents`、`GET/PUT/DELETE /agents/{name}`、`POST /agents/{name}/invoke`；创建用确定性脚手架 `{name, description}`，不依赖 LLM；删除 = 归档到 `.oryxos/archive/`，不物理删除 | `AgentManagementApiController`（web）、`AgentApiController.invoke`（沿用） | web `AgentManagementApiControllerTest`（16）；`AgentLifecycleServiceTest`（脚手架可运行、描述不能改变 frontmatter 结构、归档含记忆、同秒归档不覆盖、归档失败时 Agent 保持注册）；`AdminAgentFlowTest`（创建→查询→修改→会话→归档→重启） | **Mock 验证通过** | 同上；真实 JAR `evidence/live-check-c4.txt` |
+| 30.3 | 失败回滚：无效 AGENT.md、未知工具、Scheduler 拒绝、保存多文件中途失败，都不出现半注册 Agent；更新 schedules 时旧句柄被取消 | `AgentLifecycleService.update/saveFiles/create`（先校验，写原子文件，失败还原） | provider `AgentUpdateRollbackTest`（7）；scheduler `AgentSchedulerRegisterTest`（旧触发器 cancel、新触发器注册）；真实 JAR（改 cron、删 schedule 后只剩一个任务/无任务，历史保留） | **Mock 验证通过** | 同上 |
+| 30.4 | `WorkspaceWatcher`：启动扫描 + `WatchService`；复制目录自动注册、编辑重载、删除注销；坏目录只影响自己；事件去抖；不接受半写入文件；Windows 可重复 | `WorkspaceWatcher`（防抖 + 状态核对 `reconcile()` 兜底 + 原子替换文件 + 内容哈希使同内容为空操作） | provider `WorkspaceWatcherTest`（10，真实文件事件，轮询等待而非固定 sleep：30 次写入合并为 ≤3 次注册、半截文件不被应用、编辑器式原子替换、`reconcile` 兜底、关闭后可再起）；真实 JAR（复制/编辑/删除/坏目录/半写入） | **Mock 验证通过** | 同上 |
+| 30.5 | **每个 Agent 独立 Memory**（补 C2 缺口）：A 不能读/改 B 的私有记忆；新会话仍能读本 Agent 的；归档时记忆随目录走；旧全局 `MEMORY.md` 保留且**不**自动复制给任何 Agent；Mem0 不能证明隔离就明确报错 | 核心端口 `AgentMemories`，`PerAgentMemories`、`MemoryServices`（memory）；Markdown 存 `agents/<name>/MEMORY.md`，SQLite 用新的 `memory_entries.agent_name` 列；显式从 `ToolContext.profile()` 取 Agent，**没有新增 ThreadLocal** | memory `PerAgentMemoryIsolationTest`（10：工具与 prompt 都隔离、两个后端、全局不被复制进私有、并发写不丢、Mem0 式后端拒绝）；boot `AdminAgentFlowTest`（文件落在各自目录、全局文件不含私有事实、重启后仍在）；真实 JAR | **Mock 验证通过**。**范围**：只有 `AGENT.md` Agent 有私有记忆；旧 `profiles/*.yaml` Agent 没有目录，**仍共享全局记忆**（`MultiAgentIsolationE2ETest` 特征化测试保留，注释已更新） | 同上 |
+| 30.6 | **Scheduler 执行 ID**，消除 C2 的时间窗启发式：每次执行一个唯一 `execution_id`；ToolExecutor 审计带该 ID；outcome 按 ID 精确查询；V4 迁移；历史记录保留 | `Migrations` V4（`tool_invocations.execution_id`、`task_executions.execution_id`、`memory_entries.agent_name`，附索引）、`ToolCallEvent`/`ToolCallRecord`/`TaskExecution` 新字段（旧构造器保留）、`AgentToolExecutor` 4 参数默认方法、`AgentScheduler.execute`、`ScheduleOutcomeApiController`（有 ID 按 ID，无 ID 回退时间窗并带 `caveat`） | storage `SqliteMigrationTest`（22，含 v3→v4 升级保留每一行、重复升级无变化）；boot `SchedulerExecutionCorrelationTest`（5：**同一 Agent 的两个任务并发**时，旧时间窗对每个运行都查到 2 条调用，按 ID 各 1 条；拒绝/成功归属正确；同任务两次执行不串账；聊天调用无 ID）；web `ScheduleOutcomeApiControllerTest`（11） | **Mock 验证通过**。`llm_calls` 没有加执行 ID（outcome 不需要） | 同上；真实 JAR（工具行 ID = 执行行 ID） |
+| 30.7 | 固定管理会话：`GET /agents/{name}/session`、`POST /agents/{name}/session/messages`；复用 `AgentService`；**同一 Session 并发写入不再覆盖历史** | 会话 ID `admin:console:<name>`；`AgentService` 每会话串行（`SessionGates`，按需创建/释放的细粒度锁） | core `AgentSessionConcurrencyTest`（4：两个同时消息不丢答案且一次一个；20 条消息全部按序落库；不同会话仍并行；失败的运行释放锁。**变异检查**：让锁失效后其中 2 个失败）；web 控制器测试；真实 JAR（6 个并发消息，7 问 7 答成对） | **Mock 验证通过** | 同上 |
+| 30.8 | AI 生成文件：`POST /agents/{name}/generate-files`（描述→Provider→草稿→Schema 校验）与 `POST /agents/{name}/files`（确认保存）；LLM 只生成草稿，不自动落盘、不运行脚本；非法 YAML 返回可读错误；不泄漏 Prompt/Token；无有效 Provider 明确报错；生成调用有审计 | `AgentDraftService`（只接受 Markdown 草稿、最多 5 个文件、不接受 scripts）、`AgentLifecycleService.saveFiles` | provider `GenerateTest`（11）；boot `AdminAgentFlowTest`（本地 OpenAI 协议假服务器给出草稿：生成后磁盘不变、`llm_calls` 有 `admin:generator:<name>` 行、响应不含 Prompt/Key；确认后才生效；非法草稿 400）；web 控制器测试（Provider 未配置 → 409）；真实 JAR（Python 假模型服务器） | **Mock 验证通过**；**真实 LLM 生成未验证** | 同上 |
+| 30.9 | 工作区 API：`GET /workspace/tree`、`GET/POST /workspace/file`；禁止 `../`、绝对路径逃逸、符号链接/Windows Junction；限制类型、大小、目录；不能编辑数据库/密钥/配置；保存 AGENT.md 触发完整校验与重注册，失败保留旧 Agent | `WorkspacePaths`（逐段校验 + `toRealPath` 包含检查 + 逐级拒绝链接/重解析点）、`AgentWorkspace`、`WorkspaceApiController` | provider `AgentWorkspaceTest`（13，其中 1 个符号链接用例按权限跳过；**Windows Junction 用 `mklink /J` 真实运行**，树不会走进去）；web `WorkspaceApiControllerTest`（6）；真实 JAR（`../`、绝对路径、`C:/`、反斜杠被拒） | **Mock 验证通过**（过程中发现并修复：Junction 目录下的文件会出现在树里；`%` 现在也被拒绝） | 同上 |
+| 30.10 | 本地管理安全边界：默认只监听 loopback；校验 Host/Origin；限制跨站写；不开宽松 CORS；删除/重要修改 UI 二次确认 | `server.address: 127.0.0.1`（已有）；`LocalAccess`（已有，所有新端点都调用）；无 CORS 配置 | web 两个控制器测试：**每个端点 × 4 种攻击（非本机地址、跨站 Origin、重绑定 Host、转发头）全部 403**，且底层服务零调用；boot `AdminAgentFlowTest`（写操作跨站 403、`server.address=127.0.0.1`）；真实 JAR（跨站 POST 403、重绑定 Host 403、局域网地址不可达） | **Mock 验证通过**。**仍然没有认证**：这是本机防护，不是身份验证 | 同上 |
+| 30.11 | Vue 管理台：Agent 列表与详情五个部分（基本信息、生成、文件、会话、记忆）；真实 REST 数据；加载/空/错误状态；Scheduler 页读取准确的 outcome | `AgentsView`、`AgentDetailView`、`components/agent/*`；`SchedulerView` 改读 `/executions/{id}/outcome` | 前端 vitest 38（原 28 不变 + 新增 10：列表/问题目录/创建与拒绝、归档二次确认、生成不自动保存、文件树与保存失败、会话、共享记忆提示）；真实 JAR + Playwright 无头 Chromium（创建→概览→会话→改坏 AGENT.md 被拒→归档二次确认） | **Mock 验证通过**（自动化浏览器；**没有人工浏览器验收**） | `evidence/live-check-c4.txt` |
+| 30.12 | 创建→查询→修改→触发→归档→重启恢复 | 同上 | `AdminAgentFlowTest`（第 2～11 步）；真实 JAR（重启前后六张表逐行相同、归档 Agent 不回来、Beta 的文件与私有记忆不变） | **Mock 验证通过** | 同上 |
+
 ## 回归（第 4 周功能没有被破坏）
 
 | 项 | 结果 |
 |---|---|
-| 第 4 周的 502 个测试 | 全部仍在且通过；总数 538（见 [acceptance-report.md](acceptance-report.md)） |
-| 第 4 周 77 项真实 JAR 检查（`scripts/week04_live_check.py`） | 77/77（`evidence/week04-live-check-regression.txt`） |
+| 第 4 周的 502 个测试 | 全部仍在且通过；总数现为 728（见 [acceptance-report.md](acceptance-report.md)）。因新增 V4 迁移，仅把 `SqliteMigrationTest`/`MigrationStartupTest`/`week04_live_check.py` 里写死的"最新版本 = 3"改为 4（并新增 V3→V4 升级测试），断言没有放宽 |
+| 第 4 周 77 项真实 JAR 检查（`scripts/week04_live_check.py`） | 77/77（最终 JAR，`evidence/week04-live-check-regression.txt`） |
 | 管理台无头浏览器检查 | 27/27（`evidence/dashboard-headless-run.txt`） |
 | 4 个 Windows 符号链接测试 | 仍跳过，如实记录 |

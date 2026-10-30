@@ -1,22 +1,29 @@
 package io.oryxos;
 
 import io.oryxos.core.agent.ContextLoader;
+import io.oryxos.core.memory.AgentMemories;
 import io.oryxos.core.memory.LongTermMemoryStore;
+import io.oryxos.core.memory.MemoryIsolationUnsupportedException;
 import io.oryxos.core.sandbox.Sandbox;
 import io.oryxos.memory.BootstrapContextLoader;
 import io.oryxos.memory.MarkdownMemoryStore;
 import io.oryxos.memory.Mem0MemoryStore;
 import io.oryxos.memory.MemoryContextLoader;
 import io.oryxos.memory.MemoryService;
+import io.oryxos.memory.MemoryServices;
+import io.oryxos.memory.PerAgentMemories;
 import io.oryxos.memory.RecallMemoryTool;
 import io.oryxos.memory.SaveMemoryTool;
 import io.oryxos.memory.SqliteMemoryStore;
+import io.oryxos.provider.agent.AgentDefinition;
+import io.oryxos.provider.agent.AgentLifecycleService;
 import java.net.http.HttpClient;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Locale;
 import javax.sql.DataSource;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -129,14 +136,53 @@ public class MemoryConfiguration {
         new MemoryService.Limits(props.getArchivalMaxEntries(), props.getArchivalMaxChars()));
   }
 
+  /**
+   * An agent defined by an AGENT.md directory has a private memory; a legacy profile keeps the
+   * shared global one. SQLite keeps private rows under the agent's name; Markdown keeps a MEMORY.md
+   * in the agent's directory (so archiving the agent archives its memory). Mem0 cannot be shown to
+   * keep agents apart, so it refuses instead of quietly sharing.
+   */
   @Bean
-  public SaveMemoryTool saveMemoryTool(MemoryService memory) {
-    return new SaveMemoryTool(memory);
+  public AgentMemories agentMemories(
+      LongTermMemoryStore global,
+      MemoryProperties props,
+      DataSource dataSource,
+      ObjectProvider<AgentLifecycleService> lifecycle) {
+    Clock clock = Clock.systemDefaultZone();
+    String backend =
+        props.getBackend() == null ? "" : props.getBackend().strip().toLowerCase(Locale.ROOT);
+    PerAgentMemories.Factory factory =
+        switch (backend) {
+          case "sqlite" -> (agent, home) -> new SqliteMemoryStore(dataSource, clock, agent);
+          case "mem0" ->
+              (agent, home) -> {
+                throw new MemoryIsolationUnsupportedException(
+                    "Per-agent memory is not supported by the mem0 backend (it cannot be shown to"
+                        + " keep agents apart). Use oryxos.memory.backend=markdown or sqlite.");
+              };
+          default -> (agent, home) -> new MarkdownMemoryStore(home.resolve("MEMORY.md"), clock);
+        };
+    return new PerAgentMemories(
+        global,
+        name -> lifecycle.getObject().definition(name).map(AgentDefinition::directory),
+        factory);
   }
 
   @Bean
-  public RecallMemoryTool recallMemoryTool(MemoryService memory) {
-    return new RecallMemoryTool(memory);
+  public MemoryServices memoryServices(AgentMemories memories, MemoryProperties props) {
+    return MemoryServices.perAgent(
+        memories,
+        new MemoryService.Limits(props.getArchivalMaxEntries(), props.getArchivalMaxChars()));
+  }
+
+  @Bean
+  public SaveMemoryTool saveMemoryTool(MemoryServices memories) {
+    return new SaveMemoryTool(memories);
+  }
+
+  @Bean
+  public RecallMemoryTool recallMemoryTool(MemoryServices memories) {
+    return new RecallMemoryTool(memories);
   }
 
   @Bean
@@ -145,7 +191,7 @@ public class MemoryConfiguration {
   }
 
   @Bean
-  public ContextLoader memoryContextLoader(MemoryService memory) {
-    return new MemoryContextLoader(memory);
+  public ContextLoader memoryContextLoader(MemoryServices memories) {
+    return new MemoryContextLoader(memories);
   }
 }

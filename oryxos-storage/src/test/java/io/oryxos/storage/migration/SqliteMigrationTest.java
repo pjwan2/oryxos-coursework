@@ -183,9 +183,9 @@ class SqliteMigrationTest {
     MigrationReport report = migrator(true).migrate(ds);
 
     assertTrue(report.freshDatabase());
-    assertEquals(3, report.toVersion());
+    assertEquals(4, report.toVersion());
     assertNull(report.backupFile(), "there is nothing to back up");
-    assertEquals(List.of(1, 2, 3), recordedVersions(ds));
+    assertEquals(List.of(1, 2, 3, 4), recordedVersions(ds));
     assertEquals(0, count(ds, "SELECT COUNT(*) FROM scheduled_tasks"));
     assertEquals(0, count(ds, "SELECT COUNT(*) FROM task_executions"));
     assertEquals(
@@ -211,10 +211,10 @@ class SqliteMigrationTest {
     assertFalse(second.freshDatabase());
     assertEquals(List.of(), second.applied());
     assertEquals(List.of(), third.applied());
-    assertEquals(3, second.fromVersion());
+    assertEquals(4, second.fromVersion());
     assertNull(second.backupFile());
     assertEquals(stamp, stringOf(ds, "SELECT applied_at FROM schema_migrations WHERE version = 3"));
-    assertEquals(List.of(1, 2, 3), recordedVersions(ds));
+    assertEquals(List.of(1, 2, 3, 4), recordedVersions(ds));
     assertEquals(List.of("again.db"), filesInDir());
   }
 
@@ -236,8 +236,8 @@ class SqliteMigrationTest {
 
     assertFalse(report.freshDatabase());
     assertEquals(0, report.fromVersion());
-    assertEquals(List.of(1, 2, 3), report.applied());
-    assertEquals(List.of(1, 2, 3), recordedVersions(ds));
+    assertEquals(List.of(1, 2, 3, 4), report.applied());
+    assertEquals(List.of(1, 2, 3, 4), recordedVersions(ds));
     assertEquals(2L, report.rowCountsBefore().get("llm_calls"));
     assertEquals(1L, report.rowCountsBefore().get("sessions"));
     assertEquals(3L, report.rowCountsBefore().get("tool_invocations"));
@@ -290,7 +290,7 @@ class SqliteMigrationTest {
     MigrationReport report = migrator(false).migrate(ds);
     assertNull(report.backupFile());
     assertEquals(List.of("legacy.db"), filesInDir());
-    assertEquals(List.of(1, 2, 3), recordedVersions(ds));
+    assertEquals(List.of(1, 2, 3, 4), recordedVersions(ds));
   }
 
   @Test
@@ -301,7 +301,7 @@ class SqliteMigrationTest {
 
     MigrationReport report = migrator(true).migrate(ds);
 
-    assertEquals(List.of(1, 2, 3), report.applied());
+    assertEquals(List.of(1, 2, 3, 4), report.applied());
     assertEquals("kept", stringOf(ds, "SELECT error_message FROM tool_invocations WHERE id = 1"));
   }
 
@@ -343,14 +343,14 @@ class SqliteMigrationTest {
 
   // ---- failure ------------------------------------------------------------------------
 
-  private static List<Migration> withBrokenFourthMigration() {
+  private static List<Migration> withBrokenFifthMigration() {
     List<Migration> all = new ArrayList<>(Migrations.ALL);
     all.add(
         new Migration(
-            4,
+            5,
             "broken",
             List.of(
-                Migration.sql("CREATE TABLE t4 (id INTEGER)"),
+                Migration.sql("CREATE TABLE t5 (id INTEGER)"),
                 Migration.sql("INSERT INTO table_that_does_not_exist VALUES (1)"))));
     return all;
   }
@@ -358,24 +358,24 @@ class SqliteMigrationTest {
   @Test
   void aFailingMigrationIsRehearsedFirstSoTheRealDatabaseIsNeverTouched() throws Exception {
     SQLiteDataSource ds = legacyDatabase("rehearsed.db");
-    migrator(true).migrate(ds); // now at version 3 with a backup
+    migrator(true).migrate(ds); // now at version 4 with a backup
     long toolRows = count(ds, "SELECT COUNT(*) FROM tool_invocations");
 
     MigrationException error =
         assertThrows(
             MigrationException.class,
             () ->
-                new SqliteMigrator(withBrokenFourthMigration(), null, true, laterClock())
+                new SqliteMigrator(withBrokenFifthMigration(), null, true, laterClock())
                     .migrate(ds));
 
     assertTrue(error.getMessage().contains("Rehearsal on a copy failed"), error.getMessage());
     assertTrue(error.getMessage().contains("original database was not changed"));
-    assertEquals(List.of(1, 2, 3), recordedVersions(ds));
-    assertEquals(0, count(ds, "SELECT COUNT(*) FROM sqlite_master WHERE name = 't4'"));
+    assertEquals(List.of(1, 2, 3, 4), recordedVersions(ds));
+    assertEquals(0, count(ds, "SELECT COUNT(*) FROM sqlite_master WHERE name = 't5'"));
     assertEquals(toolRows, count(ds, "SELECT COUNT(*) FROM tool_invocations"));
     assertTrue(filesInDir().stream().noneMatch(n -> n.contains("rehearsal")));
     assertTrue(
-        filesInDir().stream().anyMatch(n -> n.contains(".pre-v3-")),
+        filesInDir().stream().anyMatch(n -> n.contains(".pre-v4-")),
         "the backup taken for the failed attempt is kept");
   }
 
@@ -392,12 +392,12 @@ class SqliteMigrationTest {
     MigrationException error =
         assertThrows(
             MigrationException.class,
-            () -> new SqliteMigrator(withBrokenFourthMigration(), null, false, CLOCK).migrate(ds));
+            () -> new SqliteMigrator(withBrokenFifthMigration(), null, false, CLOCK).migrate(ds));
 
-    assertTrue(error.getMessage().contains("migration 4"), error.getMessage());
-    assertEquals(List.of(1, 2, 3), recordedVersions(ds), "version 4 was not recorded");
+    assertTrue(error.getMessage().contains("migration 5"), error.getMessage());
+    assertEquals(List.of(1, 2, 3, 4), recordedVersions(ds), "version 5 was not recorded");
     assertEquals(
-        0, count(ds, "SELECT COUNT(*) FROM sqlite_master WHERE name = 't4'"), "CREATE rolled back");
+        0, count(ds, "SELECT COUNT(*) FROM sqlite_master WHERE name = 't5'"), "CREATE rolled back");
     assertEquals(3, count(ds, "SELECT COUNT(*) FROM tool_invocations"));
   }
 
@@ -464,7 +464,7 @@ class SqliteMigrationTest {
   void aDatabaseFromANewerReleaseIsRefused() throws Exception {
     SQLiteDataSource ds = source(dir.resolve("future.db"));
     migrator(true).migrate(ds);
-    exec(ds, "INSERT INTO schema_migrations VALUES (4, 'from the future', 'abc', '2030-01-01')");
+    exec(ds, "INSERT INTO schema_migrations VALUES (5, 'from the future', 'abc', '2030-01-01')");
 
     MigrationException error =
         assertThrows(MigrationException.class, () -> migrator(true).migrate(ds));
@@ -509,8 +509,66 @@ class SqliteMigrationTest {
       MigrationReport report = migrator(true).migrate(ds);
       assertTrue(report.freshDatabase());
       assertNull(report.backupFile());
-      assertEquals(List.of(1, 2, 3), recordedVersions(ds));
+      assertEquals(List.of(1, 2, 3, 4), recordedVersions(ds));
       assertTrue(keepAlive.isValid(1));
     }
+  }
+
+  // ---- version 4: execution id and per-agent memory ----------------------------------------
+
+  @Test
+  void aVersion3DatabaseKeepsEveryRowWhenItIsUpgradedToVersion4() throws Exception {
+    SQLiteDataSource ds = source(dir.resolve("v3.db"));
+    new SqliteMigrator(Migrations.ALL.subList(0, 3), null, false, CLOCK).migrate(ds);
+    exec(
+        ds,
+        "INSERT INTO tool_invocations(session_id, tool_name, success, duration_ms, occurred_at)"
+            + " VALUES ('s1','http_get',1,5,'2026-01-01')");
+    exec(
+        ds,
+        "INSERT INTO memory_entries(scope, content, saved_on) VALUES ('CORE','old fact','2026-01-01')");
+    exec(
+        ds,
+        "INSERT INTO scheduled_tasks(task_id, profile_name, cron, zone, message) "
+            + "VALUES ('a.b','a','0 0 9 * * *','UTC','m')");
+    exec(
+        ds,
+        "INSERT INTO task_executions(task_id, session_id, started_at, success)"
+            + " VALUES ('a.b','scheduler:scheduler:a','2026-01-01T00:00:00Z',1)");
+
+    MigrationReport report = new SqliteMigrator(Migrations.ALL, null, false, CLOCK).migrate(ds);
+
+    assertEquals(3, report.fromVersion());
+    assertEquals(List.of(4), report.applied());
+    assertEquals(List.of(1, 2, 3, 4), recordedVersions(ds));
+    assertEquals(1, count(ds, "SELECT COUNT(*) FROM tool_invocations"));
+    assertEquals(
+        1,
+        count(ds, "SELECT COUNT(*) FROM tool_invocations WHERE execution_id IS NULL"),
+        "old rows have no id");
+    assertEquals(
+        1,
+        count(
+            ds,
+            "SELECT COUNT(*) FROM memory_entries WHERE agent_name = '' AND content = 'old fact'"),
+        "existing memory stays the legacy global memory");
+    assertEquals(1, count(ds, "SELECT COUNT(*) FROM task_executions WHERE execution_id IS NULL"));
+    assertEquals(1, count(ds, "SELECT COUNT(*) FROM scheduled_tasks"));
+  }
+
+  @Test
+  void upgradingToVersion4TwiceChangesNothing() throws Exception {
+    SQLiteDataSource ds = source(dir.resolve("v4-twice.db"));
+    new SqliteMigrator(Migrations.ALL.subList(0, 3), null, false, CLOCK).migrate(ds);
+    new SqliteMigrator(Migrations.ALL, null, false, CLOCK).migrate(ds);
+    MigrationReport second = new SqliteMigrator(Migrations.ALL, null, false, CLOCK).migrate(ds);
+
+    assertEquals(List.of(), second.applied());
+    assertEquals(List.of(1, 2, 3, 4), recordedVersions(ds));
+    assertEquals(
+        1,
+        count(
+            ds,
+            "SELECT COUNT(*) FROM pragma_table_info('tool_invocations') WHERE name='execution_id'"));
   }
 }

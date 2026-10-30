@@ -46,13 +46,20 @@ public class ScheduleOutcomeApiController {
       int toolDenied,
       int toolFailed,
       String outcome,
-      String note) {
+      String note,
+      String executionRef,
+      String matchedBy,
+      String caveat) {
 
     public static final String COMPLETED = "COMPLETED";
     public static final String COMPLETED_WITH_TOOL_ISSUES = "COMPLETED_WITH_TOOL_ISSUES";
     public static final String FAILED = "FAILED";
 
-    static ExecutionOutcome of(TaskExecution execution, List<ToolCallRecord> calls) {
+    public static final String BY_EXECUTION_ID = "execution_id";
+    public static final String BY_TIME_WINDOW = "time_window";
+
+    static ExecutionOutcome of(
+        TaskExecution execution, List<ToolCallRecord> calls, String matchedBy) {
       int succeeded = 0;
       int denied = 0;
       int failed = 0;
@@ -85,12 +92,31 @@ public class ScheduleOutcomeApiController {
                 ? "The run finished and made no tool calls."
                 : "The run finished and every tool call succeeded.";
       }
+      String caveat =
+          BY_TIME_WINDOW.equals(matchedBy)
+              ? "This run predates execution ids: its tool calls were matched by time window and"
+                  + " may include a run that overlapped it."
+              : null;
       return new ExecutionOutcome(
-          execution.id(), technical, calls.size(), succeeded, denied, failed, outcome, note);
+          execution.id(),
+          technical,
+          calls.size(),
+          succeeded,
+          denied,
+          failed,
+          outcome,
+          note,
+          execution.executionId(),
+          matchedBy,
+          caveat);
     }
   }
 
-  /** 404 for an unknown task or execution (only the latest 200 executions are looked up). */
+  /**
+   * 404 for an unknown task or execution (only the latest 200 executions are looked up). A run that
+   * has an execution id is matched to its tool calls by that id; older rows fall back to the time
+   * window.
+   */
   @GetMapping("/{id}/executions/{executionId}/outcome")
   public ApiResponse<ExecutionOutcome> outcome(
       @PathVariable("id") String id,
@@ -102,9 +128,17 @@ public class ScheduleOutcomeApiController {
             .filter(e -> e.id() == executionId)
             .findFirst()
             .orElseThrow(() -> new ApiNotFoundException("Execution"));
+    if (execution.executionId() != null) {
+      // Exact: the rows carry the id of this run, so overlapping runs are never mixed up.
+      return ApiResponse.ok(
+          ExecutionOutcome.of(
+              execution,
+              history.findByExecution(execution.executionId(), LOOKUP_LIMIT),
+              ExecutionOutcome.BY_EXECUTION_ID));
+    }
     Instant until = execution.startedAt().plusMillis(execution.durationMs() + SLACK_MILLIS);
     List<ToolCallRecord> calls =
         history.find(execution.sessionId(), execution.startedAt(), until, LOOKUP_LIMIT);
-    return ApiResponse.ok(ExecutionOutcome.of(execution, calls));
+    return ApiResponse.ok(ExecutionOutcome.of(execution, calls, ExecutionOutcome.BY_TIME_WINDOW));
   }
 }

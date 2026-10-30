@@ -33,18 +33,23 @@ CREATE TABLE IF NOT EXISTS tool_invocations (
     error_category TEXT,
     duration_ms INTEGER NOT NULL DEFAULT 0,
     occurred_at TIMESTAMP NOT NULL,
-    error_message TEXT
+    error_message TEXT,
+    execution_id TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_tool_session ON tool_invocations(session_id);
+CREATE INDEX IF NOT EXISTS idx_tool_execution ON tool_invocations(execution_id);
 
 -- Long-term memory (lesson 21/22). scope is CORE or ARCHIVAL; saved_on is an ISO date.
+-- agent_name is '' for the legacy global memory, else the agent that owns the entry (lesson 30).
 CREATE TABLE IF NOT EXISTS memory_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     scope TEXT NOT NULL CHECK (scope IN ('CORE', 'ARCHIVAL')),
     content TEXT NOT NULL,
-    saved_on TEXT NOT NULL
+    saved_on TEXT NOT NULL,
+    agent_name TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_memory_scope ON memory_entries(scope, id);
+CREATE INDEX IF NOT EXISTS idx_memory_agent ON memory_entries(agent_name, scope, id);
 
 -- Scheduler (lesson 25/28). task_id is "<profile>.<localId>"; times are ISO-8601 UTC text.
 CREATE TABLE IF NOT EXISTS scheduled_tasks (
@@ -70,6 +75,7 @@ CREATE TABLE IF NOT EXISTS task_executions (
     started_at TEXT NOT NULL,
     success INTEGER NOT NULL,
     error_message TEXT,
-    duration_ms INTEGER NOT NULL DEFAULT 0
+    duration_ms INTEGER NOT NULL DEFAULT 0,
+    execution_id TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_task_exec_task ON task_executions(task_id, id);

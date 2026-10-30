@@ -96,7 +96,7 @@ class MigrationStartupTest {
 
     try (ConfigurableApplicationContext context = start(db, WebApplicationType.NONE)) {
       MigrationReport report = context.getBean(MigrationReport.class);
-      assertEquals(List.of(1, 2, 3), report.applied());
+      assertEquals(List.of(1, 2, 3, 4), report.applied());
       assertEquals(2L, report.rowCountsBefore().get("tool_invocations"));
       assertEquals(2L, report.rowCountsAfter().get("tool_invocations"));
 
@@ -108,7 +108,7 @@ class MigrationStartupTest {
               "SELECT COUNT(*) FROM sessions WHERE session_id = 'web:u:payment-demo'",
               Integer.class));
       assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM scheduled_tasks", Integer.class));
-      assertEquals(3, jdbc.queryForObject("SELECT COUNT(*) FROM schema_migrations", Integer.class));
+      assertEquals(4, jdbc.queryForObject("SELECT COUNT(*) FROM schema_migrations", Integer.class));
     }
     assertEquals(1, filesNamed("old.db.pre-v0-").size(), "one backup of the old file");
   }
@@ -118,11 +118,11 @@ class MigrationStartupTest {
     Path db = temp.resolve("twice.db");
     legacyDatabase(db);
     try (ConfigurableApplicationContext first = start(db, WebApplicationType.NONE)) {
-      assertEquals(List.of(1, 2, 3), first.getBean(MigrationReport.class).applied());
+      assertEquals(List.of(1, 2, 3, 4), first.getBean(MigrationReport.class).applied());
     }
     try (ConfigurableApplicationContext second = start(db, WebApplicationType.NONE)) {
       assertEquals(List.of(), second.getBean(MigrationReport.class).applied());
-      assertEquals(3, second.getBean(MigrationReport.class).toVersion());
+      assertEquals(4, second.getBean(MigrationReport.class).toVersion());
     }
     assertEquals(1, filesNamed("twice.db.pre-v").size());
   }
@@ -133,7 +133,7 @@ class MigrationStartupTest {
     try (ConfigurableApplicationContext context = start(db, WebApplicationType.NONE)) {
       MigrationReport report = context.getBean(MigrationReport.class);
       assertTrue(report.freshDatabase());
-      assertEquals(3, report.toVersion());
+      assertEquals(4, report.toVersion());
     }
     assertEquals(List.of(), filesNamed("new.db.pre-v"));
   }
@@ -144,7 +144,7 @@ class MigrationStartupTest {
     try (ConfigurableApplicationContext context = start(db, WebApplicationType.NONE)) {
       assertTrue(context.isActive());
     }
-    sql(db, "INSERT INTO schema_migrations VALUES (4, 'from the future', 'x', '2030-01-01')");
+    sql(db, "INSERT INTO schema_migrations VALUES (5, 'from the future', 'x', '2030-01-01')");
 
     // A servlet application: if the migration failure did not abort the context, a web server
     // would be listening. run() throwing proves it was never started.

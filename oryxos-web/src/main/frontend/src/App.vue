@@ -1,6 +1,7 @@
 <script setup>
 const links = [
   { to: '/sessions', label: 'Sessions' },
+  { to: '/agents', label: 'Agents' },
   { to: '/profiles', label: 'Profiles' },
   { to: '/tools', label: 'Tools' },
   { to: '/memory', label: 'Memory' },

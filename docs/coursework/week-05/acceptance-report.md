@@ -1,6 +1,6 @@
 # 第 5 周验收报告（C1 + C2：第 27、28 节）
 
-Written for: 项目所有者与作业评阅者。**第 5 周尚未完成**（第 29～32 节还没做，C3/C4 是下一阶段）；本报告只覆盖第 27、28 节的工程集成与验收。数字全部来自本机实际执行；Mock 验证与真实外部服务验证分开写。
+Written for: 项目所有者与作业评阅者。**第 5 周尚未完成**（第 31、32 节还没做）；本报告覆盖第 27～30 节：第 1～10 节是 C1/C2，文末"C3 补充验收""C4 补充验收"是第 29、30 节。数字全部来自本机实际执行；Mock 验证与真实外部服务验证分开写。
 
 ## 1. 版本与分支
 
@@ -100,3 +100,37 @@ weather fixture requests: ['/weather']
 | 真实 JAR | `scripts/week05_agents_live_check.py --stage c3`：**22/22**（`evidence/live-check-c3.txt`）：AGENT.md 目录启动即注册、REST 与 CLI 都能看到、同名冲突保留旧 YAML、坏目录不注册但有日志、计划入库、Mock 运行并审计、沙箱放行/拒绝、脚本未被执行、Health/Swagger/Admin 200、重启后 `scheduled_tasks`/`llm_calls`/`tool_invocations` 逐行相同 |
 | 回归中发现并修正的问题 | 把调度器的定义表改成并发映射后，既有 `AgentSchedulerTest`、`MultiAgentSchedulerIsolationTest` 因注册顺序变化失败；改为"写时复制的有序快照"（读无锁、写在 monitor 下、保持 Profile 顺序），既有测试未改动即通过 |
 | 未做 | 运行中新增目录的 JAR 级验证（文件监听与 REST 是第 30 节）；真实 LLM / MCP / Webhook / Mem0 仍未验证 |
+
+---
+
+# C4 补充验收（第 30 节：动态管理 Agent）与最终结果
+
+| 项 | 结果 |
+|---|---|
+| `npm ci`、`npm test`、`npm run build` | 通过；**38** 个前端测试（原 28 不变 + 新增 10）；`check-build: ok` |
+| `mvn -B -ntp spotless:apply`、`mvn -B -ntp clean verify` | **BUILD SUCCESS**，九模块 + 父工程全部 SUCCESS；Checkstyle 0 违规、SpotBugs 0 BugInstance（9 个模块）、PMD、Spotless 通过；`evidence/mvn-clean-verify-c4.txt` |
+| 测试数量 | **728 个：722 通过、6 跳过、0 失败**（C3 为 616，新增 112；第 4 周为 502）。分模块见 `evidence/test-summary.md` |
+| 6 个跳过 | 既有 4 个符号链接测试 + 2 个新增的文件符号链接用例（`AgentLoaderTest`、`AgentWorkspaceTest`）：该 Windows 账号无创建符号链接的权限，如实记为跳过。目录 Junction 逃逸用例真实运行 |
+| 真实 JAR：第 29/30 节 | `scripts/week05_agents_live_check.py --stage all`：**96/96**（C3 22 + C4 74），`evidence/live-check-c3-c4.txt`。覆盖：AGENT.md 目录注册、REST 创建/更新/归档、重启恢复、调度动态更新、Sandbox 权限收紧、每 Agent 记忆隔离、`execution_id` 审计归属、会话并发、文件监听、工作区 API、跨站/重绑定拒绝、局域网地址不可达、**无头 Chromium 对管理台的真实交互** |
+| 真实 JAR：回归 | 第 5 周 C1/C2 检查 **31/31**（`evidence/live-check.txt`）；第 4 周检查 **77/77**（`evidence/week04-live-check-regression.txt`，只把"迁移版本 1..3"改为"1..4"） |
+| 新增/修改的测试 | provider：`AgentLifecycleServiceTest` 14、`AgentUpdateRollbackTest` 7、`AgentWorkspaceTest` 13、`GenerateTest` 11、`WorkspaceWatcherTest` 10；memory：`PerAgentMemoryIsolationTest` 10；core：`AgentSessionConcurrencyTest` 4；storage：`SqliteMigrationTest` +2；web：`AgentManagementApiControllerTest` 16、`WorkspaceApiControllerTest` 6、`ScheduleOutcomeApiControllerTest` +3；boot：`SchedulerExecutionCorrelationTest` 5、`AdminAgentFlowTest` 11；前端 `agents.test.js` 10 |
+| 质量门禁过程中发现并修复的问题 | ① Junction 目录下的文件出现在工作区树里（`Files.walk` 会进入 Junction）→ 逐级拒绝重解析点；② `%` 现在在路径里被拒绝（防双重编码）；③ 管理台保存后整页回到"Loading…"丢失标签状态 → 静默刷新；④ SpotBugs/PMD 共 8 处（空 catch、`getParent()` 可能为 null、格式串换行、不一致同步、`write` 被当作可变接口 → 改名 `save`、控制器空请求体）全部改代码修复，没有关闭任何检查 |
+| 为新迁移而改动的既有测试 | `SqliteMigrationTest`（最新版本 3→4，原"坏的第 4 个迁移"改为"坏的第 5 个"）、`MigrationStartupTest`（3→4）、`ScheduleOutcomeApiControllerTest`（未改动旧断言，另增 3 个）。**没有删除任何测试，没有放宽任何断言** |
+| 变异检查 | 让会话锁失效后 `AgentSessionConcurrencyTest` 4 个里 2 个失败，已还原 |
+
+## 第 5 周 C3 + C4 的结论
+
+- 第 29 节（C3）：**Mock 验证通过**。
+- 第 30 节（C4）：**Mock 验证通过**；真实 LLM 生成、MCP、Webhook、Mem0 **未验证**；管理台**没有人工浏览器验收**；仍然**没有认证**。
+- 不推送、不打 `week-05` 标签。
+
+## 第 31 节三个 Demo 的前置条件
+
+| 前置 | 状态 |
+|---|---|
+| 用目录声明新 Agent，不改 Java、不重新打包 | 就绪（C3） |
+| 通过 REST/管理台创建、修改、运行、归档 Agent，改动立即生效且失败可回滚 | 就绪（C4） |
+| 每个 Agent 独立长期记忆 | 就绪（仅 `AGENT.md` Agent；Mem0 不支持） |
+| 定时任务的结果有精确的审计归属，技术成功与业务结果分开 | 就绪（`execution_id`） |
+| 无 Key 可复现的运行（假模型/Mock） | 就绪 |
+| 用真实模型跑 Demo | **未就绪**：没有验证过任何真实 LLM；需要 Key 和一次真实运行，并核对第 31 节要求（Demo 是两个还是三个仍待官方说明） |

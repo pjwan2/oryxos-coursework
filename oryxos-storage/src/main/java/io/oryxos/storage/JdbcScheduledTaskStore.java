@@ -48,7 +48,8 @@ public class JdbcScheduledTaskStore implements ScheduledTaskStore {
               Instant.parse(rs.getString("started_at")),
               rs.getInt("success") == 1,
               rs.getString("error_message"),
-              rs.getLong("duration_ms"));
+              rs.getLong("duration_ms"),
+              rs.getString("execution_id"));
 
   private final JdbcTemplate jdbc;
 
@@ -152,7 +153,8 @@ public class JdbcScheduledTaskStore implements ScheduledTaskStore {
     Long id =
         jdbc.queryForObject(
             "INSERT INTO task_executions(task_id, session_id, trigger_type, started_at, success, "
-                + "error_message, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                + "error_message, duration_ms, execution_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+                + "RETURNING id",
             Long.class,
             execution.taskId(),
             execution.sessionId(),
@@ -160,7 +162,8 @@ public class JdbcScheduledTaskStore implements ScheduledTaskStore {
             execution.startedAt().toString(),
             execution.success() ? 1 : 0,
             execution.errorMessage(),
-            execution.durationMs());
+            execution.durationMs(),
+            execution.executionId());
     jdbc.update(
         "UPDATE scheduled_tasks SET run_count = run_count + 1, last_run_at = ?, last_status = ?, "
             + "next_run_at = ? WHERE task_id = ?",
@@ -176,14 +179,15 @@ public class JdbcScheduledTaskStore implements ScheduledTaskStore {
         execution.startedAt(),
         execution.success(),
         execution.errorMessage(),
-        execution.durationMs());
+        execution.durationMs(),
+        execution.executionId());
   }
 
   @Override
   public List<TaskExecution> executions(String taskId, int limit) {
     return jdbc.query(
         "SELECT id, task_id, session_id, trigger_type, started_at, success, error_message, "
-            + "duration_ms FROM task_executions WHERE task_id = ? ORDER BY id DESC LIMIT ?",
+            + "duration_ms, execution_id FROM task_executions WHERE task_id = ? ORDER BY id DESC LIMIT ?",
         EXECUTION,
         taskId,
         Math.max(1, limit));

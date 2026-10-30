@@ -1,0 +1,45 @@
+JAR: oryxos-boot-0.1.0-SNAPSHOT.jar, scratch dir: <HOME>\AppData\Local\Temp\oryxos-week05-ksobr2lm
+
+== Lesson 27: weather and memory through the real JAR
+PASS  weather answer comes from the fixture  -> Tool result: {"city":"Shanghai","temp_c":21,"sky":"clear"}
+PASS  exactly one weather request  -> ['/weather']
+PASS  llm_calls: exactly 2 (tool request, final answer)
+PASS  tool_invocations: exactly 1, http_get, success
+      llm_calls   : [(1, 'mock', 'm', 1, None), (2, 'mock', 'm', 1, None)]
+      tool_invocations: [(1, 'http_get', 1, None, None)]
+      weather fixture requests: ['/weather']
+PASS  memory written and visible over REST
+PASS  memory row in SQLite
+
+== Lesson 28: isolation
+PASS  agent-files reads its own file
+PASS  agent-files cannot read outside its root  -> Tool result: ERROR SANDBOX_DENIED: Path outside allowed READ roots
+PASS  agent-files has no http_get
+PASS  agent-web has no file_read
+PASS  fixture not touched by agent-files
+PASS  same user, two agents, two sessions
+PASS  memory is GLOBAL: agent-web reads what agent-files saved (per-agent isolation NOT implemented)
+
+== Lesson 28: scheduler, outcome, API
+PASS  scheduled weather run succeeded through AgentService
+PASS  outcome COMPLETED, tool succeeded  -> {"executionId": 1, "technicalStatus": "SUCCESS", "toolCalls": 1, "toolSucceeded": 1, "toolDenied": 0, "toolFailed": 0, "outcome": "COMPLETED", "note": "The run finished and every tool call succeeded.", "executionRef": "6d1ed1d5-994e-4e32-b7fe-b449cc6836ae", "matchedBy": "execution_id", "caveat": null, "calls": [{"tool": "http_get", "success": true, "category": null, "reason": null}]}
+PASS  denied scheduled run: technical success, file not written
+PASS  outcome COMPLETED_WITH_TOOL_ISSUES, not a plain success  -> {"executionId": 2, "technicalStatus": "SUCCESS", "toolCalls": 1, "toolSucceeded": 0, "toolDenied": 1, "toolFailed": 0, "outcome": "COMPLETED_WITH_TOOL_ISSUES", "note": "The run finished, but 1 tool call(s) were refused or failed, so the requested action may not have happened. This is not a confirmed business success.", "executionRef": "960f70cd-b867-43e8-b7d8-c6b783ef50fd", "matchedBy": "execution_id", "caveat": null, "calls": [{"tool": "file_write", "success": false, "category": "SandboxDenied", "reason": "Path outside allowed WRITE roots"}]}
+PASS  stored lastStatus unchanged (API compatible)
+PASS  disabled flag in SQLite
+PASS  OpenAPI lists the outcome endpoint
+PASS  health, swagger, prometheus, admin
+PASS  tables hold real rows before the restart  -> sessions=9, llm_calls=18, tool_invocations=8, scheduled_tasks=2, task_executions=2, memory_entries=2
+
+== Restart (separate JVM, same files)
+PASS  sessions: rows identical after restart  -> 9 rows
+PASS  llm_calls: rows identical after restart  -> 18 rows
+PASS  tool_invocations: rows identical after restart  -> 8 rows
+PASS  scheduled_tasks: rows identical after restart  -> 2 rows
+PASS  task_executions: rows identical after restart  -> 2 rows
+PASS  memory_entries: rows identical after restart  -> 2 rows
+PASS  scheduler API shows the disabled task and run counts
+PASS  memory survives
+PASS  sessions survive and keep growing
+
+31/31 checks passed

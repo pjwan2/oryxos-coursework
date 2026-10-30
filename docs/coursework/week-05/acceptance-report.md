@@ -175,7 +175,7 @@ weather fixture requests: ['/weather']
 
 | 项 | 值 |
 |---|---|
-| 验收提交 | `@X@`（`feature/week-05-agent-lifecycle`；比 C5 的 `32372ac` 多一个守护提交 `d7a5f5b`、第一阶段总结与本报告等文档、`scripts/week05_c6_quickstart_check.py`） |
+| 验收提交 | `194f9f3`（`feature/week-05-agent-lifecycle`；比 C5 的 `32372ac` 多一个守护提交 `d7a5f5b`、第一阶段总结与本报告等文档、`scripts/week05_c6_quickstart_check.py`） |
 | 发布提交 | `submission/week-05` 和标签 `week-05` 指向的提交 = 验收提交 + 证据文件。两者之间**只有** `docs/` 和 `README.md` 里的文件不同（把验收数字和证据写进文档；发布前用 `git diff --name-only <验收提交> HEAD` 核对没有任何源码、脚本、示例或配置文件的差别），所以验收结果适用于发布提交。精确 SHA 在最终报告和标签本身 |
 | 方法 | `git clone --single-branch` 到临时目录，工作区干净；从空的 `node_modules`、空的 `target/` 开始；没有 `-DskipTests`，没有关闭任何检查 |
 | 环境 | Windows 10，JDK 21.0.2，Maven 3.9.16，Node v20.20.2，Python 3.14（本机没有 `python3` 命令，所以 Linux 的命令名只能由 GitHub Actions 间接检验） |

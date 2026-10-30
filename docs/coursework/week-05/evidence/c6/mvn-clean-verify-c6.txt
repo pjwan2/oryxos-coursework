@@ -1,0 +1,85 @@
+commit: 194f9f354fbfa7e71afd21962db6465d59281567
+status-lines: 0
+== npm ci / test / build
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+
+added 130 packages in 20s
+ ✓ tests/views.test.js (14 tests) 394ms
+ ✓ tests/agents.test.js (14 tests) 436ms
+
+ Test Files  4 passed (4)
+      Tests  42 passed (42)
+   Start at  20:40:48
+   Duration  4.05s (transform 1.10s, setup 0ms, collect 3.52s, tests 861ms, environment 4.73s, prepare 1.38s)
+
+../resources/static/admin/assets/index-D8dKvGdV.css                                     12.35 kB │ gzip:  4.60 kB
+../resources/static/admin/assets/index-VFV_uOu9.js                                     142.35 kB │ gzip: 50.10 kB
+✓ built in 1.64s
+check-build: ok (16 files, 3 assets in index.html)
+== mvn spotless:check
+[INFO] BUILD SUCCESS
+== mvn clean verify
+[INFO]
+[INFO] --- pmd:3.28.0:pmd (static-pmd) @ oryxos-boot ---
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[INFO] PMD version: 7.17.0
+[INFO] Rendering content with org.apache.maven.skins:maven-fluido-skin:jar:2.0.0-M9 skin
+[INFO]
+[INFO] >>> pmd:3.28.0:check (static-pmd) > :pmd @ oryxos-boot >>>
+[INFO]
+[INFO] --- pmd:3.28.0:pmd (pmd) @ oryxos-boot ---
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[INFO] PMD version: 7.17.0
+[INFO] Rendering content with org.apache.maven.skins:maven-fluido-skin:jar:2.0.0-M9 skin
+[INFO]
+[INFO] <<< pmd:3.28.0:check (static-pmd) < :pmd @ oryxos-boot <<<
+[INFO]
+[INFO]
+[INFO] --- pmd:3.28.0:check (static-pmd) @ oryxos-boot ---
+[INFO]
+[INFO] --- spotbugs:4.9.8.4:spotbugs (spotbugs) @ oryxos-boot ---
+[INFO] Fork Value is true
+[INFO] Done SpotBugs Analysis....
+[INFO] Skipping com.github.spotbugs:spotbugs-maven-plugin:4.9.8.4:spotbugs report goal
+[INFO]
+[INFO] >>> spotbugs:4.9.8.4:check (spotbugs) > :spotbugs @ oryxos-boot >>>
+[INFO]
+[INFO] --- spotbugs:4.9.8.4:spotbugs (spotbugs) @ oryxos-boot ---
+[INFO] Fork Value is true
+[INFO] Done SpotBugs Analysis....
+[INFO] Skipping com.github.spotbugs:spotbugs-maven-plugin:4.9.8.4:spotbugs report goal
+[INFO]
+[INFO] <<< spotbugs:4.9.8.4:check (spotbugs) < :spotbugs @ oryxos-boot <<<
+[INFO]
+[INFO]
+[INFO] --- spotbugs:4.9.8.4:check (spotbugs) @ oryxos-boot ---
+[INFO] BugInstance size is 0
+[INFO] Error size is 0
+[INFO] No errors/warnings found
+[INFO]
+[INFO] --- failsafe:3.5.6:verify (default) @ oryxos-boot ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for OryxOS Coursework 0.1.0-SNAPSHOT:
+[INFO]
+[INFO] OryxOS Coursework .................................. SUCCESS [ 10.632 s]
+[INFO] oryxos-core ........................................ SUCCESS [ 28.657 s]
+[INFO] oryxos-provider .................................... SUCCESS [ 32.588 s]
+[INFO] oryxos-tool ........................................ SUCCESS [ 20.629 s]
+[INFO] oryxos-storage ..................................... SUCCESS [ 21.661 s]
+[INFO] oryxos-memory ...................................... SUCCESS [ 36.205 s]
+[INFO] oryxos-scheduler ................................... SUCCESS [ 15.415 s]
+[INFO] oryxos-cli ......................................... SUCCESS [ 13.400 s]
+[INFO] oryxos-web ......................................... SUCCESS [ 24.841 s]
+[INFO] oryxos-boot ........................................ SUCCESS [02:26 min]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  05:51 min
+[INFO] Finished at: 2026-10-30T20:47:09+11:00
+[INFO] ------------------------------------------------------------------------
+== git diff --check
+diff-check ok
+== doc links
+70 markdown files checked, 0 broken links

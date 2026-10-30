@@ -1,0 +1,73 @@
+workspace (empty at start): oryxos-quickstart-zeh9y13e
+
+== 1. Fat JAR
+  ok   jar exists and is large enough to hold its dependencies  [85 MB]
+  ok   Spring Boot launcher is the main class
+  ok   dependencies are bundled  [112 libraries]
+  ok   bundles sqlite-jdbc
+  ok   bundles spring-ai-openai
+  ok   bundles picocli
+  ok   bundles springdoc
+  ok   bundles the oryxos-core module
+  ok   bundles the oryxos-provider module
+  ok   bundles the oryxos-tool module
+  ok   bundles the oryxos-memory module
+  ok   bundles the oryxos-storage module
+  ok   bundles the oryxos-scheduler module
+  ok   bundles the oryxos-cli module
+  ok   bundles the oryxos-web module
+  ok   admin console index.html is inside the web module
+  ok   admin console has bundled script and style assets
+  ok   admin console references no external URL
+  ok   no secrets, databases or logs packaged
+
+== 2. First start in an empty workspace
+  ok   server healthy
+  ok   database created in the workspace
+  ok   no agents yet  [[]]
+
+== 3. API, Swagger, Health, Admin, Prometheus
+  ok   info
+  ok   swagger ui
+  ok   openapi document lists the agent API
+  ok   admin console served
+  ok   admin deep link served (history mode)
+  ok   prometheus
+  ok   profiles endpoint
+  ok   tools endpoint lists shell_exec and notify
+
+== 4. Install the three examples, one at a time
+  ok   installer exit 0 for weather-daily
+  ok   weather-daily registered without restart  [['weather-daily']]
+  ok   installer exit 0 for daily-tech-digest
+  ok   daily-tech-digest registered without restart  [['daily-tech-digest', 'weather-daily']]
+  ok   installer exit 0 for github-daily
+  ok   github-daily registered without restart  [['daily-tech-digest', 'github-daily', 'weather-daily']]
+  ok   only AGENT.md in weather-daily
+  ok   digest skill file installed
+  ok   github script installed, no bytecode copied
+  ok   installed copy still says LOCAL DEMO ONLY next to the private-network line
+  ok   installed copy notifies only the local receiver
+  ok   three schedules registered (08:00, 09:00, 09:30 Asia/Shanghai)
+
+== 5. Run by REST (the cron's code path) and read the outcome
+  ok   manual run accepted  [200]
+  ok   one execution recorded
+  ok   trigger recorded as manual
+  ok   outcome endpoint answers  [COMPLETED]
+  ok   outcome matched by execution id
+  ok   the run was audited in llm_calls  [1 rows]
+
+== 6. The unauthenticated API still refuses non-local requests
+  ok   foreign Origin refused  [403]
+  ok   forwarding header refused  [403]
+  ok   agent creation from a foreign origin refused  [403]
+  ok   server bound to loopback only
+
+== 7. Restart on the same workspace
+  ok   agents survived the restart  [['daily-tech-digest', 'github-daily', 'weather-daily']]
+  ok   execution history survived
+  ok   llm_calls rows survived
+  ok   schema migrated to the latest version (4)  [4]
+
+RESULT: 56 passed, 0 failed

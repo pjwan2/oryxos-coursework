@@ -47,43 +47,9 @@ class GitHubDailyAgentTest {
   private static final GithubApi GITHUB = new GithubApi();
   private static final Receiver GROUP = new Receiver();
   private static final FakeModelServer MODEL = new FakeModelServer(DemoSupport::brain, 0);
-  private static final String ORIGINAL_ARGS = "\"--limit\",\"5\"]";
-
-  static String installed(String md) {
-    String script =
-        DemoSupport.slash(WS.agents.resolve(AGENT).resolve("scripts/github_trending.py"));
-    String edited = DemoSupport.common(md, GROUP.url(), "0 30 9 1 1 *");
-    String command = PYTHON == null ? "python" : PYTHON;
-    edited =
-        DemoSupport.replaceOnce(
-            edited, "\\.oryxos/agents/github-daily/scripts/github_trending\\.py", regex(script));
-    edited =
-        DemoSupport.replaceOnce(
-            edited, ".oryxos/agents/github-daily/scripts/github_trending.py", script);
-    edited = DemoSupport.replaceOnce(edited, "- name: python", "- name: " + command);
-    edited =
-        DemoSupport.replaceOnce(
-            edited, "\"command\":\"python\"", "\"command\":\"" + command + "\"");
-    edited =
-        DemoSupport.replaceOnce(
-            edited,
-            "'https://api\\.github\\.com'",
-            "'http://127\\.0\\.0\\.1:[0-9]{2,5}'\n          - '--today'\n          - '2026-03-05'");
-    edited = DemoSupport.replaceOnce(edited, "max_args: 5", "max_args: 7");
-    return DemoSupport.replaceOnce(
-        edited,
-        ORIGINAL_ARGS,
-        "\"--limit\",\"5\",\"--api-base\",\""
-            + GITHUB.baseUrl()
-            + "\",\"--today\",\"2026-03-05\"]");
-  }
-
-  private static String regex(String literal) {
-    return literal.replace(".", "\\.");
-  }
 
   static {
-    DemoSupport.install(WS.agents, AGENT, GitHubDailyAgentTest::installed);
+    DemoSupport.installGithub(WS, GROUP.url(), GITHUB.baseUrl(), PYTHON, "0 30 9 1 1 *");
   }
 
   @DynamicPropertySource

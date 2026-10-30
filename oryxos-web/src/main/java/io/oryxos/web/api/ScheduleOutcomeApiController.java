@@ -49,7 +49,20 @@ public class ScheduleOutcomeApiController {
       String note,
       String executionRef,
       String matchedBy,
-      String caveat) {
+      String caveat,
+      List<CallView> calls) {
+
+    public ExecutionOutcome {
+      calls = List.copyOf(calls);
+    }
+
+    @Override
+    public List<CallView> calls() {
+      return List.copyOf(calls);
+    }
+
+    /** One tool call of the run, in the order it happened. */
+    public record CallView(String tool, boolean success, String category, String reason) {}
 
     public static final String COMPLETED = "COMPLETED";
     public static final String COMPLETED_WITH_TOOL_ISSUES = "COMPLETED_WITH_TOOL_ISSUES";
@@ -57,6 +70,17 @@ public class ScheduleOutcomeApiController {
 
     public static final String BY_EXECUTION_ID = "execution_id";
     public static final String BY_TIME_WINDOW = "time_window";
+
+    private static List<CallView> chronological(List<ToolCallRecord> newestFirst) {
+      List<CallView> views = new java.util.ArrayList<>();
+      for (ToolCallRecord call : newestFirst) {
+        views.add(
+            new CallView(
+                call.toolName(), call.success(), call.errorCategory(), call.errorMessage()));
+      }
+      java.util.Collections.reverse(views);
+      return List.copyOf(views);
+    }
 
     static ExecutionOutcome of(
         TaskExecution execution, List<ToolCallRecord> calls, String matchedBy) {
@@ -108,7 +132,8 @@ public class ScheduleOutcomeApiController {
           note,
           execution.executionId(),
           matchedBy,
-          caveat);
+          caveat,
+          chronological(calls));
     }
   }
 

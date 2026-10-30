@@ -243,7 +243,8 @@ final class SchedulerFixtures {
               e.startedAt(),
               e.success(),
               e.errorMessage(),
-              e.durationMs());
+              e.durationMs(),
+              e.executionId());
       history.add(saved);
       ScheduledTask t = tasks.get(e.taskId());
       tasks.put(

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { api } from '../../api.js'
+import RunsPanel from './RunsPanel.vue'
 
 const props = defineProps({ agent: { type: Object, required: true } })
 const emit = defineEmits(['archived'])
@@ -65,6 +66,8 @@ async function archive() {
     >{{ agent.instructions }}</pre
   >
   <p v-else class="muted">Legacy profiles keep their prompt in the YAML file.</p>
+
+  <RunsPanel :key="agent.name" :agent="agent" />
 
   <template v-if="agent.editable">
     <h2>Archive</h2>

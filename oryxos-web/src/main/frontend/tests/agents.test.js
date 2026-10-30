@@ -238,4 +238,71 @@ describe('Agent detail', () => {
     expect(wrapper.find('[data-test=shared-note]').text()).toContain('every legacy profile shares')
     expect(wrapper.find('[data-test=core-entry]').text()).toContain('shared fact')
   })
+
+  describe('scheduled runs', () => {
+    const execution = (over = {}) => ({
+      id: 5, taskId: 'daily.nightly', sessionId: 'scheduler:scheduler:daily', trigger: 'cron',
+      startedAt: '2026-03-01T10:00:00Z', success: true, errorMessage: null, durationMs: 40,
+      executionId: 'abc', ...over
+    })
+    const outcome = (over = {}) => ({
+      executionId: 5, technicalStatus: 'SUCCESS', toolCalls: 2, toolSucceeded: 1, toolDenied: 1, toolFailed: 0,
+      outcome: 'COMPLETED_WITH_TOOL_ISSUES', note: 'x', executionRef: 'abc', matchedBy: 'execution_id', caveat: null,
+      calls: [
+        { tool: 'http_get', success: false, category: 'SandboxDenied', reason: 'Host not allowed' },
+        { tool: 'notify', success: true, category: null, reason: null }
+      ],
+      ...over
+    })
+
+    it('lists the recent runs of the agent and shows each tool call, a denial included, on demand', async () => {
+      const { wrapper } = await detail({
+        'GET /schedules/daily.nightly/executions/5/outcome': envelope(outcome()),
+        'GET /schedules/daily.nightly/executions': envelope([execution()])
+      })
+      expect(wrapper.findAll('[data-test=run-row]')).toHaveLength(1)
+      expect(wrapper.find('[data-test=run-row]').text()).toContain('finished')
+      await wrapper.find('[data-test=details]').trigger('click')
+      await flushPromises()
+      const calls = wrapper.findAll('[data-test=call]').map((c) => c.text())
+      expect(calls[0]).toContain('✗ http_get')
+      expect(calls[0]).toContain('SandboxDenied')
+      expect(calls[1]).toContain('✓ notify')
+      expect(wrapper.find('[data-test=details-row]').text()).toContain('1 denied by the sandbox')
+      expect(wrapper.find('[data-test=details-row]').text()).toContain('NOT carried out')
+    })
+
+    it('runs only after an explicit confirmation and then shows technical status and tool audit apart', async () => {
+      const { wrapper, calls } = await detail({
+        'POST /schedules/daily.nightly/run': envelope(execution({ trigger: 'manual' })),
+        'GET /schedules/daily.nightly/executions/5/outcome': envelope(outcome()),
+        'GET /schedules/daily.nightly/executions': envelope([execution({ trigger: 'manual' })])
+      })
+      await wrapper.find('[data-test=run]').trigger('click')
+      expect(calls.some((c) => c.key.startsWith('POST /schedules'))).toBe(false)
+      await wrapper.find('[data-test=run-yes]').trigger('click')
+      await flushPromises()
+      expect(calls.some((c) => c.key === 'POST /schedules/daily.nightly/run')).toBe(true)
+      const result = wrapper.find('[data-test=last-run]').text()
+      expect(result).toContain('Technical: Finished without error')
+      expect(result).toContain('Tools: 1 denied by the sandbox, 1 succeeded')
+    })
+
+    it('an agent without a schedule says there is nothing to run', async () => {
+      const { wrapper } = await detail({}, { schedules: [] })
+      expect(wrapper.find('[data-test=no-schedules]').exists()).toBe(true)
+      expect(wrapper.find('[data-test=run]').exists()).toBe(false)
+    })
+
+    it('a refused run shows the server message', async () => {
+      const { wrapper } = await detail({
+        'POST /schedules/daily.nightly/run': { status: 409, body: { code: 409, message: 'Task is already running' } },
+        'GET /schedules/daily.nightly/executions': envelope([])
+      })
+      await wrapper.find('[data-test=run]').trigger('click')
+      await wrapper.find('[data-test=run-yes]').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('[data-test=run-error]').text()).toContain('Task is already running')
+    })
+  })
 })

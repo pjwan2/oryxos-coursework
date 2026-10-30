@@ -219,4 +219,20 @@ class ScheduleOutcomeApiControllerTest {
                 .value(org.hamcrest.Matchers.containsString("predates execution ids")));
     verify(history, never()).findByExecution(any(), anyInt());
   }
+
+  @Test
+  void theOutcomeListsTheRunsToolCallsInTheOrderTheyHappened() throws Exception {
+    when(schedules.executions("ops.report", 200)).thenReturn(List.of(runWithId("run-A")));
+    when(history.findByExecution("run-A", 200))
+        .thenReturn(
+            List.of(
+                callOf("run-A", true, null), // newest first, as the history returns them
+                callOf("run-A", false, "SandboxDenied")));
+
+    mvc.perform(get("/api/v1/schedules/ops.report/executions/7/outcome"))
+        .andExpect(jsonPath("$.data.calls.length()").value(2))
+        .andExpect(jsonPath("$.data.calls[0].category").value("SandboxDenied"))
+        .andExpect(jsonPath("$.data.calls[0].success").value(false))
+        .andExpect(jsonPath("$.data.calls[1].success").value(true));
+  }
 }

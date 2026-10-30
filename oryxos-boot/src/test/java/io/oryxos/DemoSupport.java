@@ -781,4 +781,68 @@ final class DemoSupport {
         java.time.ZonedDateTime.now(java.time.ZoneId.of(zone)).plusSeconds(seconds);
     return at.getSecond() + " " + at.getMinute() + " " + at.getHour() + " * * *";
   }
+
+  // ---- installing each demo for a test machine
+  // ---------------------------------------------------
+
+  static Path installWeather(
+      E2eWorkspace ws, String receiverUrl, String forecastBase, String cron) {
+    return install(
+        ws.agents,
+        "weather-daily",
+        md ->
+            replaceOnce(
+                common(md, receiverUrl, cron),
+                "https://api.open-meteo.com/v1/forecast",
+                forecastBase));
+  }
+
+  static Path installTech(E2eWorkspace ws, String receiverUrl, String searchBase, String cron) {
+    Path skills = ws.agents.resolve("daily-tech-digest").resolve("skills");
+    return install(
+        ws.agents,
+        "daily-tech-digest",
+        md -> {
+          String edited = common(md, receiverUrl, cron);
+          edited = replaceOnce(edited, "https://hn.algolia.com/api/v1/search", searchBase);
+          return replaceOnce(edited, ".oryxos/agents/daily-tech-digest/skills", slash(skills));
+        });
+  }
+
+  /**
+   * The github-daily example with the script path made absolute, the API base pointed at a local
+   * fixture, and a fixed date so the fixture can tell the windows apart.
+   */
+  static Path installGithub(
+      E2eWorkspace ws, String receiverUrl, String apiBase, String python, String cron) {
+    String script = slash(ws.agents.resolve("github-daily").resolve("scripts/github_trending.py"));
+    String command = python == null ? "python" : python;
+    return install(
+        ws.agents,
+        "github-daily",
+        md -> {
+          String edited = common(md, receiverUrl, cron);
+          edited =
+              replaceOnce(
+                  edited,
+                  "\\.oryxos/agents/github-daily/scripts/github_trending\\.py",
+                  script.replace(".", "\\."));
+          edited =
+              replaceOnce(edited, ".oryxos/agents/github-daily/scripts/github_trending.py", script);
+          edited = replaceOnce(edited, "- name: python", "- name: " + command);
+          edited = replaceOnce(edited, "\"command\":\"python\"", "\"command\":\"" + command + "\"");
+          edited =
+              replaceOnce(
+                  edited,
+                  "'https://api\\.github\\.com'",
+                  "'http://127\\.0\\.0\\.1:[0-9]{2,5}'"
+                      + "\n          - '--today'"
+                      + "\n          - '2026-03-05'");
+          edited = replaceOnce(edited, "max_args: 5", "max_args: 7");
+          return replaceOnce(
+              edited,
+              "\"--limit\",\"5\"]",
+              "\"--limit\",\"5\",\"--api-base\",\"" + apiBase + "\",\"--today\",\"2026-03-05\"]");
+        });
+  }
 }

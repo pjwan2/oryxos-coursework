@@ -50,18 +50,7 @@ class TechDigestAgentTest {
   private static final FakeModelServer MODEL = new FakeModelServer(DemoSupport::brain, 0);
 
   static {
-    Path skills = WS.agents.resolve(AGENT).resolve("skills");
-    DemoSupport.install(
-        WS.agents,
-        AGENT,
-        md -> {
-          String edited = DemoSupport.common(md, GROUP.url(), "0 0 9 1 1 *");
-          edited =
-              DemoSupport.replaceOnce(
-                  edited, "https://hn.algolia.com/api/v1/search", NEWS.searchUrl());
-          return DemoSupport.replaceOnce(
-              edited, ".oryxos/agents/daily-tech-digest/skills", DemoSupport.slash(skills));
-        });
+    DemoSupport.installTech(WS, GROUP.url(), NEWS.searchUrl(), "0 0 9 1 1 *");
   }
 
   @DynamicPropertySource

@@ -14,6 +14,8 @@ schedules:
 settings:
   max_iterations: 10
   sandbox:
+    # LOCAL DEMO ONLY: 127.0.0.1 + allow_private_networks let this agent reach the local receiver
+    # (and any other local port). Not a production default; the operator ceiling must also allow it.
     hosts: ["hn.algolia.com", "127.0.0.1"]
     allow_private_networks: true
     read_roots: [".oryxos/agents/daily-tech-digest/skills"]

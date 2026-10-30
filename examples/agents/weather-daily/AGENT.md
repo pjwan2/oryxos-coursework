@@ -15,6 +15,8 @@ schedules:
 settings:
   max_iterations: 8
   sandbox:
+    # LOCAL DEMO ONLY: 127.0.0.1 + allow_private_networks let this agent reach the local receiver
+    # (and any other local port). Not a production default; the operator ceiling must also allow it.
     hosts: ["api.open-meteo.com", "127.0.0.1"]
     allow_private_networks: true
 ---

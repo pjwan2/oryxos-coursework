@@ -221,11 +221,13 @@ weather fixture requests: ['/weather']
 
 | 命中 | 原因 |
 |---|---|
-| `Path secret = WS.allowed.resolve(...)`（`AgentPluginIntegrationTest`、`TechDigestAgentTest`） | 变量名叫 `secret` 的测试变量，指向测试里用来证明"不会泄露"的假文件 |
-| `http://user:pass@127.0.0.1:1`（`GitHubTrendingScriptTest`） | 反向测试：脚本必须拒绝带用户信息的 `--api-base` |
-| `--oryxos.providers[1].api-key=dummy-key-not-a-secret`（三个实机检查脚本） | 明确标注的占位值，指向本机假模型 |
-| 第 4 周文档里的作者邮箱和 `C:/Users/USER/...` | 第 4 周已发布内容，发布时已审阅；本地目录已被统一成 `USER` |
-| 历史提交里的旧路径（`/c/Users/`、`C:\Users\USER\...`） | 历史不改写（既定约束） |
+| 测试里一个名字叫 `secret` 的局部变量（`AgentPluginIntegrationTest`、`TechDigestAgentTest`） | 变量名而已，指向测试里用来证明"不会泄露"的假文件 |
+| 一个带用户名密码样式的假本机地址（`GitHubTrendingScriptTest`） | 反向测试：脚本必须拒绝带用户信息的 `--api-base` |
+| 三个实机检查脚本里传给本机假模型的占位 `api-key` 值 | 明确标注为占位的假值，指向 127.0.0.1 |
+| 第 4 周已发布文档里的作者邮箱和本机目录样式路径 | 第 4 周发布时已审阅；目录名已统一成 `USER` |
+| 历史提交里更早的本机路径 | 历史不改写（既定约束） |
+
+为了不让扫描器报告自己的证据，`evidence/c6/security-audit.txt` 只记录命中的类别和文件，不重复命中的文本。
 
 ## C6.5 真实集成状态
 

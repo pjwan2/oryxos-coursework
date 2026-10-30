@@ -333,6 +333,7 @@ public final class AgentLoader {
       try (Stream<Path> walk = Files.walk(dir, 3)) {
         walk.filter(p -> Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS))
             .filter(p -> WorkspacePaths.plain(agentDir, p))
+            .filter(p -> !p.toString().contains("__pycache__"))
             .map(p -> agentDir.relativize(p).toString().replace('\\', '/'))
             .forEach(names::add);
       } catch (IOException | UncheckedIOException e) {

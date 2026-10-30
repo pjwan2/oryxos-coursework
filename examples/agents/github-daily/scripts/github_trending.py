@@ -121,7 +121,7 @@ def get_json(url):
 
 
 def clean(text):
-    text = CONTROL.sub(" ", text or "").strip()
+    text = " ".join(CONTROL.sub(" ", text or "").split())
     return text if len(text) <= MAX_DESCRIPTION else text[: MAX_DESCRIPTION - 1] + "…"
 
 
@@ -193,6 +193,9 @@ def build(limit, base, today):
 
 
 def main(argv):
+    # A pipe on Windows would otherwise use the ANSI code page and garble non-ASCII text.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     try:
         limit, base, today = parse_args(argv)
         result = build(limit, base, today)

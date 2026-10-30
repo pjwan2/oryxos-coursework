@@ -240,7 +240,7 @@ weather fixture requests: ['/weather']
 | 真实 Webhook | **未验证**（没有授权目标，一次都没有发送） |
 | 真实 48 小时连续运行 | **待验证** |
 | 新闻 MCP | **没有实现，没有运行** |
-| Linux/macOS 实际运行 | **未验证**（本机 Windows；GitHub Actions 的 Ubuntu 结果见 C6.7） |
+| Linux/macOS 实际运行 | **部分验证**：GitHub Actions（Ubuntu）对提交 `1298112`（与验收提交只差文档）跑完整 `mvn clean verify` 与前端构建，**成功**：789 个测试、785 通过、4 跳过、0 失败（Linux 上能创建符号链接，所以 `oryxos-provider` 的 2 个文件符号链接用例不再跳过；`oryxos-tool` 仍跳过 4 个）；依赖 Python 的测试在 Ubuntu 上自己找到 `python3` 并实际运行（`oryxos-boot` 214 个、0 跳过）。**没有**在 Linux/macOS 上运行过打包好的 JAR、三个示例或实机检查脚本；macOS 完全没有；示例里写的命令名仍是 `python` |
 | 人工浏览器验收 | **未做** |
 
 ## C6.6 第 27～32 节完成矩阵
@@ -254,7 +254,7 @@ weather fixture requests: ['/weather']
 | 分支 | `submission/week-05` |
 | 标签 | `week-05`（注释型；只在 GitHub Actions 全部成功之后创建） |
 | 标签与分支指向同一提交 | 发布时核实（`git ls-remote` 的结果在最终报告里） |
-| GitHub Actions | 推送后等待；结果在最终报告里（文档不能记录自己所在提交的 CI 结果） |
+| GitHub Actions | 对 `1298112`（`submission/week-05` 首次推送）：**成功**（Ubuntu，JDK 21，Node 20，`npm ci/test/build` + `mvn -B -ntp clean verify` + 文档链接检查）。发布提交只多了本节的文档修改，它自己的 CI 结果在最终报告里（文档不能记录自己所在提交的 CI 结果） |
 | 没有做的事 | 没有 force push，没有改写历史，没有移动或修改 `week-04` 标签和 `submission/week-04`，没有创建 `v0.1.0` |
 | 提交链接 | <https://github.com/pjwan2/oryxos-coursework/tree/submission/week-05>（以推送成功为准） |
 

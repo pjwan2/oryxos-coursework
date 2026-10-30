@@ -103,7 +103,7 @@ C6 没有增加业务功能。下面是发布时**仍然未完成**的事项，�
 | 真实 Webhook | **未验证**。没有被明确授权的目标；示例只通知 `http://127.0.0.1:18080/notify`。 |
 | 真实连续 48 小时运行 | **待验证**。"连续两天"只用可控时钟验证（`ScheduleCrossDayTest`）。 |
 | 新闻 MCP | **没有实现，没有运行。** |
-| Linux/macOS 实际运行 | 本机只有 Windows。GitHub Actions 在 Ubuntu 上跑全部 Maven 与前端检查（结果见最终报告）；依赖 Python 的测试会自己找 `python` 或 `python3`，找不到就跳过并如实计入跳过数。三个示例里写的命令名是 `python`；Linux/macOS 要改成 `python3`（AGENT.md 里两处和 `--oryxos.sandbox.commands`），本阶段没有在这些系统上实际运行示例。 |
+| Linux/macOS 实际运行 | 本机只有 Windows。GitHub Actions 在 Ubuntu 上跑通了全部 Maven 与前端检查（789 个测试、4 个跳过、0 失败，含依赖 Python 的测试），但**没有**在 Linux/macOS 上运行过打包好的 JAR、示例或实机检查脚本；依赖 Python 的测试会自己找 `python` 或 `python3`，找不到就跳过并如实计入跳过数。三个示例里写的命令名是 `python`；Linux/macOS 要改成 `python3`（AGENT.md 里两处和 `--oryxos.sandbox.commands`），本阶段没有在这些系统上实际运行示例。 |
 | 人工浏览器验收 | **没有**。只有 vitest 和 Playwright 无头浏览器。 |
 | 课程平台提交 | **Pending**（GitHub 发布不等于平台提交）。 |
 | 认证 | **没有**。管理 API 只适合本机，限制本机访问的检查（回环、无转发头、本地 `Origin`/`Host`）在 Quick Start 检查中再次确认。 |

@@ -28,6 +28,8 @@ Rules of the gate:
 | `chore/` | structure, tooling, docs, no behaviour change |
 | `release/` | frozen submission or release states |
 
+Each course week is one iteration: develop on a `feature/` branch, submit on `submission/week-NN`, tag the final commit `week-NN`, and add a section to [docs/coursework/iteration-log.md](docs/coursework/iteration-log.md). Never continue development on a `submission/` branch.
+
 Lower-case, hyphenated: `feature/spring-ai-react-integration`, `chore/repository-professionalization`. Commit subjects are imperative and say what and why in the body; stage commits are named `Phase <stage>: ...`. Do not push or open anything on a remote without the owner's say-so.
 
 ## Naming

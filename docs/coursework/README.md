@@ -8,6 +8,8 @@ One folder per course week. Each holds what was handed in or will be: requiremen
 | 4 | 21 to 26: Memory, Sandbox, Scheduler, Web Service and admin console | done, verified, delivered as a package | [week-04/](week-04/README.md) |
 | 5 | 27 to 32: main flow, stability, plugin agents, dynamic management, demos, review | not started | [week-05/](week-05/README.md) |
 
+Weekly iteration index (commits, tests, tags, publication status): [iteration-log.md](iteration-log.md).
+
 Generated submission packages go to `../../deliverables/week-NN/` (`python scripts/package_week04.py` for week 4).
 
 ## Path map (older documents)

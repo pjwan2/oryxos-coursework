@@ -119,6 +119,19 @@ final class E2eWorkspace {
     properties(fakeModelBaseUrl).forEach((key, value) -> registry.add(key, () -> value));
   }
 
+  /** Like {@link #properties(String)} with some values replaced or added (sandbox ceiling, ...). */
+  Map<String, String> properties(String fakeModelBaseUrl, Map<String, String> overrides) {
+    java.util.LinkedHashMap<String, String> p =
+        new java.util.LinkedHashMap<>(properties(fakeModelBaseUrl));
+    p.putAll(overrides);
+    return p;
+  }
+
+  void register(
+      DynamicPropertyRegistry registry, String fakeModelBaseUrl, Map<String, String> overrides) {
+    properties(fakeModelBaseUrl, overrides).forEach((key, value) -> registry.add(key, () -> value));
+  }
+
   // ---- SQLite helpers used by every end-to-end test -----------------------------------------
 
   static int count(JdbcTemplate jdbc, String table, String sessionId) {

@@ -98,6 +98,7 @@ Every answer uses `{code, message, data, timestamp}` and carries `X-Trace-Id`. I
 | `GET /api/v1/profiles`, `/tools`, `/memory`, `/tool-calls` | read-only queries |
 | `GET /api/v1/health`, `/info` | probe (503 if the database is down) and status |
 | `GET /api/v1/schedules`, `/{id}/executions`, `POST /{id}/run`, `PUT /{id}` | scheduler operations |
+| `GET /api/v1/schedules/{id}/executions/{executionId}/outcome` | what a finished run achieved: technical status plus tool audit (`COMPLETED`, `COMPLETED_WITH_TOOL_ISSUES`, `FAILED`) |
 
 Codes: 400 bad input · 403 not local · 404 unknown · 409 scheduler conflict · 500 fixed text only · 503 model/memory unavailable · 504 model timeout. Design: [web service design](docs/coursework/week-04/web-service-design.md).
 

@@ -1,0 +1,29 @@
+PASS  /admin/ redirects client-side to /admin/sessions  -> http://127.0.0.1:8098/admin/sessions
+PASS  Sessions: list shows real sessions  -> 3 rows
+PASS  Sessions: UI row count equals API count  -> 3 vs 3
+PASS  Sessions: detail shows messages  -> 8 messages
+PASS  Sessions: detail contains the UTF-8 Chinese message
+PASS  Deep link reload keeps the page (no 404)  -> http://127.0.0.1:8098/admin/sessions/api:alice:ops
+PASS  Profiles: cards equal API profiles  -> flaky,memory-demo,ops,payment-demo
+PASS  Tools: list equals API registry  -> file_read,file_write,get_payment,http_get,notify,recall_memory,save_memory,shell_exec
+PASS  Tools: parameter table rendered
+PASS  Memory: backend and entries shown
+PASS  System: health ok
+PASS  System: bind address 127.0.0.1 and no-auth notice shown
+PASS  System: no secrets/paths in page
+PASS  Scheduler: tasks listed from API  -> flaky.boom,ops.report,ops.write-outside
+PASS  Scheduler: technical status finished
+PASS  Scheduler: sandbox denial shown as denied, separately  -> Result of the manual run of ops.write-outside | Technical execution | finished without error took 29 ms | Tool audit | 1 denied by the sandbox | The run finished, but at least one tool action was NOT carried out. A finished run is not proof that a notification was sent or an operation was performed.
+PASS  Scheduler: denial is not shown as success/notification
+PASS  Scheduler: technical failure shown with safe reason  -> Result of the manual run of flaky.boom | Technical execution | failedAgent run failed (IllegalArgumentException) took 8 ms | Tool audit | No tool calls recorded in this run
+PASS  Scheduler: disable button disables (badge + label flip)
+PASS  Scheduler: API confirms enabled=false
+PASS  Scheduler: disabled-task confirm says manual run is still allowed  -> This task is disabled, but a manual run is still allowed and will execute the agent now. | Run | Cancel
+PASS  Scheduler: manual run of disabled task ran and left it disabled  -> runCount=1
+PASS  Scheduler: history row details show the sandbox denial  -> 1 denied by the sandbox matched by session and time window of this run | The run finished, but at least one tool action was NOT carried out. A finished run is not proof that a notification was sent or an operation was performed.
+PASS  Error state: message, status, trace id and retry shown
+PASS  Unknown client route falls back to Sessions  -> http://127.0.0.1:8098/admin/sessions
+PASS  All six pages reload (200, or 304 revalidation of the no-cache shell) and render
+PASS  Browser console/page errors during run
+
+27/27 checks passed

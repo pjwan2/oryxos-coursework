@@ -1,0 +1,100 @@
+JAR: oryxos-boot-0.1.0-SNAPSHOT.jar (83732 KiB), scratch dir: <HOME>\AppData\Local\Temp\oryxos-week04-i74nrt39
+
+== Memory, backend=markdown (lessons 21/22)
+PASS  save CORE  -> Tool result: Saved to CORE memory
+PASS  save defaults to ARCHIVAL  -> Tool result: Saved to ARCHIVAL memory
+PASS  recall (case-insensitive) from a NEW user sees it  -> Tool result: - met Sam at the harbour
+PASS  recall searches ARCHIVAL only, not CORE  -> Tool result: No matching archived memories
+PASS  invalid scope is rejected  -> Tool result: ERROR scope must be CORE or ARCHIVAL
+PASS  agent without the tool in its Profile cannot use memory  -> Tool not available: save_memory
+PASS  REST /memory reports the backend  -> markdown
+PASS  REST /memory lists CORE and ARCHIVAL
+PASS  MEMORY.md has both sections with the entries
+PASS  SQLite memory table untouched by the markdown backend
+PASS  memory survives a JVM restart
+
+== Memory, backend=sqlite (lessons 21/22)
+PASS  save CORE  -> Tool result: Saved to CORE memory
+PASS  save defaults to ARCHIVAL  -> Tool result: Saved to ARCHIVAL memory
+PASS  recall (case-insensitive) from a NEW user sees it  -> Tool result: - met Sam at the harbour
+PASS  recall searches ARCHIVAL only, not CORE  -> Tool result: No matching archived memories
+PASS  invalid scope is rejected  -> Tool result: ERROR scope must be CORE or ARCHIVAL
+PASS  agent without the tool in its Profile cannot use memory  -> Tool not available: save_memory
+PASS  REST /memory reports the backend  -> sqlite
+PASS  REST /memory lists CORE and ARCHIVAL
+PASS  memory_entries rows match the API  -> [('CORE', 'Alex prefers green tea'), ('ARCHIVAL', 'met Sam at the harbour')]
+PASS  no MEMORY.md written by the sqlite backend
+PASS  memory survives a JVM restart
+
+== Sandbox (lessons 23/24)
+PASS  read inside the declared root is allowed  -> Tool result: HELLO-FROM-ALLOWED
+PASS  read outside the root is denied and leaks nothing  -> Tool result: ERROR SANDBOX_DENIED: Path outside allowed READ roots
+PASS  ../ traversal is denied  -> Tool result: ERROR SANDBOX_DENIED: Path outside allowed READ roots
+PASS  write outside the root is denied and the file is NOT created  -> Tool result: ERROR SANDBOX_DENIED: Path outside allowed WRITE roots
+PASS  write inside the root works  -> Tool result: Wrote 5 characters
+PASS  cloud metadata address is never allowed  -> Tool result: ERROR SANDBOX_DENIED: This IP range (link-local, metadata, multicast) is never allowed
+PASS  numeric-disguised loopback address is denied  -> Tool result: ERROR SANDBOX_DENIED: Ambiguous numeric host is not allowed
+PASS  host not in the Profile's list is denied  -> Tool result: ERROR SANDBOX_DENIED: Host not allowed: evil.test
+PASS  Profile with no sandbox declaration is denied everything  -> Tool result: ERROR SANDBOX_DENIED: Path outside allowed READ roots
+PASS  every refusal is audited as SandboxDenied  -> 7 of 9 rows
+PASS  REST /tool-calls equals the audit table
+PASS  audit rows carry a safe readable reason
+      audit: ('file_read', 1, None)
+      audit: ('file_read', 0, 'SandboxDenied')
+      audit: ('file_read', 0, 'SandboxDenied')
+      audit: ('file_write', 0, 'SandboxDenied')
+      audit: ('file_write', 1, None)
+      audit: ('http_get', 0, 'SandboxDenied')
+      audit: ('http_get', 0, 'SandboxDenied')
+      audit: ('http_get', 0, 'SandboxDenied')
+      audit: ('file_read', 0, 'SandboxDenied')
+
+== Web service, Swagger, Prometheus, admin console (lesson 26)
+PASS  GET /health 200 with ok + trace id  -> 105b68f0-136b-478c-8f66-7db8b0b45f64
+PASS  GET /info
+PASS  GET /profiles
+PASS  GET /tools has schemas
+PASS  POST /sessions -> 201
+PASS  POST /sessions again -> 200 (idempotent)
+PASS  POST /sessions/{id}/messages
+PASS  GET /sessions/{id} returns the history
+PASS  GET /sessions is newest-first and capped at 100
+PASS  DELETE /sessions/{id}
+PASS  400: missing profile
+PASS  400: blank message
+PASS  400: message over 32 KiB
+PASS  400: malformed JSON
+PASS  404: unknown session
+PASS  404: unknown agent
+PASS  500 returns a fixed text and leaks nothing  -> {"code": 500, "message": "Internal server error", "data": null, "timestamp": "2026-10-30T02:59:21.895638Z"}
+PASS  403: Host header of a foreign name (DNS rebinding)
+PASS  403: forwarded request
+PASS  403: cross-site Origin on a write
+PASS  unknown API path is a JSON 404
+PASS  OpenAPI document is served  -> 20 paths
+PASS  Swagger UI is served
+PASS  Prometheus endpoint exposes metrics
+PASS  /admin/ serves the Vue console from the JAR
+PASS  client route /admin/sessions reloads (no 404)
+PASS  client route /admin/scheduler reloads (no 404)
+PASS  client route /admin/sessions/web:a:b reloads (no 404)
+PASS  missing asset stays 404
+
+== Scheduler (lesson 25)
+PASS  tasks from Profile YAML are registered, enabled, never run
+PASS  time zone is kept per task
+PASS  next run is computed
+PASS  manual run succeeds through the shared AgentService  -> {"id": 1, "taskId": "ops.report", "sessionId": "scheduler:scheduler:ops", "trigger": "manual", "startedAt": "2026-10-30T02:59:30.099558200Z", "success": true, "errorMessage": null, "durationMs": 88}
+PASS  run whose tool is refused: technical success, sandbox denial audited separately
+PASS  the scheduled call was denied by the sandbox in the audit
+PASS  unknown task is 404
+PASS  disable through the API
+PASS  manual run is still allowed while disabled, and does not re-enable
+PASS  invalid cron is rejected with 400
+      scheduled_tasks before restart: [('ops.report', 0, 3, 'SUCCESS'), ('ops.write-outside', 1, 1, 'SUCCESS')]
+PASS  after a JVM restart state, run counts and enabled flags are unchanged  -> [('ops.report', 0, 3, 'SUCCESS'), ('ops.write-outside', 1, 1, 'SUCCESS')]
+PASS  API shows the disabled task and its runs
+PASS  execution history survives the restart
+PASS  schema_migrations recorded versions 1..3  -> [1, 2, 3]
+
+77/77 checks passed

@@ -1,0 +1,14 @@
+# Week-5 evidence index (C1 + C2)
+
+Real output of commands run on the author's machine (Windows 10, JDK 21.0.2, Maven 3.9.16). Local paths were replaced by `<HOME>` and terminal colour codes removed.
+
+| File | What it is |
+|---|---|
+| `mvn-clean-verify.txt` | `mvn -B -ntp clean verify` on the C2 code: nine modules SUCCESS, 538 tests, 4 skipped, 0 failed, static analysis clean |
+| `mvn-clean-verify-after-c1.txt` | the same after C1 only (517 tests) |
+| `test-summary.md` | tests, skipped and failed per module and per class (`scripts/test_summary.py`) |
+| `live-check.txt` | `scripts/week05_live_check.py` on the real JAR: 31 checks (weather and memory with the real audit rows, isolation, scheduler and the `outcome` endpoint, JVM restart with a table-by-table comparison) |
+| `week04-live-check-regression.txt` | week-4's 77 live checks re-run on the same JAR: 77/77 |
+| `dashboard-headless-run.txt` | headless-browser run of the six dashboard pages on the same JAR: 27/27 (automated, not a human review) |
+
+Not here, because it was never done: any run with a real LLM, MCP server, webhook, Mem0 server or weather API.

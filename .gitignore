@@ -31,3 +31,6 @@ deliverables/*.zip
 config/application*.yaml
 config/application*.yml
 config/application*.properties
+
+__pycache__/
+*.pyc

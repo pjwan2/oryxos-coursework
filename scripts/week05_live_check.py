@@ -113,6 +113,9 @@ def main():
             check("exactly one weather request", len(HITS) == 1, str(HITS))
             check("llm_calls: exactly 2 (tool request, final answer)", count(db, "llm_calls", session) == 2)
             check("tool_invocations: exactly 1, http_get, success", rows(db, f"select tool_name, success from tool_invocations where session_id='{session}'") == [("http_get", 1)])
+            say("      llm_calls   : " + str(rows(db, f"select id, provider, model, success, error_message from llm_calls where session_id='{session}' order by id")))
+            say("      tool_invocations: " + str(rows(db, f"select id, tool_name, success, error_category, error_message from tool_invocations where session_id='{session}' order by id")))
+            say("      weather fixture requests: " + str(HITS))
             srv.invoke("agent-files", 'tool:save_memory {"content":"我喜欢喝美式咖啡","scope":"CORE"}', "m1")
             mem = srv.get("/api/v1/memory")[1]["data"]
             check("memory written and visible over REST", [e["content"] for e in mem["core"]] == ["我喜欢喝美式咖啡"])

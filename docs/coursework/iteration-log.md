@@ -20,7 +20,7 @@
 |---|---|---|---|---|---|
 | 3 | 15～20：骨架、Provider、ReAct、CLI、Notify、Tool | 完成（阶段 A） | 106 个，0 失败 | （无独立提交分支，见 `master` 之后的线性历史） | `week-03` → `9c07dc0` |
 | 4 | 21～26：Memory、Sandbox、定时任务、Web Service 与管理台 | 完成并已发布到 GitHub；**课程平台尚未提交** | 502 个：498 / 4 / 0 | `submission/week-04` | `week-04` → 该分支发布时的最终提交（见标签本身） |
-| 5 | 27～32：主流程、稳定性、插件化、动态管理、Demo、复盘 | 未开始 | — | — | — |
+| 5 | 27～32：主流程、稳定性、插件化、动态管理、Demo、复盘 | **进行中**：C1（第 27 节）、C2（第 28 节）完成；C3～C6 未开始；**未推送、未打标签** | 538 个：534 / 4 / 0（截至 C2） | （第 5 周完成后建立 `submission/week-05`） | （完成后打 `week-05`） |
 
 ## 第 3 周（课 15～20）
 
@@ -51,9 +51,23 @@
 - **发布状态**：GitHub 已发布 <https://github.com/pjwan2/oryxos-coursework/tree/submission/week-04>；课程平台提交框**尚未提交**（提交后在此处更新日期）。
 - **文档**：[week-04/README.md](week-04/README.md)。
 
-## 第 5 周（课 27～32）
+## 第 5 周（课 27～32）——进行中
 
-未开始。范围和前置事项见 [week-05/README.md](week-05/README.md)。开始时从 `submission/week-04`（标签 `week-04`）切出 `feature/week-05-...`，不要在 `submission/week-04` 上继续开发。
+- **分支**：`feature/week-05-agent-lifecycle`，从标签 `week-04` 创建（基线 `4dc96af`）。**未推送、未打标签**（第 5 周没做完）。
+- **目标（本阶段）**：第 27 节主流程集成（C1）、第 28 节稳定性与多 Agent（C2）；不提前做第 29、30 节。
+- **迭代过程**：
+
+| 阶段 | 提交 | 内容 | 测试 |
+|---|---|---|---|
+| C1 第 27 节 | `178411b` | 假模型服务器 + 真实 Spring AI 客户端的端到端测试（天气：2 次模型调用/1 次工具调用；记忆；三条失败路径）、进程内 Mock 流程测试、CLI/REST 同库对账；**修复** Provider 不可达时请求线程被默认重试挂住数分钟 | 517 |
+| C2 第 28 节 | `49777b7` | 调度全链路、不重叠（6 并发只执行 1 次）、重启恢复逐行对账、多 Agent 隔离、新增只读 `outcome` 端点（技术成功 ≠ 业务成功）、真实 JAR 实机检查 31 项 | 538 |
+| 文档 | （本记录所在提交） | 第 5 周需求矩阵、验收报告、限制、证据 | 538 |
+
+- **验收**：538 个测试、534 通过、4 跳过（符号链接）、0 失败；真实 JAR 31/31；第 4 周回归 77/77；管理台自动化检查 27/27。见 [week-05/acceptance-report.md](week-05/acceptance-report.md)。
+- **没验证 / 没实现**：真实 LLM、MCP、Webhook、Mem0、真实天气 API 全部未验证；`HumanTriggerFlowIT` 未实现；**per-agent memory 隔离尚未实现**（特征化测试固定了"全局共享"的现状）。
+- **进入第 29 节前**：Agent 定义的单一来源、可变 Profile 目录、沙箱缓存驱逐、per-agent memory、工具审计执行 ID、无认证下管理 API 的边界。见 [week-05/known-limitations.md](week-05/known-limitations.md)。
+- **发布状态**：GitHub 与课程平台均**未发布/未提交**（第 5 周未完成）。
+- **文档**：[week-05/README.md](week-05/README.md)。
 
 ## 每周追加的模板
 
